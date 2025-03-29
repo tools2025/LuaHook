@@ -29,14 +29,14 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
 
-        isCoreLibraryDesugaringEnabled = true
+//        isCoreLibraryDesugaringEnabled = true
 
     }
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = "11"
     }
 }
 
@@ -51,9 +51,4 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
     compileOnly(fileTree("compileOnly"))
-    val editorVersion = "0.23.5"
-//    implementation("io.github.Rosemoe.sora-editor:sora-editor:$editorVersion")
-    implementation("io.github.Rosemoe.sora-editor:editor:$editorVersion")
-    implementation("io.github.Rosemoe.sora-editor:language-textmate:$editorVersion")
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 }

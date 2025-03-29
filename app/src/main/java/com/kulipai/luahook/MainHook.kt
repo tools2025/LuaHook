@@ -1,11 +1,11 @@
 package com.kulipai.luahook
 
 
-import android.util.Log
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.IXposedHookZygoteInit
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XSharedPreferences
+import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import org.luaj.vm2.Globals
@@ -30,10 +30,10 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
     private lateinit var xPrefs: XSharedPreferences
 
     override fun initZygote(startupParam: IXposedHookZygoteInit.StartupParam) {
-        // 读取自己模块的 SharedPreferences 文件（路径为 /data/data/模块包名/shared_prefs/xposed_prefs.xml）
+        //读取固定的share
         xPrefs = XSharedPreferences(MODULE_PACKAGE, PREFS_NAME)
         xPrefs.makeWorldReadable()
-       ("XSharedPreferences 初始化，文件路径：${xPrefs.file.absolutePath}").d()
+//       ("XSharedPreferences 初始化，文件路径：${xPrefs.file.absolutePath}").d()
     }
 
 
@@ -62,9 +62,14 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
 
         val globals: Globals = JsePlatform.standardGlobals()
 
-
         // 1. 传递 lpparam (类加载器) 给 Lua
         globals["lpparam"] = CoerceJavaToLua.coerce(lpparam)
+
+//        globals["XposedHelpers"] = CoerceJavaToLua.coerce(XposedHelpers::class.java)
+//
+//        globals["XposedBridge"] = CoerceJavaToLua.coerce(XposedBridge::class.java)
+        XposedBridge.log("aa")
+
 
         globals["log"] = object : OneArgFunction() {
             override fun call(arg: LuaValue): LuaValue {
@@ -338,127 +343,11 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
             }
         }
 
-        // 3. 运行 Lua 代码
-        // 运行 Lua 代码
-//        val luaScript = """
-//    log(lpparam.packageName)
-//    package=lpparam.packageName
-//    if package == "com.ad2001.frida0x1" then
-//        local MainActivity = findClass("com.ad2001.frida0x1.MainActivity",lpparam.classLoader)
-//        log(MainActivity)
-//        if MainActivity then
-//            hook(MainActivity, "get_random",
-//                function(param)
-//                    log("【Before get_random】参数: " .. tostring(param.args[1]))
-//                    --return { args = {"Modified Parameter"} }
-//                end,
-//                function(param)
-//                    log("【After get_random】返回值: " .. tostring(param.result))
-//                    --return 1
-//                end
-//            )
-//
-//             hook(MainActivity, "check", "int", "int",
-//                function(param)
-//                    log("【Before check】参数: " .. tostring(param.args[1]) .. tostring(param.args[2]))
-//                    return { args = {1,6} }
-//                end,
-//                function(param)
-//                    log("【After check】参数: " .. tostring(param.result))
-//                end
-//            )
-//            --[[
-//            hook(MainActivity, "onCreate", "android.os.Bundle",
-//                function(param)
-//                    log("【Before onCreate】")
-//                end,
-//                function(param)
-//                    log("【After onCreate】")
-//                    local activity = param.thisObject
-//                    log(activity)
-//                    local Toast = findClass("android.widget.Toast")
-//                    log(Toast)
-//                    --Toast.makeText(activity, "0x11 Hook成功！", Toast.LENGTH_SHORT):show()
-//                    --invoke(param,"check", 1, 6)
-//                end
-//            )
-//            ]]
-//
-//        else
-//            log("MainActivity class not found!")
-//        end
-//    end
-//""".trimIndent()
-        luaScript?.d("luaddd")
+
+
         val chunk: LuaValue = globals.load(luaScript)
         chunk.call()
 
 
-//        // 1. 创建 Lua 运行环境
-//        val globals: Globals = JsePlatform.standardGlobals()
-//
-//        // 2. 传递变量到 Lua
-//        globals["name"] = LuaValue.valueOf("Kotlin User")
-//        globals["number"] = LuaValue.valueOf(42)
-//        globals["lpparam"] = CoerceJavaToLua.coerce(lpparam)
-////        globals["lp"] = LuaValue.valueOf(lpparam)
-//
-//        // 3. 传递 Kotlin 方法到 Lua
-//        globals["logMessage"] = object : OneArgFunction() {
-//            override fun call(arg: LuaValue): LuaValue {
-//                val message = arg.tojstring()
-//                return LuaValue.valueOf("Received: $message")
-//            }
-//        }
-//
-//        globals["addNumbers"] = object : TwoArgFunction() {
-//            override fun call(a: LuaValue, b: LuaValue): LuaValue {
-//                val sum = a.toint() + b.toint()
-//                return LuaValue.valueOf(sum)
-//            }
-//        }
-//
-//        globals["showDialog"] = object : VarArgFunction() {
-//            override fun invoke(varargs: Varargs): LuaValue {
-//                val title = varargs.optjstring(1, "默认标题")  // 参数 1：标题
-//                val message = varargs.optjstring(2, "默认内容")  // 参数 2：内容
-//                val positiveText = varargs.optjstring(3, "确定")  // 参数 3：按钮1文本
-//                val negativeText = varargs.optjstring(4, "取消")  // 参数 4：按钮2文本
-//
-//                return LuaValue.NIL
-//            }
-//        }
-//
-//        // 2. 定义 Kotlin 类
-//        class Person(val name: String, val age: Int) {
-//            fun greet(): String {
-//                return "你好，我是 $name，今年 $age 岁！"
-//            }
-//        }
-//
-//
-//        // 2. 让 Kotlin 传递 Person 类到 Lua
-//        globals["createPerson"] = object : VarArgFunction() {
-//            override fun invoke(varargs: Varargs): LuaValue {
-//                val name = varargs.optjstring(1, "未知")
-//                val age = varargs.optint(2, 18)
-//                return CoerceJavaToLua.coerce(Person(name, age)) // 传递 Kotlin 类
-//            }
-//        }
-//
-//
-//
-//
-//        // 4. Lua 代码
-//        val luaScript = """
-//            print("Hello from Lua! Name: " .. name .. ", Number: " .. number)
-//            result = logMessage("Lua 发送的信息")
-//            print("Kotlin 返回: " .. result)
-//        """.trimIndent()
-//
-//        // 5. 运行 Lua 代码
-//        val chunk: LuaValue = globals.load(luaScript)
-//        val result: LuaValue = chunk.call()
-////        print(result)
     }
 }

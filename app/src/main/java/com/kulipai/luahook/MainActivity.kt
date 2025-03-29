@@ -1,20 +1,27 @@
 package com.kulipai.luahook
 
 
+import android.annotation.SuppressLint
 import android.content.Context
+import android.content.res.Configuration
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import io.github.rosemoe.sora.langs.textmate.registry.FileProviderRegistry
-import io.github.rosemoe.sora.langs.textmate.registry.provider.AssetsFileResolver
-import io.github.rosemoe.sora.widget.CodeEditor
+
+
 import java.io.File
 
 class MainActivity : AppCompatActivity() {
+
+
+    fun isNightMode(context: Context): Boolean {
+        return (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+    }
 
 
     companion object {
@@ -22,6 +29,7 @@ class MainActivity : AppCompatActivity() {
         const val TAG = "XposedModule"
     }
 
+    @SuppressLint("MissingInflatedId")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -32,42 +40,9 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
-        FileProviderRegistry.getInstance().addFileProvider(
-            AssetsFileResolver(
-                applicationContext.assets // 使用应用上下文
-            )
-        )
 
-        val editor = findViewById<CodeEditor>(R.id.codeEditor)
+        val editor = findViewById<LuaEditor>(R.id.editor)
 
-//        GrammarRegistry.getInstance().loadGrammars("language.json")
-//
-//
-//        val languageScopeName = "source.lua" // 您目标语言的作用域名称
-//        val language = TextMateLanguage.create(
-//            languageScopeName, true /* true表示启用自动补全 */
-//        )
-////        editor.setBackgroundColor(Color.BLACK)
-//        editor.setEditorLanguage(language)
-//        // 创建自定义编辑器主题
-//        // 加载主题
-//        val themeRegistry = ThemeRegistry.getInstance()
-//        val themeAssetsPath = "textmate/package.json"
-//        themeRegistry.loadTheme(
-//            ThemeModel(
-//                IThemeSource.fromInputStream(
-//                    FileProviderRegistry.getInstance().tryGetInputStream(themeAssetsPath),
-//                    themeAssetsPath,
-//                    null
-//                ),
-//                "package"
-//            ).apply {
-//                // 如果是暗色主题，可以设置
-//                isDark = true
-//            }
-//        )
-//
-//        ThemeRegistry.getInstance().setTheme("package")
 
         makePrefsWorldReadable()
 
@@ -87,6 +62,14 @@ class MainActivity : AppCompatActivity() {
             return prefs.getString("lua", "") ?: ""
         }
 
+
+
+        if (isNightMode(this)) {
+            editor.setDark(true)
+        } else
+        {
+            editor.setDark(false)
+        }
 
 
         var luaScript = readPrefs(this)
@@ -145,8 +128,16 @@ class MainActivity : AppCompatActivity() {
         }
 
 
-        // 启用高亮显示
         editor.setText(luaScript)
+//        val pluginSupplier = PluginSupplier.create {
+//            lineNumbers {
+//            }
+//            codeCompletion {
+//
+//            }
+//        }
+//        editor.plugins(pluginSupplier)
+
 
         var fab = findViewById<FloatingActionButton>(R.id.fab)
 
@@ -154,10 +145,6 @@ class MainActivity : AppCompatActivity() {
             savePrefs(this@MainActivity, editor.text.toString())
 
         }
-
-
-
-
 
 
     }

@@ -6,18 +6,41 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+        <com.google.android.material.appbar.MaterialToolbar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:title="LuaXposed"/>
 
-    <io.github.rosemoe.sora.widget.CodeEditor
-        android:id="@+id/codeEditor"
+    </com.google.android.material.appbar.AppBarLayout>
+
+<LinearLayout
+    android:id="@+id/Linear1"
+    android:background="@color/black"
+    android:orientation="horizontal"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.kulipai.luahook.LuaEditor
+        android:id="@+id/editor"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"/>
+</LinearLayout>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|right"
-        android:contentDescription="TODO" />
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="104dp"
+        android:contentDescription="@string/push"
+        android:src="@drawable/save_24px"
+        android:layout_gravity="end|bottom"
+
+        />
 
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
