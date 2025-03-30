@@ -62,19 +62,95 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
 
         val globals: Globals = JsePlatform.standardGlobals()
 
-        // 1. 传递 lpparam (类加载器) 给 Lua
-        globals["lpparam"] = CoerceJavaToLua.coerce(lpparam)
 
 //        globals["XposedHelpers"] = CoerceJavaToLua.coerce(XposedHelpers::class.java)
 //
 //        globals["XposedBridge"] = CoerceJavaToLua.coerce(XposedBridge::class.java)
-        XposedBridge.log("aa")
+
+        // 1. 传递 lpparam (类加载器) 给 Lua
+
+
+
+        globals["lpparam"] = CoerceJavaToLua.coerce(lpparam)
+
+
+        globals["getField"] = object : VarArgFunction() {
+            override fun invoke(args: Varargs): LuaValue {
+                return try {
+                    val targetObject = args.arg(1)
+                    val fieldName = args.checkjstring(2)
+
+                    if (targetObject.isuserdata(Any::class.java)) {
+                        val target = targetObject.touserdata(Any::class.java)
+                        val result = XposedHelpers.getObjectField(target, fieldName)
+                        CoerceJavaToLua.coerce(result)
+                    } else {
+                        LuaValue.NIL
+                    }
+                } catch (e: Exception) {
+                    println("getField error: ${e.message}")
+                    LuaValue.NIL
+                }
+            }
+        }
+
+        globals["setField"] = object : VarArgFunction() {
+            override fun invoke(args: Varargs): LuaValue {
+                return try {
+                    val targetObject = args.arg(1)
+                    val fieldName = args.checkjstring(2)
+                    val fieldValue = fromLuaValue(args.arg(3))
+
+                    if (targetObject.isuserdata(Any::class.java)) {
+                        val target = targetObject.touserdata(Any::class.java)
+                        XposedHelpers.setObjectField(target, fieldName, fieldValue)
+                    }
+                    LuaValue.NIL
+                } catch (e: Exception) {
+                    println("setField error: ${e.message}")
+                    LuaValue.NIL
+                }
+            }
+        }
+
+        globals["getStaticField"] = object : VarArgFunction() {
+            override fun invoke(args: Varargs): LuaValue {
+                return try {
+                    val className = args.checkjstring(1)
+                    val fieldName = args.checkjstring(2)
+                    val clazz = XposedHelpers.findClass(className, lpparam.classLoader)
+                    val result = XposedHelpers.getStaticObjectField(clazz, fieldName)
+                    CoerceJavaToLua.coerce(result)
+                } catch (e: Exception) {
+                    println("getStaticField error: ${e.message}")
+                    LuaValue.NIL
+                }
+            }
+        }
+
+        globals["setStaticField"] = object : VarArgFunction() {
+            override fun invoke(args: Varargs): LuaValue {
+                return try {
+                    val className = args.checkjstring(1)
+                    val fieldName = args.checkjstring(2)
+                    val fieldValue = fromLuaValue(args.arg(3))
+                    val clazz = XposedHelpers.findClass(className, lpparam.classLoader)
+                    XposedHelpers.setStaticObjectField(clazz, fieldName, fieldValue)
+                    LuaValue.NIL
+                } catch (e: Exception) {
+                    println("setStaticField error: ${e.message}")
+                    LuaValue.NIL
+                }
+            }
+        }
+
 
 
         globals["log"] = object : OneArgFunction() {
             override fun call(arg: LuaValue): LuaValue {
                 val message = arg.tojstring()
                 message.d()
+                XposedBridge.log(message)
                 return NIL
             }
         }

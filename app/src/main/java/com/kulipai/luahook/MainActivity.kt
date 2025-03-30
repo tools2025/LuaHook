@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.res.Configuration
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -44,7 +45,7 @@ class MainActivity : AppCompatActivity() {
         val editor = findViewById<LuaEditor>(R.id.editor)
 
 
-        makePrefsWorldReadable()
+
 
 
         // 写入 SharedPreferences 并修改权限
@@ -62,16 +63,12 @@ class MainActivity : AppCompatActivity() {
             return prefs.getString("lua", "") ?: ""
         }
 
-
-
         if (isNightMode(this)) {
             editor.setDark(true)
         } else
         {
             editor.setDark(false)
         }
-
-
         var luaScript = readPrefs(this)
         if (luaScript == "") {
             makePrefsWorldReadable()
@@ -127,22 +124,17 @@ class MainActivity : AppCompatActivity() {
             savePrefs(this, lua)
         }
 
-
         editor.setText(luaScript)
-//        val pluginSupplier = PluginSupplier.create {
-//            lineNumbers {
-//            }
-//            codeCompletion {
-//
-//            }
-//        }
-//        editor.plugins(pluginSupplier)
+        makePrefsWorldReadable()
 
 
         var fab = findViewById<FloatingActionButton>(R.id.fab)
 
         fab.setOnClickListener {
+//            makePrefsWorldReadable()
             savePrefs(this@MainActivity, editor.text.toString())
+            makePrefsWorldReadable()
+            Toast.makeText(this, "保存成功", Toast.LENGTH_SHORT).show()
 
         }
 
@@ -155,7 +147,6 @@ class MainActivity : AppCompatActivity() {
             // SharedPreferences 默认存储路径: /data/data/包名/shared_prefs/文件名.xml
             val prefsFile = File(applicationInfo.dataDir, "shared_prefs/$PREFS_NAME.xml")
             if (prefsFile.exists()) {
-                // 修改权限：所有用户可读写（注意安全风险，请谨慎使用）
                 Runtime.getRuntime().exec("chmod 666 ${prefsFile.absolutePath}")
                 Log.d(TAG, "Prefs 文件已设置为全局可读: ${prefsFile.absolutePath}")
             } else {
