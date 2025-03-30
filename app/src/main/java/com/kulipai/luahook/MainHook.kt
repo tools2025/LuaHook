@@ -63,13 +63,6 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
         val globals: Globals = JsePlatform.standardGlobals()
 
 
-//        globals["XposedHelpers"] = CoerceJavaToLua.coerce(XposedHelpers::class.java)
-//
-//        globals["XposedBridge"] = CoerceJavaToLua.coerce(XposedBridge::class.java)
-
-        // 1. 传递 lpparam (类加载器) 给 Lua
-
-
 
         globals["lpparam"] = CoerceJavaToLua.coerce(lpparam)
 
