@@ -85,7 +85,7 @@ public class LuaEditor extends FreeScrollingTextField {
         array.recycle();
         setTextColor(textColor);
         setTextHighlightColor(textColorHighlight);
-        String[] Names = {"hook","Xposed","log"};
+        String[] Names = {"hook","Xposed","log","setField","getField"};
         addNames(Names);
         /*
         new AsyncTask<String, String, String[]>(){
@@ -499,6 +499,7 @@ public class LuaEditor extends FreeScrollingTextField {
         return _lastSelectedFile;
     }
 
+    @SuppressLint("SuspiciousIndentation")
     public void open(String filename) throws IOException {
         _lastSelectedFile = filename;
         BufferedReader reader = new BufferedReader(new FileReader(filename));
