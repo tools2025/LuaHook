@@ -1,6 +1,7 @@
 package com.kulipai.luahook
 
 
+import android.content.SharedPreferences
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.IXposedHookZygoteInit
 import de.robv.android.xposed.XC_MethodHook
@@ -20,29 +21,37 @@ import org.luaj.vm2.lib.jse.JsePlatform
 
 class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
 
+
     companion object {
         const val MODULE_PACKAGE = "com.kulipai.luahook"  // 模块包名
         const val PREFS_NAME = "xposed_prefs"
-        const val TAG = "XposedModule"
+
     }
 
-    // 全局 XSharedPreferences 对象
-    private lateinit var xPrefs: XSharedPreferences
+
+    lateinit var luaScript: String
 
     override fun initZygote(startupParam: IXposedHookZygoteInit.StartupParam) {
-        //读取固定的share
-        xPrefs = XSharedPreferences(MODULE_PACKAGE, PREFS_NAME)
-        xPrefs.makeWorldReadable()
-//       ("XSharedPreferences 初始化，文件路径：${xPrefs.file.absolutePath}").d()
+        val pref = XSharedPreferences(MODULE_PACKAGE, PREFS_NAME)
+        pref.makeWorldReadable()
+//        pref.registerOnSharedPreferenceChangeListener { prefs, key ->
+//            "偏好设置已更改，重新加载...$prefs,$key".d()
+//            val pref = XSharedPreferences(MODULE_PACKAGE, PREFS_NAME)
+//            pref.makeWorldReadable()
+//            pref.reload()
+//
+//            luaScript = pref.getString("lua","nil").toString()
+//        }
+
+        luaScript = pref.getString("lua","nil").toString()
     }
 
 
     override fun handleLoadPackage(lpparam: LoadPackageParam) {
 
 
+        luaScript.d()
 
-        xPrefs.reload()
-        val luaScript = xPrefs.getString("lua", "return nil")
 
 
         // 将Lua值转换回Java类型
@@ -78,11 +87,11 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
                         val result = XposedHelpers.getObjectField(target, fieldName)
                         CoerceJavaToLua.coerce(result)
                     } else {
-                        LuaValue.NIL
+                        NIL
                     }
                 } catch (e: Exception) {
                     println("getField error: ${e.message}")
-                    LuaValue.NIL
+                    NIL
                 }
             }
         }
@@ -98,10 +107,10 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
                         val target = targetObject.touserdata(Any::class.java)
                         XposedHelpers.setObjectField(target, fieldName, fieldValue)
                     }
-                    LuaValue.NIL
+                    NIL
                 } catch (e: Exception) {
                     println("setField error: ${e.message}")
-                    LuaValue.NIL
+                    NIL
                 }
             }
         }
@@ -116,7 +125,7 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
                     CoerceJavaToLua.coerce(result)
                 } catch (e: Exception) {
                     println("getStaticField error: ${e.message}")
-                    LuaValue.NIL
+                    NIL
                 }
             }
         }
@@ -129,10 +138,10 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
                     val fieldValue = fromLuaValue(args.arg(3))
                     val clazz = XposedHelpers.findClass(className, lpparam.classLoader)
                     XposedHelpers.setStaticObjectField(clazz, fieldName, fieldValue)
-                    LuaValue.NIL
+                    NIL
                 } catch (e: Exception) {
                     println("setStaticField error: ${e.message}")
-                    LuaValue.NIL
+                    NIL
                 }
             }
         }
@@ -174,9 +183,11 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
                     // 获取 Java 对象
                     val targetObject: Any? = when {
                         obj.isuserdata(XC_MethodHook.MethodHookParam::class.java) -> {
-                            val param = obj.touserdata(XC_MethodHook.MethodHookParam::class.java) as XC_MethodHook.MethodHookParam
+                            val param =
+                                obj.touserdata(XC_MethodHook.MethodHookParam::class.java) as XC_MethodHook.MethodHookParam
                             param.thisObject // 获取 thisObject
                         }
+
                         obj.isuserdata(Any::class.java) -> obj.touserdata(Any::class.java)
                         else -> throw IllegalArgumentException("invoke 需要 Java 对象")
                     }
@@ -188,7 +199,11 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
                     }
 
                     // 反射调用方法
-                    val result = XposedHelpers.callMethod(targetObject, methodName, *javaParams.toTypedArray())
+                    val result = XposedHelpers.callMethod(
+                        targetObject,
+                        methodName,
+                        *javaParams.toTypedArray()
+                    )
 
                     return CoerceJavaToLua.coerce(result) // 把 Java 结果返回 Lua
                 } catch (e: Exception) {
@@ -204,7 +219,7 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
                 try {
                     val classNameOrClass = args.arg(1)
                     var classLoader: ClassLoader? = null
-                    var methodName : String
+                    var methodName: String
                     if (classNameOrClass.isstring()) { /////////string,
                         val classLoader =
                             args.optuserdata(2, lpparam.javaClass.classLoader) as ClassLoader
@@ -296,9 +311,8 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
                         )
 
 
-
                     } else if (classNameOrClass.isuserdata(Class::class.java)) {   ///classs
-                        var HookClass= classNameOrClass.touserdata(Class::class.java) as Class<*>
+                        var hookClass = classNameOrClass.touserdata(Class::class.java) as Class<*>
                         methodName = args.checkjstring(2)
 
                         // 动态处理参数类型
@@ -334,7 +348,7 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
                         val afterFunc = args.optfunction(args.narg(), null)
 
                         XposedHelpers.findAndHookMethod(
-                            HookClass,
+                            hookClass,
                             methodName,
                             *paramTypes.toTypedArray(),
                             object : XC_MethodHook() {
@@ -385,10 +399,6 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
                         )
 
 
-
-
-
-
                     }
 
 
@@ -403,7 +413,6 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
 //                    }
 
 
-
                 } catch (e: Exception) {
                     println("Hook error: ${e.message}")
                     e.printStackTrace()
@@ -411,7 +420,6 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
                 return NIL
             }
         }
-
 
 
         val chunk: LuaValue = globals.load(luaScript)

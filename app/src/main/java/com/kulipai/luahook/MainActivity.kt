@@ -1,36 +1,45 @@
 package com.kulipai.luahook
 
 
-import android.annotation.SuppressLint
-import android.app.Activity
+import ToolAdapter
 import android.content.Context
+import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
-import android.util.Log
-import android.view.Menu
+import android.os.Handler
+import android.os.Looper
+import android.view.MenuItem
+import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.MaterialToolbar
-import com.google.android.material.floatingactionbutton.FloatingActionButton
-import android.app.Application
-import android.graphics.Color
-import android.os.Build
-import java.io.File
-import android.view.MenuItem
-import android.view.View
-import android.view.Window
-import android.view.WindowManager
-import androidx.appcompat.app.AppCompatDelegate.NightMode
-import androidx.core.view.WindowCompat
 import com.google.android.material.color.DynamicColors
-import com.google.android.material.color.DynamicColorsOptions
-import com.google.android.material.color.utilities.DynamicColor
-import com.google.android.material.color.utilities.MaterialDynamicColors
+import com.google.android.material.floatingactionbutton.FloatingActionButton
+import kotlin.system.exitProcess
+
 
 class MainActivity : AppCompatActivity() {
+
+
+
+    fun Context.softRestartApp(delayMillis: Long = 100) {
+        val packageManager = packageManager
+        val intent = packageManager.getLaunchIntentForPackage(packageName)
+        intent?.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+
+        Handler(Looper.getMainLooper()).postDelayed({
+            startActivity(intent)
+            // 结束当前应用的所有 Activity
+            android.os.Process.killProcess(android.os.Process.myPid())
+            exitProcess(0)
+        }, delayMillis)
+    }
 
 
     fun isNightMode(context: Context): Boolean {
@@ -41,6 +50,8 @@ class MainActivity : AppCompatActivity() {
     private val editor: LuaEditor by lazy { findViewById(R.id.editor) }
     private val fab: FloatingActionButton by lazy { findViewById(R.id.fab) }
     private val toolbar: MaterialToolbar by lazy { findViewById<MaterialToolbar>(R.id.toolbar) }
+    private val rootLayout: CoordinatorLayout by lazy { findViewById<CoordinatorLayout>(R.id.main) }
+    private val bottomSymbolBar: LinearLayout by lazy { findViewById<LinearLayout>(R.id.bottomBar) }
 
 
     companion object {
@@ -48,12 +59,9 @@ class MainActivity : AppCompatActivity() {
         const val TAG = "XposedModule"
     }
 
-
-
-
     // 写入 SharedPreferences 并修改权限
     fun savePrefs(context: Context, text: String) {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val prefs = context.getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
         prefs.edit().apply {
             putString("lua", text)
             apply()
@@ -62,20 +70,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun readPrefs(context: Context): String {
-        val prefs = context.getSharedPreferences(MainActivity.PREFS_NAME, Context.MODE_PRIVATE)
+        val prefs = context.getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
         return prefs.getString("lua", "") ?: ""
     }
 
     override fun onStop() {
         super.onStop()
         savePrefs(this@MainActivity, editor.text.toString())
-        makePrefsWorldReadable()
+//        makePrefsWorldReadable()
     }
 
     override fun onPause() {
         super.onPause()
         savePrefs(this@MainActivity, editor.text.toString())
-        makePrefsWorldReadable()
+//        makePrefsWorldReadable()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -84,34 +92,26 @@ class MainActivity : AppCompatActivity() {
 
         enableEdgeToEdge()
 
-        WindowCompat.setDecorFitsSystemWindows(window, false) // 允许内容绘制在系统栏后面
         setContentView(R.layout.activity_main)
-        window.decorView.systemUiVisibility =
-            View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-
-
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0)
-            insets
-        }
 
 
 
 
-        toolbar.menu.add( 0,1,0,"Undo")
+
+
+        toolbar.menu.add(0, 1, 0, "Undo")
             .setIcon(R.drawable.undo_24px)
             .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM)
 
-        toolbar.menu.add(0,2,0,"Redo")
+        toolbar.menu.add(0, 2, 0, "Redo")
             .setIcon(R.drawable.redo_24px)
             .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM)
 
-        toolbar.menu.add(0,3,0,"格式化")
+        toolbar.menu.add(0, 3, 0, "格式化")
             .setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
-        toolbar.menu.add(0,4,0,"More")
+        toolbar.menu.add(0, 4, 0, "More")
             .setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
-        toolbar.menu.add(0,5,0,"More")
+        toolbar.menu.add(0, 5, 0, "More")
             .setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
 
 
@@ -145,77 +145,73 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        val symbols =
+            listOf("hook", "lp", "(", ")", "\"", ":", "?", "!", "[", "]", "{", "}", "+", "-")
+        val symbolRecyclerView: RecyclerView = findViewById(R.id.symbolRecyclerView)
+        symbolRecyclerView.layoutManager =
+            LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        symbolRecyclerView.adapter = ToolAdapter(symbols, editor)
 
+
+
+
+        ViewCompat.setOnApplyWindowInsetsListener(rootLayout) { view, insets ->
+            val imeInsets = insets.getInsets(WindowInsetsCompat.Type.ime())
+            val navigationBarInsets = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
+            val statusBarInsets = insets.getInsets(WindowInsetsCompat.Type.statusBars())
+
+            // 调整底部符号栏的位置，使其位于输入法上方
+            bottomSymbolBar.translationY = -imeInsets.bottom.toFloat()
+            fab.translationY = -imeInsets.bottom.toFloat()
+
+            // 设置根布局的底部内边距
+            if (imeInsets.bottom > 0) {
+                // 输入法可见时，不需要额外的底部内边距来避免被导航栏遮挡，
+                // 因为 bottomSymbolBar 已经移动到输入法上方
+                view.setPadding(
+                    navigationBarInsets.left,
+                    statusBarInsets.top,
+                    navigationBarInsets.right,
+                    0
+                )
+
+            } else {
+                // 输入法不可见时，设置底部内边距以避免内容被导航栏遮挡
+                view.setPadding(
+                    navigationBarInsets.left,
+                    statusBarInsets.top,
+                    navigationBarInsets.right,
+                    navigationBarInsets.bottom
+                )
+            }
+
+            insets
+        }
+
+        // 确保在布局稳定后请求 WindowInsets，以便监听器能够正确工作
+        ViewCompat.requestApplyInsets(rootLayout)
 
 
         editor.setDark(isNightMode(this))
 
         var luaScript = readPrefs(this)
         if (luaScript == "") {
-            makePrefsWorldReadable()
+//            makePrefsWorldReadable()
             var lua = """
-            log(lpparam.packageName)
-                package=lpparam.packageName
-                if package == "com.ad2001.frida0x1" then
-                    local MainActivity = findClass("com.ad2001.frida0x1.MainActivity",lpparam.classLoader)
-                    log(MainActivity)
-                    if MainActivity then
-                        hook(MainActivity, "get_random",
-                            function(param)
-                                log("【Before get_random】参数: " .. tostring(param.args[1]))
-                                --return { args = {"Modified Parameter"} }
-                            end,
-                            function(param)
-                                log("【After get_random】返回值: " .. tostring(param.result))
-                                --return 1
-                            end
-                        )
-
-                         hook(MainActivity, "check", "int", "int",
-                            function(param)
-                                log("【Before check】参数: " .. tostring(param.args[1]) .. tostring(param.args[2]))
-                                return { args = {1,6} }
-                            end,
-                            function(param)
-                                log("【After check】参数: " .. tostring(param.result))
-                            end
-                        )
-                        --[[
-                        hook(MainActivity, "onCreate", "android.os.Bundle",
-                            function(param)
-                                log("【Before onCreate】")
-                            end,
-                            function(param)
-                                log("【After onCreate】")
-                                local activity = param.thisObject
-                                log(activity)
-                                local Toast = findClass("android.widget.Toast")
-                                log(Toast)
-                                --Toast.makeText(activity, "0x11 Hook成功！", Toast.LENGTH_SHORT):show()
-                                --invoke(param,"check", 1, 6)
-                            end
-                        )
-                        ]]
-
-                    else
-                        log("MainActivity class not found!")
-                    end
-                end
         """.trimIndent()
             savePrefs(this, lua)
         }
 
         editor.setText(luaScript)
-        makePrefsWorldReadable()
-
-
+//        makePrefsWorldReadable()
 
 
         fab.setOnClickListener {
 //            makePrefsWorldReadable()
             savePrefs(this@MainActivity, editor.text.toString())
-            makePrefsWorldReadable()
+//            makePrefsWorldReadable()
             Toast.makeText(this, "保存成功", Toast.LENGTH_SHORT).show()
+            softRestartApp()
 
         }
 
@@ -223,18 +219,18 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    private fun makePrefsWorldReadable() {
-        try {
-            // SharedPreferences 默认存储路径: /data/data/包名/shared_prefs/文件名.xml
-            val prefsFile = File(applicationInfo.dataDir, "shared_prefs/$PREFS_NAME.xml")
-            if (prefsFile.exists()) {
-                Runtime.getRuntime().exec("chmod 666 ${prefsFile.absolutePath}")
-                Log.d(TAG, "Prefs 文件已设置为全局可读: ${prefsFile.absolutePath}")
-            } else {
-                Log.d(TAG, "Prefs 文件不存在：${prefsFile.absolutePath}")
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "修改 SharedPreferences 权限失败", e)
-        }
-    }
+//    private fun makePrefsWorldReadable() {
+//        try {
+//            // SharedPreferences 默认存储路径: /data/data/包名/shared_prefs/文件名.xml
+//            val prefsFile = File(applicationInfo.dataDir, "shared_prefs/$PREFS_NAME.xml")
+//            if (prefsFile.exists()) {
+//                Runtime.getRuntime().exec("chmod 666 ${prefsFile.absolutePath}")
+//                Log.d(TAG, "Prefs 文件已设置为全局可读: ${prefsFile.absolutePath}")
+//            } else {
+//                Log.d(TAG, "Prefs 文件不存在：${prefsFile.absolutePath}")
+//            }
+//        } catch (e: Exception) {
+//            Log.e(TAG, "修改 SharedPreferences 权限失败", e)
+//        }
+//    }
 }
