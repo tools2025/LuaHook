@@ -1,7 +1,6 @@
 package com.kulipai.luahook
 
 
-import LogAdapter
 import ToolAdapter
 import android.content.Context
 import android.content.Intent
@@ -23,7 +22,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.color.DynamicColors
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.kulipai.luahook.util.RootHelper
 
 import kotlin.system.exitProcess
 
@@ -135,13 +133,11 @@ class MainActivity : AppCompatActivity() {
     override fun onStop() {
         super.onStop()
         savePrefs(this@MainActivity, editor.text.toString())
-//        makePrefsWorldReadable()
     }
 
     override fun onPause() {
         super.onPause()
         savePrefs(this@MainActivity, editor.text.toString())
-//        makePrefsWorldReadable()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -207,20 +203,16 @@ class MainActivity : AppCompatActivity() {
 
         var luaScript = readPrefs(this)
         if (luaScript == "") {
-//            makePrefsWorldReadable()
             var lua = """
         """.trimIndent()
             savePrefs(this, lua)
         }
 
         editor.setText(luaScript)
-//        makePrefsWorldReadable()
 
 
         fab.setOnClickListener {
-//            makePrefsWorldReadable()
             savePrefs(this@MainActivity, editor.text.toString())
-//            makePrefsWorldReadable()
             Toast.makeText(this, "保存成功", Toast.LENGTH_SHORT).show()
             softRestartApp()
 
