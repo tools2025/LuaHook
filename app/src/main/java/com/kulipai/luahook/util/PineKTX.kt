@@ -1,4 +1,4 @@
-package com.kulipai.luahook
+package com.kulipai.luahook.util
 
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XC_MethodReplacement

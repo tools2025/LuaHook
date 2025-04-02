@@ -254,7 +254,7 @@ public class LuaEditor extends FreeScrollingTextField {
 
             @Override
             public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-                mode.setType(ActionMode.TYPE_FLOATING);
+//                mode.setType(ActionMode.TYPE_FLOATING);
                 // TODO: Implement this method
                 mode.setTitle("转到");
                 mode.setSubtitle(null);

@@ -1,7 +1,7 @@
 package com.kulipai.luahook
 
 
-import android.content.SharedPreferences
+import com.kulipai.luahook.util.d
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.IXposedHookZygoteInit
 import de.robv.android.xposed.XC_MethodHook
@@ -48,10 +48,6 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
 
 
     override fun handleLoadPackage(lpparam: LoadPackageParam) {
-
-
-        luaScript.d()
-
 
 
         // 将Lua值转换回Java类型

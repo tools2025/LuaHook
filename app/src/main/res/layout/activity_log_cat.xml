@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
+    android:fitsSystemWindows="true"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
@@ -15,7 +16,7 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:title="LuaXposed" />
+            app:title="LogCat" />
         <com.google.android.material.divider.MaterialDivider
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
@@ -24,16 +25,30 @@
 
     <LinearLayout
         android:id="@+id/Linear1"
+
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="horizontal"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior">
-
-        <com.kulipai.luahook.LuaEditor
-
-            android:id="@+id/editor"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        android:gravity="center"
+        >
+<!--TODO 错误的处理显示！-->
+        <TextView
+            android:id="@+id/noPower"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone"
+            style="@style/TextAppearance.Material3.DisplayMedium"
+            android:text="没有权限"
+            />
+        <androidx.recyclerview.widget.RecyclerView
+            android:layout_gravity="center"
+            android:id="@+id/LogRecyclerView"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" />
+
     </LinearLayout>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -44,25 +59,6 @@
         android:layout_marginEnd="24dp"
         android:layout_marginBottom="104dp"
         android:contentDescription="@string/push"
-        android:src="@drawable/save_24px" />
-
-    <LinearLayout
-        android:id="@+id/bottomBar"
-        android:layout_gravity="bottom"
-        android:layout_width="match_parent"
-        android:layout_height="36dp"
-        android:background="?attr/colorSurface"
-        android:orientation="vertical"
-        >
-        <com.google.android.material.divider.MaterialDivider
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-        <androidx.recyclerview.widget.RecyclerView
-            android:layout_gravity="center"
-            android:id="@+id/symbolRecyclerView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal" />
-    </LinearLayout>
+        android:src="@drawable/refresh_24px" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
