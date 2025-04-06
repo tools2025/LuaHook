@@ -59,7 +59,7 @@ class MainActivity : AppCompatActivity() {
             ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
         menu?.add(0, 4, 0, "LogCat")
             ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
-        menu?.add(0, 5, 0, "More")
+        menu?.add(0, 5, 0, "示例")
             ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
         return true
     }
@@ -67,46 +67,46 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             1 -> {
-                // 处理 "Undo" 的点击事件
+                // "Undo"
                 editor.undo()
                 true // 返回 true 表示事件已被处理
             }
 
             2 -> {
-                // 处理 "Redo" 的点击事件
+                // "Redo"
                 editor.redo()
                 true
             }
 
             3 -> {
-                // 处理 "More" 子菜单项 1 的点击事件
+                // 格式化
                 editor.format()
                 true
             }
 
             4 -> {
+                //LogCat
                 val intent = Intent(this, LogCatActivity::class.java)
                 startActivity(intent)
-//                    // 处理 "More" 子菜单项 2 的点击事件
-//                    val logs = LogcatHelper.getSystemLogsByTagSince("Demo", "04-01 13:08:00.000")
-//                    logs.toString().d()
                 true
             }
 
             5 -> {
-                editor.startGotoMode()
+                //示例
+                val intent = Intent(this, Manual::class.java)
+                startActivity(intent)
                 true
             }
 
-            else -> false // 返回 false 表示事件未被处理，可以传递给其他监听器（如果存在）
+            else -> false
         }
     }
 
     private val editor: LuaEditor by lazy { findViewById(R.id.editor) }
     private val fab: FloatingActionButton by lazy { findViewById(R.id.fab) }
-    private val toolbar: MaterialToolbar by lazy { findViewById<MaterialToolbar>(R.id.toolbar) }
-    private val rootLayout: CoordinatorLayout by lazy { findViewById<CoordinatorLayout>(R.id.main) }
-    private val bottomSymbolBar: LinearLayout by lazy { findViewById<LinearLayout>(R.id.bottomBar) }
+    private val toolbar: MaterialToolbar by lazy { findViewById(R.id.toolbar) }
+    private val rootLayout: CoordinatorLayout by lazy { findViewById(R.id.main) }
+    private val bottomSymbolBar: LinearLayout by lazy { findViewById(R.id.bottomBar) }
 
 
     companion object {
