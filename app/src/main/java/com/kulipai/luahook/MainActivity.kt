@@ -2,31 +2,169 @@ package com.kulipai.luahook
 
 
 import ToolAdapter
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.text.SpannableString
+import android.text.TextPaint
+import android.text.method.LinkMovementMethod
+import android.text.style.ClickableSpan
+import android.util.TypedValue
+import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
+import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.annotation.AttrRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.coordinatorlayout.widget.CoordinatorLayout
+import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.color.DynamicColors
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-
 import kotlin.system.exitProcess
 
 
 class MainActivity : AppCompatActivity() {
+
+
+    fun getDynamicColor(context: Context, @AttrRes colorAttributeResId: Int): Int {
+        val typedValue = TypedValue()
+        context.theme.resolveAttribute(colorAttributeResId, typedValue, true)
+        return if (typedValue.resourceId != 0) {
+            ContextCompat.getColor(context, typedValue.resourceId)
+        } else {
+            typedValue.data
+        }
+    }
+
+    private fun openUrl(url: String) {
+        val intent = Intent(Intent.ACTION_VIEW, url.toUri())
+        startActivity(intent)
+    }
+
+
+    private fun showLsposedInfoDialog() {
+        val view = LayoutInflater.from(this).inflate(R.layout.dialog_info, null)
+
+
+        val appLogoImageView: ImageView = view.findViewById(R.id.app_logo)
+        val appNameTextView: TextView = view.findViewById(R.id.app_name)
+        val appVersionTextView: TextView = view.findViewById(R.id.app_version)
+        val appDescriptionTextView: TextView = view.findViewById(R.id.app_description)
+
+        // 设置应用信息
+        appLogoImageView.setImageResource(R.drawable.logo) // 替换为你的 Logo
+        appNameTextView.text = "LuaHook"
+        appVersionTextView.text = "1.0"
+
+        // 构建包含可点击链接的 SpannableString (与之前的示例代码相同)
+        val descriptionText = "在 GitHub 查看源码\n加入我们的 Telegram 频道"
+        val spannableString = SpannableString(descriptionText)
+
+        // 设置 GitHub 链接
+        val githubStartIndex = descriptionText.indexOf("GitHub")
+        val githubEndIndex = githubStartIndex + "GitHub".length // 修改这里
+        if (githubStartIndex != -1) {
+            val clickableSpanGithub = object : ClickableSpan() {
+                override fun onClick(widget: View) {
+                    openUrl("https://github.com/LSPosed/LSPosed")
+                }
+
+                override fun updateDrawState(ds: TextPaint) {
+                    super.updateDrawState(ds)
+                    ds.color = getDynamicColor(
+                        this@MainActivity,
+                        com.google.android.material.R.attr.colorPrimary
+                    )
+                    ds.isUnderlineText = true
+                }
+            }
+            spannableString.setSpan(
+                clickableSpanGithub,
+                githubStartIndex,
+                githubEndIndex,
+                SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+        }
+
+        // 设置 Telegram 链接
+        val telegramStartIndex = descriptionText.indexOf("Telegram")
+        val  telegramEndIndex =  telegramStartIndex + "Telegram".length // 修改这里
+        if ( telegramStartIndex != -1) {
+            val clickableSpanTelegram = object : ClickableSpan() {
+                override fun onClick(widget: View) {
+                    openUrl("https://t.me/LSPosed")
+                }
+
+                override fun updateDrawState(ds: TextPaint) {
+                    super.updateDrawState(ds)
+                    ds.color = getDynamicColor(
+                        this@MainActivity,
+                        com.google.android.material.R.attr.colorPrimary
+                    )
+                    ds.isUnderlineText = true
+                }
+            }
+            spannableString.setSpan(
+                clickableSpanTelegram,
+                telegramStartIndex,
+                telegramEndIndex,
+                SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+        }
+
+        // 设置 QQ 链接
+//        val qqStartIndex = descriptionText.indexOf("QQ")
+//        val qqEndIndex = descriptionText.indexOf(" ", qqStartIndex) + " ".length
+//        if (qqStartIndex != -1 && qqEndIndex != -1) {
+//            val clickableSpanQq = object : ClickableSpan() {
+//                override fun onClick(widget: View) {
+//                    openUrl("https://qm.qq.com/cgi-bin/qm/qr?k=your_qq_key")
+//                }
+//
+//                @SuppressLint("ResourceType")
+//                override fun updateDrawState(ds: TextPaint) {
+//                    super.updateDrawState(ds)
+//                    ds.color = getDynamicColor(
+//                        this@MainActivity,
+//                        com.google.android.material.R.attr.colorPrimary
+//                    )
+//                    ds.isUnderlineText = true
+//
+//                }
+//            }
+//            spannableString.setSpan(
+//                clickableSpanQq,
+//                qqStartIndex,
+//                qqEndIndex,
+//                SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE
+//            )
+//        }
+
+        // 设置 TextView 的文本和 MovementMethod
+        appDescriptionTextView.text = spannableString
+        appDescriptionTextView.movementMethod = LinkMovementMethod.getInstance()
+
+        // 使用 MaterialAlertDialogBuilder 构建并显示对话框
+        MaterialAlertDialogBuilder(this)
+            .setView(view)
+            .show()
+    }
 
     fun Context.softRestartApp(delayMillis: Long = 100) {
         val packageManager = packageManager
@@ -57,9 +195,11 @@ class MainActivity : AppCompatActivity() {
 
         menu?.add(0, 3, 0, "格式化")
             ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
-        menu?.add(0, 4, 0, "LogCat")
+        menu?.add(0, 4, 0, "日志")  //LogCat
             ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
-        menu?.add(0, 5, 0, "示例")
+        menu?.add(0, 5, 0, "手册")
+            ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
+        menu?.add(0, 6, 0, "关于")
             ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
         return true
     }
@@ -95,6 +235,11 @@ class MainActivity : AppCompatActivity() {
                 //示例
                 val intent = Intent(this, Manual::class.java)
                 startActivity(intent)
+                true
+            }
+
+            6 -> {
+                showLsposedInfoDialog()
                 true
             }
 
@@ -220,5 +365,6 @@ class MainActivity : AppCompatActivity() {
 
 
     }
+
 
 }
