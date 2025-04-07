@@ -2,7 +2,6 @@ package com.kulipai.luahook
 
 
 import ToolAdapter
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
@@ -68,7 +67,7 @@ class MainActivity : AppCompatActivity() {
         val appDescriptionTextView: TextView = view.findViewById(R.id.app_description)
 
         // 设置应用信息
-        appLogoImageView.setImageResource(R.drawable.logo) // 替换为你的 Logo
+        appLogoImageView.setImageResource(R.drawable.logo)
         appNameTextView.text = "LuaHook"
         appVersionTextView.text = "1.0"
 
@@ -78,7 +77,7 @@ class MainActivity : AppCompatActivity() {
 
         // 设置 GitHub 链接
         val githubStartIndex = descriptionText.indexOf("GitHub")
-        val githubEndIndex = githubStartIndex + "GitHub".length // 修改这里
+        val githubEndIndex = githubStartIndex + "GitHub".length
         if (githubStartIndex != -1) {
             val clickableSpanGithub = object : ClickableSpan() {
                 override fun onClick(widget: View) {
@@ -104,8 +103,8 @@ class MainActivity : AppCompatActivity() {
 
         // 设置 Telegram 链接
         val telegramStartIndex = descriptionText.indexOf("Telegram")
-        val  telegramEndIndex =  telegramStartIndex + "Telegram".length // 修改这里
-        if ( telegramStartIndex != -1) {
+        val telegramEndIndex = telegramStartIndex + "Telegram".length
+        if (telegramStartIndex != -1) {
             val clickableSpanTelegram = object : ClickableSpan() {
                 override fun onClick(widget: View) {
                     openUrl("https://t.me/LuaXposed")
@@ -209,7 +208,7 @@ class MainActivity : AppCompatActivity() {
             1 -> {
                 // "Undo"
                 editor.undo()
-                true // 返回 true 表示事件已被处理
+                true
             }
 
             2 -> {
@@ -256,7 +255,6 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         const val PREFS_NAME = "xposed_prefs"
-//        const val TAG = "XposedModule"
     }
 
 

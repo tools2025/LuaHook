@@ -15,14 +15,7 @@ class LogAdapter(private val logs: MutableList<String>) :
         val timeText: TextView = itemView.findViewById(R.id.time)
         val logText: TextView = itemView.findViewById<TextView>(R.id.log)
 
-
-        //
         init {
-
-//            symbolTextView.setOnClickListener {
-//                val symbol = symbols[adapterPosition]
-//                var idx = editor.selectionStart
-//            }
 
         }
     }

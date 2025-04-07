@@ -1,8 +1,6 @@
 package com.kulipai.luahook
 
 
-import android.content.pm.ApplicationInfo
-import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import com.kulipai.luahook.util.d
 import de.robv.android.xposed.IXposedHookLoadPackage
@@ -11,10 +9,14 @@ import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XSharedPreferences
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
-import de.robv.android.xposed.callbacks.XC_LoadPackage
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
-import okhttp3.*
+import okhttp3.Call
+import okhttp3.Callback
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody
+import okhttp3.Response
 import org.luaj.vm2.Globals
 import org.luaj.vm2.LuaValue
 import org.luaj.vm2.Varargs
@@ -26,11 +28,9 @@ import org.luaj.vm2.lib.jse.JsePlatform
 import java.io.IOException
 
 
-
 class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
 
     private val client = OkHttpClient()  // 确保 OkHttpClient 实例已定义
-
 
 
     companion object {
@@ -46,155 +46,8 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
         val pref = XSharedPreferences(MODULE_PACKAGE, PREFS_NAME)
         pref.makeWorldReadable()
 
-        luaScript = pref.getString("lua","nil").toString()
+        luaScript = pref.getString("lua", "nil").toString()
     }
-
-
-    private fun hookPriorityPermissions(lpparam: LoadPackageParam) {
-        // 1. Hook ActivityThread的handleBindApplication方法，这发生在Application.onCreate之前
-        XposedHelpers.findAndHookMethod(
-            "android.app.ActivityThread",
-            lpparam.classLoader,
-            "handleBindApplication",
-            "android.app.ActivityThread\$AppBindData",
-            object : XC_MethodHook() {
-                override fun beforeHookedMethod(param: MethodHookParam) {
-                    XposedBridge.log("提前处理应用绑定，添加网络权限")
-
-                    // 通过AppBindData获取ApplicationInfo对象
-                    val appBindData = param.args[0]
-                    val appInfo = XposedHelpers.getObjectField(appBindData, "appInfo") as ApplicationInfo
-
-                    // 确保enableOnBackInvokedCallback属性为true
-                    XposedHelpers.setObjectField(appInfo, "enableOnBackInvokedCallback", true)
-                    XposedBridge.log("已提前设置enableOnBackInvokedCallback为true")
-                }
-            }
-        )
-
-        // 2. 直接hook关键的权限检查方法
-        // Hook Context中的网络权限检查方法
-        hookPermissionMethod(lpparam, "android.app.ContextImpl", "checkPermission")
-        hookPermissionMethod(lpparam, "android.app.ContextImpl", "checkCallingPermission")
-        hookPermissionMethod(lpparam, "android.app.ContextImpl", "checkCallingOrSelfPermission")
-        hookPermissionMethod(lpparam, "android.app.ContextImpl", "checkSelfPermission")
-
-        // 3. Hook网络操作相关的安全管理器检查
-        hookSecurityManager(lpparam)
-
-        // 4. 提前修改PackageManager的权限检查
-        hookPackageManagerMethods(lpparam)
-    }
-
-    private fun hookPermissionMethod(lpparam: LoadPackageParam, className: String, methodName: String) {
-        try {
-            XposedHelpers.findAndHookMethod(
-                className,
-                lpparam.classLoader,
-                methodName,
-                String::class.java,
-                Int::class.javaPrimitiveType,
-                Int::class.javaPrimitiveType,
-                object : XC_MethodHook() {
-                    override fun afterHookedMethod(param: MethodHookParam) {
-                        val permission = param.args[0] as String
-                        if (permission == "android.permission.INTERNET") {
-                            param.result = PackageManager.PERMISSION_GRANTED
-                        }
-                    }
-                }
-            )
-        } catch (e: Throwable) {
-            // 某些Android版本可能方法签名不同，捕获异常防止模块崩溃
-            XposedBridge.log("Hook方法 $methodName 失败: ${e.message}")
-
-            // 尝试不同的方法签名
-            try {
-                XposedHelpers.findAndHookMethod(
-                    className,
-                    lpparam.classLoader,
-                    methodName,
-                    String::class.java,
-                    Int::class.javaPrimitiveType,
-                    object : XC_MethodHook() {
-                        override fun afterHookedMethod(param: MethodHookParam) {
-                            val permission = param.args[0] as String
-                            if (permission == "android.permission.INTERNET") {
-                                param.result = PackageManager.PERMISSION_GRANTED
-                            }
-                        }
-                    }
-                )
-            } catch (e: Throwable) {
-                XposedBridge.log("尝试备用方法签名也失败: ${e.message}")
-            }
-        }
-    }
-
-    private fun hookSecurityManager(lpparam: LoadPackageParam) {
-        // Hook SecurityManager的checkPermission方法
-        try {
-            XposedHelpers.findAndHookMethod(
-                "java.lang.SecurityManager",
-                lpparam.classLoader,
-                "checkPermission",
-                java.security.Permission::class.java,
-                object : XC_MethodHook() {
-                    override fun beforeHookedMethod(param: MethodHookParam) {
-                        val permission = param.args[0]
-                        val permName = permission.toString()
-                        if (permName.contains("internet") || permName.contains("socket")) {
-                            // 跳过这个检查
-                            param.result = null
-                        }
-                    }
-                }
-            )
-        } catch (e: Throwable) {
-            XposedBridge.log("Hook SecurityManager失败: ${e.message}")
-        }
-    }
-
-    private fun hookPackageManagerMethods(lpparam: LoadPackageParam) {
-        // Hook PackageManager的getPackageInfo方法注入权限
-        XposedHelpers.findAndHookMethod(
-            "android.app.ApplicationPackageManager",
-            lpparam.classLoader,
-            "getPackageInfo",
-            String::class.java,
-            Int::class.javaPrimitiveType,
-            object : XC_MethodHook() {
-                override fun afterHookedMethod(param: MethodHookParam) {
-                    val packageInfo = param.result as PackageInfo?
-//                    param.args[0] as String
-
-                    if (packageInfo != null) {
-                        // 确保权限列表存在
-                        if (packageInfo.requestedPermissions == null) {
-                            packageInfo.requestedPermissions = arrayOf("android.permission.INTERNET")
-                            packageInfo.requestedPermissionsFlags = intArrayOf(PackageInfo.REQUESTED_PERMISSION_GRANTED)
-                        } else {
-                            // 检查是否已有该权限
-                            val permList = packageInfo.requestedPermissions!!.toMutableList()
-                            if (!permList.contains("android.permission.INTERNET")) {
-                                permList.add("android.permission.INTERNET")
-                                packageInfo.requestedPermissions = permList.toTypedArray()
-
-                                val newFlags = if (packageInfo.requestedPermissionsFlags != null) {
-                                    packageInfo.requestedPermissionsFlags!!.toMutableList()
-                                } else {
-                                    mutableListOf()
-                                }
-                                newFlags.add(PackageInfo.REQUESTED_PERMISSION_GRANTED)
-                                packageInfo.requestedPermissionsFlags = newFlags.toIntArray()
-                            }
-                        }
-                    }
-                }
-            }
-        )
-    }
-
 
     override fun handleLoadPackage(lpparam: LoadPackageParam) {
 
@@ -208,77 +61,70 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
                 value.isnumber() -> value.todouble()
                 value.isstring() -> value.tojstring()
                 value.isuserdata() -> value.touserdata()
-                else -> null // Add more type conversions as needed
+                else -> null
             }
         }
-
-
-
-
-        hookPriorityPermissions(lpparam)
-
-
 
 
         val globals: Globals = JsePlatform.standardGlobals()
 
         val http = LuaValue.tableOf()
-       http["get"] = object : VarArgFunction() {
-           override fun invoke(args: Varargs): LuaValue {
-               val url = args.checkjstring(1)
-               val callback = args.checkfunction(args.narg())
-               val headers = if (args.narg() > 2 && args.istable(2)) args.checktable(2) else null
-               val cookie = if (args.narg() > 3) args.optjstring(3, null) else null
+        http["get"] = object : VarArgFunction() {
+            override fun invoke(args: Varargs): LuaValue {
+                val url = args.checkjstring(1)
+                val callback = args.checkfunction(args.narg())
+                val headers = if (args.narg() > 2 && args.istable(2)) args.checktable(2) else null
+                val cookie = if (args.narg() > 3) args.optjstring(3, null) else null
 
-               val requestBuilder = Request.Builder().url(url)
+                val requestBuilder = Request.Builder().url(url)
 
-               // 添加请求头
-               headers?.let {
-                   val headerMap = mutableMapOf<String, String>()
+                // 添加请求头
+                headers?.let {
+                    val headerMap = mutableMapOf<String, String>()
 
-                   // 遍历 LuaTable
-                   var key: LuaValue = LuaValue.NIL
-                   while (true) {
-                       val nextPair = headers.next(key)
-                       key = nextPair.arg1()  // 获取下一个键
-                       val value = nextPair.arg(2)  // 获取键对应的值
+                    // 遍历 LuaTable
+                    var key: LuaValue = LuaValue.NIL
+                    while (true) {
+                        val nextPair = headers.next(key)
+                        key = nextPair.arg1()  // 获取下一个键
+                        val value = nextPair.arg(2)  // 获取键对应的值
 
-                       if (key.isnil()) break  // 遍历完所有键，退出循环
+                        if (key.isnil()) break  // 遍历完所有键，退出循环
 
-                       headerMap[key.tojstring()] = value.tojstring()
-                   }
-
-
-
-               for ((k, v) in headerMap) {
-                       requestBuilder.addHeader(k, v)
-                   }
-               }
-
-               // 添加 Cookie
-               cookie?.let {
-                   requestBuilder.addHeader("Cookie", it)
-               }
-
-               val request = requestBuilder.build()
-
-               client.newCall(request).enqueue(object : Callback {
-                   override fun onFailure(call: Call, e: IOException) {
-                       callback.call(LuaValue.valueOf(-1), LuaValue.valueOf(e.message ?: ""))
-                   }
-
-                   override fun onResponse(call: Call, response: Response) {
-                       val body = response.body?.string() ?: ""
-                       callback.call(LuaValue.valueOf(response.code), LuaValue.valueOf(body))
-                   }
-               })
-
-               return LuaValue.NIL
-           }
-       }
+                        headerMap[key.tojstring()] = value.tojstring()
+                    }
 
 
-        http["post"] = object :VarArgFunction() {
+
+                    for ((k, v) in headerMap) {
+                        requestBuilder.addHeader(k, v)
+                    }
+                }
+
+                // 添加 Cookie
+                cookie?.let {
+                    requestBuilder.addHeader("Cookie", it)
+                }
+
+                val request = requestBuilder.build()
+
+                client.newCall(request).enqueue(object : Callback {
+                    override fun onFailure(call: Call, e: IOException) {
+                        callback.call(LuaValue.valueOf(-1), LuaValue.valueOf(e.message ?: ""))
+                    }
+
+                    override fun onResponse(call: Call, response: Response) {
+                        val body = response.body?.string() ?: ""
+                        callback.call(LuaValue.valueOf(response.code), LuaValue.valueOf(body))
+                    }
+                })
+
+                return LuaValue.NIL
+            }
+        }
+
+
+        http["post"] = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
                 val url = args.checkjstring(1)
                 val postData = args.checkjstring(2)
@@ -286,7 +132,10 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
                 val headers = if (args.narg() > 3 && args.istable(3)) args.checktable(3) else null
                 val cookie = if (args.narg() > 4) args.optjstring(4, null) else null
 
-                val requestBody = RequestBody.create("application/x-www-form-urlencoded".toMediaTypeOrNull(), postData)
+                val requestBody = RequestBody.create(
+                    "application/x-www-form-urlencoded".toMediaTypeOrNull(),
+                    postData
+                )
 
                 val requestBuilder = Request.Builder().url(url).post(requestBody)
 
@@ -294,7 +143,6 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
                 headers?.let {
                     val headerMap = mutableMapOf<String, String>()
 
-                    // 遍历 LuaTable
                     var key: LuaValue = LuaValue.NIL
                     while (true) {
                         val nextPair = headers.next(key)
@@ -478,8 +326,8 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
             override fun invoke(args: Varargs): LuaValue {
                 try {
                     val classNameOrClass = args.arg(1)
-                    var classLoader: ClassLoader? = null
-                    var methodName: String
+                    val classLoader: ClassLoader? = null
+                    val methodName: String
                     if (classNameOrClass.isstring()) { /////////string,
                         val classLoader =
                             args.optuserdata(2, lpparam.javaClass.classLoader) as ClassLoader
@@ -665,18 +513,6 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
 
                     PackageManager.PERMISSION_GRANTED
 
-
-                    //val methodName = args.checkjstring(3)
-//                    val clazz: Class<*> = when {
-//                        classNameOrClass.isstring() -> {
-//                            XposedHelpers.findClass(classNameOrClass.tojstring(), classLoader)
-//
-//                        }
-//                        classNameOrClass.isuserdata(Class::class.java) -> classNameOrClass.touserdata(Class::class.java) as Class<*>
-//                        else -> throw IllegalArgumentException("Invalid class name or Class object")
-//                    }
-
-
                 } catch (e: Exception) {
                     println("Hook error: ${e.message}")
                     e.printStackTrace()
@@ -684,8 +520,6 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
                 return NIL
             }
         }
-
-
 
 
         val chunk: LuaValue = globals.load(luaScript)

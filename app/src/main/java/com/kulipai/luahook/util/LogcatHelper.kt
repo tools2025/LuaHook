@@ -18,7 +18,7 @@ object LogcatHelper {
             } else {
                 "logcat -d -T $since $tag:* *:S"
             }
-            // 执行 logcat 命令，使用 root 权限，并筛选从指定时间之后的日志
+            // 执行 logcat 命令，使用 root 权限，todo 并筛选从指定时间之后的日志
             val process = Runtime.getRuntime().exec(arrayOf("su", "-c", command))
             val reader = BufferedReader(InputStreamReader(process.inputStream))
 
