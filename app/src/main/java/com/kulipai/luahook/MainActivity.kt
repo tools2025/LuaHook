@@ -82,7 +82,7 @@ class MainActivity : AppCompatActivity() {
         if (githubStartIndex != -1) {
             val clickableSpanGithub = object : ClickableSpan() {
                 override fun onClick(widget: View) {
-                    openUrl("https://github.com/LSPosed/LSPosed")
+                    openUrl("https://github.com/KuLiPai/LuaHook")
                 }
 
                 override fun updateDrawState(ds: TextPaint) {
@@ -108,7 +108,7 @@ class MainActivity : AppCompatActivity() {
         if ( telegramStartIndex != -1) {
             val clickableSpanTelegram = object : ClickableSpan() {
                 override fun onClick(widget: View) {
-                    openUrl("https://t.me/LSPosed")
+                    openUrl("https://t.me/LuaXposed")
                 }
 
                 override fun updateDrawState(ds: TextPaint) {

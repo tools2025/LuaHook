@@ -2,11 +2,13 @@ import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.recyclerview.widget.RecyclerView
 import androidx.transition.TransitionManager
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.transition.MaterialContainerTransform
+import com.kulipai.luahook.LuaEditor
 import com.kulipai.luahook.OnCardExpandListener
 
 import com.kulipai.luahook.R
@@ -16,6 +18,8 @@ class ManAdapter(
     private val body: List<String>,
     private val root: CoordinatorLayout,
     private val details: MaterialCardView,
+    private val editor: LuaEditor,
+
     private val listener: OnCardExpandListener
 ) :
 
@@ -24,9 +28,12 @@ class ManAdapter(
 
     inner class ManViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val card: MaterialCardView = itemView.findViewById(R.id.card) // 使用自定义布局中的 ID
+        val title: TextView = itemView.findViewById(R.id.title)
+
 
         init {
             card.setOnClickListener {
+                editor.setText(body[adapterPosition])
                 startContainerTransition(root, it, details)
                 listener.onCardExpanded(it) // ← 通知 MainActivity 当前展开的是哪个 View
             }
@@ -42,6 +49,7 @@ class ManAdapter(
 
     override fun onBindViewHolder(holder: ManViewHolder, position: Int) {
 //        holder.symbolTextView.text = symbols[position]
+        holder.title.text = title[position]
     }
 
     override fun getItemCount(): Int {

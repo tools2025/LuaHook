@@ -28,7 +28,9 @@ import androidx.transition.TransitionSet
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.card.MaterialCardView
 import androidx.core.view.isVisible
+import com.google.android.material.color.DynamicColors
 import com.google.android.material.transition.MaterialContainerTransform
+import org.luaj.vm2.Lua
 
 
 class Manual : AppCompatActivity(), OnCardExpandListener {
@@ -37,6 +39,7 @@ class Manual : AppCompatActivity(), OnCardExpandListener {
     private val rec: RecyclerView by lazy { findViewById(R.id.rec) }
     private val container: CoordinatorLayout by lazy { findViewById(R.id.main) }
     private val detail: MaterialCardView by lazy { findViewById(R.id.detail) }
+    private val editor: LuaEditor by lazy { findViewById(R.id.editor) }
 
     private var currentCard: View? = null
 
@@ -55,6 +58,7 @@ class Manual : AppCompatActivity(), OnCardExpandListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        DynamicColors.applyIfAvailable(this)
 
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -77,7 +81,7 @@ class Manual : AppCompatActivity(), OnCardExpandListener {
 
 
         val title =
-            listOf("获取包名", "hook介绍", "")
+            listOf("获取包名", "hook介绍","获取类","调用函数","修改/获取类字段","http请求")
 
         val body = listOf(
             """
@@ -87,20 +91,85 @@ class Manual : AppCompatActivity(), OnCardExpandListener {
                 hook("class",--类名
                 lpparam.classLoader,--类加载器
                 "fun",--函数名
-                --"type",--参数类型
+                --"type",--参数类型例如"int","string","float","com.xxx"
                 function(it)--after修改参数
-                  --log(it.args[1])
-
+                 --log(it.args[1])
+                 --it.args[1]=1  --修改参数1
                 end,
                 function(it)--before可以修改返回值
                   --log(it.result)
+                  --it.result="1" --修改返回值
                 end)
             """.trimIndent(),
+            """
+                findClass("com.xxx",lpparam.classLoader)
+            """.trimIndent(),
+            """
+                invoke(类名,方法名,参数1,参数2,...)
+                
+                --例如
+                hook("class",
+                lpparam.classLoader,
+                "fun",
+                "int",
+                function(it)
+                  invoke(it,"check",1)
+                end,
+                function(it)
+                end)
+                
+                --例如
+                class = findClass("com.xxx",lpparam.classLoader)
+                invoke(class,"login","123","abc")
+            """.trimIndent(),
+            """
+                --获取
+                getField(类,字段名)
+                
+                --设置
+                setField(类,字段名,设置值)
+                
+                 --例如
+                hook("class",
+                lpparam.classLoader,
+                "fun",
+                "int",
+                function(it)  --假设arg1是个类 == Class{"name":"hhi",isVip=0}
+                  log(getField(it.args[1],"name"))
+                  setField(it.args[1],"isVip",1)
+                end,
+                function(it)
+                end)
+                
+            """.trimIndent(),
+            """
+                http.get(url [,head,cookie],callback)
+                
+                http.post(url,data[,head,cookie],callback)
+                
+                --例如
+                http.get("https://baidu.com",function(a,b)
+                    --a 状态码 
+                    --b body内容
+                    if a==200 then
+                        log(b)
+                    end
+                end)
+                
+                --例如
+                http.post("https://baidu.com","name=a&password=b",function(a,b)
+                    --a 状态码 
+                    --b body内容
+                    if a==200 then
+                        log(b)
+                    end
+                end)
+            """.trimIndent()
         )
 
         rec.layoutManager =
             LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
-        rec.adapter = ManAdapter(title, body, container, detail, this)
+        rec.adapter = ManAdapter(title, body, container, detail,editor, this)
 
 
         //Todo : 手册功能，代码示例，左右瀑布流布局，点开元素共享动画，可以复制，插入编辑框等操作

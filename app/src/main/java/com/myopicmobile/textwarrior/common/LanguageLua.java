@@ -30,6 +30,7 @@ public class LanguageLua extends Language {
 	private final static String package_math = "abs|acos|asin|atan|atan2|ceil|cos|cosh|deg|exp|floor|fmod|frexp|huge|ldexp|log|log10|max|maxinteger|min|mininteger|modf|pi|pow|rad|random|randomseed|sin|sinh|sqrt|tan|tanh|tointeger|type|ult";
 	private final static String package_os = "clock|date|difftime|execute|exit|getenv|remove|rename|setlocale|time|tmpname";
 	private final static String package_lpparam = "packageName|classLoader|appInfo|isFirstApplication|processName";
+	private final static String package_http = "get|post";
 
 	private final static String package_package = "config|cpath|loaded|loaders|loadlib|path|preload|searchers|searchpath|seeall";
 	private final static String package_string = "byte|char|dump|find|format|gfind|gmatch|gsub|len|lower|match|pack|packsize|rep|reverse|sub|unpack|upper";
@@ -70,6 +71,7 @@ public class LanguageLua extends Language {
 		super.addBasePackage("package",package_package.split("\\|"));
 		super.addBasePackage("debug",package_debug.split("\\|"));
 		super.addBasePackage("lpparam",package_lpparam.split("\\|"));
+		super.addBasePackage("http",package_http.split("\\|"));
 	}
 	
 	/**
