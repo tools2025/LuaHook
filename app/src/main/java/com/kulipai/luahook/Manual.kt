@@ -5,10 +5,6 @@ import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.view.View
-import android.view.ViewGroup
-import android.view.animation.AccelerateDecelerateInterpolator
-import android.widget.ImageView
-import android.widget.Toast
 import android.window.OnBackInvokedCallback
 import android.window.OnBackInvokedDispatcher
 import androidx.activity.enableEdgeToEdge
@@ -17,20 +13,14 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.transition.AutoTransition
-import androidx.transition.ChangeBounds
-import androidx.transition.ChangeImageTransform
-import androidx.transition.ChangeTransform
 import androidx.transition.TransitionManager
-import androidx.transition.TransitionSet
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.card.MaterialCardView
-import androidx.core.view.isVisible
 import com.google.android.material.color.DynamicColors
 import com.google.android.material.transition.MaterialContainerTransform
-import org.luaj.vm2.Lua
 
 
 class Manual : AppCompatActivity(), OnCardExpandListener {
@@ -42,9 +32,6 @@ class Manual : AppCompatActivity(), OnCardExpandListener {
     private val editor: LuaEditor by lazy { findViewById(R.id.editor) }
 
     private var currentCard: View? = null
-
-    private lateinit var layoutA: ViewGroup
-    private lateinit var layoutB: ViewGroup
 
     // 仅在 Android 13+ 使用
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
@@ -81,7 +68,7 @@ class Manual : AppCompatActivity(), OnCardExpandListener {
 
 
         val title =
-            listOf("获取包名", "hook介绍","获取类","调用函数","修改/获取类字段","http请求")
+            listOf("获取包名", "hook介绍", "获取类", "调用函数", "修改/获取类字段", "http请求")
 
         val body = listOf(
             """
@@ -169,7 +156,7 @@ class Manual : AppCompatActivity(), OnCardExpandListener {
 
         rec.layoutManager =
             LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
-        rec.adapter = ManAdapter(title, body, container, detail,editor, this)
+        rec.adapter = ManAdapter(title, body, container, detail, editor, this)
 
 
         //Todo : 手册功能，代码示例，左右瀑布流布局，点开元素共享动画，可以复制，插入编辑框等操作

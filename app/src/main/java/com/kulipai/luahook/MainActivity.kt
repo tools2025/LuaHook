@@ -1,10 +1,12 @@
 package com.kulipai.luahook
 
-
 import ToolAdapter
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.graphics.PorterDuff
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -17,6 +19,7 @@ import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -26,6 +29,7 @@ import androidx.annotation.AttrRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -35,11 +39,37 @@ import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.color.DynamicColors
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import kotlin.random.Random
 import kotlin.system.exitProcess
-
 
 class MainActivity : AppCompatActivity() {
 
+
+
+    //分装一下下面函数:(
+    fun canHook(): Boolean {
+        return false
+    }
+
+
+    private fun getAppVersionName(context: Context): String {
+        return try {
+            val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+            packageInfo.versionName!!
+        } catch (e: PackageManager.NameNotFoundException) {
+            "Unknown"
+        }
+    }
+
+
+    fun getAppVersionCode(context: Context): Long {
+        return try {
+            val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+            packageInfo.longVersionCode // 注意这里使用 longVersionCode，在旧版本中是 versionCode (Int)
+        } catch (e: PackageManager.NameNotFoundException) {
+            -1 // 或者其他表示未找到的数值
+        }
+    }
 
     fun getDynamicColor(context: Context, @AttrRes colorAttributeResId: Int): Int {
         val typedValue = TypedValue()
@@ -60,7 +90,6 @@ class MainActivity : AppCompatActivity() {
     private fun showLsposedInfoDialog() {
         val view = LayoutInflater.from(this).inflate(R.layout.dialog_info, null)
 
-
         val appLogoImageView: ImageView = view.findViewById(R.id.app_logo)
         val appNameTextView: TextView = view.findViewById(R.id.app_name)
         val appVersionTextView: TextView = view.findViewById(R.id.app_version)
@@ -68,8 +97,8 @@ class MainActivity : AppCompatActivity() {
 
         // 设置应用信息
         appLogoImageView.setImageResource(R.drawable.logo)
-        appNameTextView.text = "LuaHook"
-        appVersionTextView.text = "1.0"
+        appNameTextView.text = packageName
+        appVersionTextView.text = getAppVersionName(this)
 
         // 构建包含可点击链接的 SpannableString (与之前的示例代码相同)
         val descriptionText = "在 GitHub 查看源码\n加入我们的 Telegram 频道"
@@ -252,6 +281,7 @@ class MainActivity : AppCompatActivity() {
     private val rootLayout: CoordinatorLayout by lazy { findViewById(R.id.main) }
     private val bottomSymbolBar: LinearLayout by lazy { findViewById(R.id.bottomBar) }
 
+    private lateinit var defaultLogo: Drawable
 
     companion object {
         const val PREFS_NAME = "xposed_prefs"
@@ -283,6 +313,40 @@ class MainActivity : AppCompatActivity() {
         savePrefs(this@MainActivity, editor.text.toString())
     }
 
+
+    private fun updateToolbarLogo() {
+
+
+
+
+        val color = if (canHook()) {
+            defaultLogo = when( Random.nextInt(1, 3)){
+                1-> ContextCompat.getDrawable(this, R.drawable.clear_day_24px)!!
+                2-> ContextCompat.getDrawable(this, R.drawable.cruelty_free_24px)!!
+                3 -> {ContextCompat.getDrawable(this, R.drawable.rocket_launch_24px)!!}
+                else -> {ContextCompat.getDrawable(this, R.drawable.help_24px)!!}
+            }
+            toolbar.setNavigationOnClickListener {
+                Toast.makeText(this, "模块已激活啦!", Toast.LENGTH_SHORT).show()
+            }
+            getDynamicColor(this, com.google.android.material.R.attr.colorPrimary)
+        } else {
+            defaultLogo = ContextCompat.getDrawable(this, R.drawable.info_24px)!!
+            toolbar.setNavigationOnClickListener {
+                Toast.makeText(this, "模块未激活?", Toast.LENGTH_SHORT).show()
+            }
+            getDynamicColor(this, com.google.android.material.R.attr.colorError)
+        }
+
+
+        val logoDrawable = DrawableCompat.wrap(defaultLogo).mutate() // 创建可变副本
+        DrawableCompat.setTint(logoDrawable, color)
+        DrawableCompat.setTintMode(logoDrawable, PorterDuff.Mode.SRC_IN)
+
+        toolbar.navigationIcon  = logoDrawable
+
+
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         DynamicColors.applyIfAvailable(this)
         super.onCreate(savedInstanceState)
@@ -290,9 +354,10 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
 
         setContentView(R.layout.activity_main)
-
-
         setSupportActionBar(toolbar)
+
+        // 设置初始 Logo
+        updateToolbarLogo()
 
 
         val symbols =
@@ -303,8 +368,7 @@ class MainActivity : AppCompatActivity() {
         symbolRecyclerView.adapter = ToolAdapter(symbols, editor)
 
 
-
-
+        //窗口处理
         ViewCompat.setOnApplyWindowInsetsListener(rootLayout) { view, insets ->
             val imeInsets = insets.getInsets(WindowInsetsCompat.Type.ime())
             val navigationBarInsets = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
@@ -341,7 +405,7 @@ class MainActivity : AppCompatActivity() {
         // 确保在布局稳定后请求 WindowInsets，以便监听器能够正确工作
         ViewCompat.requestApplyInsets(rootLayout)
 
-
+        //夜间模式
         editor.setDark(isNightMode(this))
 
         var luaScript = readPrefs(this)
@@ -353,13 +417,12 @@ class MainActivity : AppCompatActivity() {
 
         editor.setText(luaScript)
 
-
         fab.setOnClickListener {
             savePrefs(this@MainActivity, editor.text.toString())
             Toast.makeText(this, "保存成功", Toast.LENGTH_SHORT).show()
             softRestartApp()
-
         }
+
 
 
     }
