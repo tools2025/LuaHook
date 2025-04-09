@@ -159,7 +159,7 @@ class Manual : AppCompatActivity(), OnCardExpandListener {
         rec.adapter = ManAdapter(title, body, container, detail, editor, this)
 
 
-        //Todo : 手册功能，代码示例，左右瀑布流布局，点开元素共享动画，可以复制，插入编辑框等操作
+        //Todo 插入编辑框等操作
 
     }
 

@@ -49,9 +49,8 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
         luaScript = pref.getString("lua", "nil").toString()
     }
 
-    override fun handleLoadPackage(lpparam: LoadPackageParam) {
 
-        //启用模块感知 todo 分装成函数
+    private fun canHook(lpparam: LoadPackageParam) {
         if(lpparam.packageName == MODULE_PACKAGE) {
             XposedHelpers.findAndHookMethod(
                 "com.kulipai.luahook.MainActivity",
@@ -70,7 +69,11 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
                 }
             )
         }
+    }
 
+    override fun handleLoadPackage(lpparam: LoadPackageParam) {
+
+        canHook(lpparam)
 
         // 将Lua值转换回Java类型
         fun fromLuaValue(value: LuaValue?): Any? {

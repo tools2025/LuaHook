@@ -1,10 +1,9 @@
-package com.androlua;
+package com.androlua
 
 /**
  * Created by Administrator on 2018/07/28 0028.
  */
-
-public enum LuaTokenTypes {
+enum class LuaTokenTypes {
     SHEBANG_CONTENT,
     NEW_LINE,
     WHITE_SPACE,
@@ -87,5 +86,4 @@ public enum LuaTokenTypes {
     DEFER,
     WHEN,
     LAMBDA
-
 }
