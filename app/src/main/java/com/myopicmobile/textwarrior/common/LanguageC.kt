@@ -6,31 +6,34 @@
  *
  * This software is provided "as is". Use at your own risk.
  */
-package com.myopicmobile.textwarrior.common;
+package com.myopicmobile.textwarrior.common
 
 /**
  * Singleton class containing the symbols and operators of the C language
  */
-public class LanguageC extends Language{
-	private static Language _theOne = null;
-	
-	private final static String[] keywords = {
-		"char", "double", "float", "int", "long", "short", "void",
-		"auto", "const", "extern", "register", "static", "volatile",
-		"signed", "unsigned", "sizeof", "typedef",
-		"enum", "struct", "union",
-		"break", "case", "continue", "default", "do", "else", "for",
-		"goto", "if", "return", "switch", "while"
-		};
+class LanguageC private constructor() : Language() {
+    init {
+        super.setKeywords(Companion.keywords)
+    }
 
-	public static Language getInstance(){
-		if(_theOne == null){
-			_theOne = new LanguageC();
-		}
-		return _theOne;
-	}
-	
-	private LanguageC(){
-		super.setKeywords(keywords);
-	}
+    companion object {
+        private var _theOne: Language? = null
+
+        private val keywords = arrayOf(
+            "char", "double", "float", "int", "long", "short", "void",
+            "auto", "const", "extern", "register", "static", "volatile",
+            "signed", "unsigned", "sizeof", "typedef",
+            "enum", "struct", "union",
+            "break", "case", "continue", "default", "do", "else", "for",
+            "goto", "if", "return", "switch", "while"
+        )
+
+        val instance: Language
+            get() {
+                if (_theOne == null) {
+                    _theOne = LanguageC()
+                }
+                return _theOne!!
+            }
+    }
 }

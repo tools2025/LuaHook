@@ -1,11 +1,12 @@
 package com.kulipai.luahook
 
+import AppListViewModel
 import android.content.Context
 import android.content.res.Configuration
 import android.os.Bundle
 import android.view.Menu
-import android.widget.Switch
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -19,6 +20,8 @@ import com.google.android.material.color.DynamicColors
 
 class MainActivity : AppCompatActivity() {
 
+
+    val appListViewModel by viewModels<AppListViewModel>()
 
     fun isNightMode(context: Context): Boolean {
         return (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
@@ -35,10 +38,13 @@ class MainActivity : AppCompatActivity() {
 
         setContentView(R.layout.activity_main)
 
+        // 可以选择在这里观察是否加载完（调试用）
+        appListViewModel.isLoaded.observe(this) {}
+
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0)
+            v.setPadding(systemBars.left, 0, systemBars.right, 0)
             insets
         }
 
@@ -82,10 +88,10 @@ class MainActivity : AppCompatActivity() {
                 menu.get(0).setIcon(R.drawable.home_24px)
                 menu.get(2).setIcon(R.drawable.book_24px)
 
-                if(position == 0) {
+                if (position == 0) {
                     menu.get(0).setIcon(R.drawable.home_fill_24px)
 
-                } else if (position==2) {
+                } else if (position == 2) {
                     menu.get(2).setIcon(R.drawable.book_fill_24px)
 
                 }
