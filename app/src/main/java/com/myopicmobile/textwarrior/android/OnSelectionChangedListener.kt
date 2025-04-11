@@ -6,9 +6,8 @@
  *
  * This software is provided "as is". Use at your own risk.
  */
-package com.myopicmobile.textwarrior.android;
+package com.myopicmobile.textwarrior.android
 
-public interface OnSelectionChangedListener {
-	public void onSelectionChanged(boolean active,int selStart, int selEnd);
-	
+interface OnSelectionChangedListener {
+    fun onSelectionChanged(active: Boolean, selStart: Int, selEnd: Int)
 }

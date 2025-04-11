@@ -6,27 +6,25 @@
  *
  * This software is provided "as is". Use at your own risk.
  */
-
-package com.myopicmobile.textwarrior.common;
+package com.myopicmobile.textwarrior.common
 
 
 /**
  * Off-black on off-white background color scheme
  */
-public class ColorSchemeLight extends ColorScheme {
+class ColorSchemeLight : ColorScheme() {
+    init {
+        setColor(Colorable.FOREGROUND, OFF_BLACK)
+        setColor(Colorable.BACKGROUND, OFF_WHITE)
+        setColor(Colorable.SELECTION_FOREGROUND, OFF_WHITE)
+        setColor(Colorable.CARET_FOREGROUND, OFF_WHITE)
+    }
 
-	public ColorSchemeLight(){
-		setColor(Colorable.FOREGROUND, OFF_BLACK);
-		setColor(Colorable.BACKGROUND, OFF_WHITE);
-		setColor(Colorable.SELECTION_FOREGROUND, OFF_WHITE);
-		setColor(Colorable.CARET_FOREGROUND, OFF_WHITE);
-	}
+    override val isDark: Boolean
+        get() = false
 
-	private static final int OFF_WHITE = 0xFFF0F0ED;
-	private static final int OFF_BLACK = 0xFF333333;
-
-	@Override
-	public boolean isDark() {
-		return false;
-	}
+    companion object {
+        private const val OFF_WHITE = -0xf0f13
+        private const val OFF_BLACK = -0xcccccd
+    }
 }

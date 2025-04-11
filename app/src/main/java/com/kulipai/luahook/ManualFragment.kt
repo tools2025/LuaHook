@@ -14,7 +14,7 @@ class ManualFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         // 加载 Fragment 的布局
-        val view = inflater.inflate(R.layout.home, container, false)
+        val view = inflater.inflate(R.layout.manual, container, false)
 
         // 在这里可以找到布局中的 View 并进行操作
 //        val textView = view.findViewById<TextView>(R.id.textViewHome)

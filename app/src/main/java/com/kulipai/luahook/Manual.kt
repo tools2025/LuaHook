@@ -45,7 +45,6 @@ class Manual : AppCompatActivity(), OnCardExpandListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        DynamicColors.applyIfAvailable(this)
 
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -79,11 +78,11 @@ class Manual : AppCompatActivity(), OnCardExpandListener {
                 lpparam.classLoader,--类加载器
                 "fun",--函数名
                 --"type",--参数类型例如"int","string","float","com.xxx"
-                function(it)--after修改参数
+                function(it)--before修改参数
                  --log(it.args[1])
                  --it.args[1]=1  --修改参数1
                 end,
-                function(it)--before可以修改返回值
+                function(it)--after可以修改返回值
                   --log(it.result)
                   --it.result="1" --修改返回值
                 end)

@@ -1,13 +1,10 @@
-package com.myopicmobile.textwarrior.android;
+package com.myopicmobile.textwarrior.android
 
-public interface TextChangeListener
-{
-
-	public void onNewLine(String c, int _caretPosition, int p2);
+interface TextChangeListener {
+    fun onNewLine(c: String?, _caretPosition: Int, p2: Int)
 
 
-	public void onDel(CharSequence text, int _caretPosition, int newCursorPosition);
+    fun onDel(text: CharSequence?, _caretPosition: Int, newCursorPosition: Int)
 
-	public void onAdd(CharSequence text, int _caretPosition, int newCursorPosition);
-
+    fun onAdd(text: CharSequence?, _caretPosition: Int, newCursorPosition: Int)
 }

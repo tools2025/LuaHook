@@ -16,7 +16,7 @@
             android:layout_width="match_parent"
             android:layout_height="90dp"
             android:layout_margin="16dp"
-            app:cardBackgroundColor="?attr/colorPrimary"
+            app:cardBackgroundColor="?attr/colorError"
             app:cardCornerRadius="16dp"
             app:cardElevation="8dp"
             app:strokeColor="#000000"
@@ -31,12 +31,13 @@
                 android:layout_height="match_parent">
 
                 <ImageView
+                    android:id="@+id/img"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:layout_marginStart="24dp"
-                    android:src="@drawable/check_circle_24px"
-                    app:tint="?attr/colorOnPrimary" />
+                    android:src="@drawable/info_24px"
+                    app:tint="?attr/colorOnError" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -48,15 +49,17 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="已激活"
-                        android:textColor="?attr/colorOnPrimary"
+                        android:text="未激活"
+                        android:id="@+id/status"
+                        android:textColor="?attr/colorOnError"
                         android:textSize="16sp" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="1.0.1 (1000)"
-                        android:textColor="?attr/colorOnPrimary"
+                        android:id="@+id/version"
+                        android:textColor="?attr/colorOnError"
                         android:textSize="15sp" />
 
                 </LinearLayout>
@@ -100,6 +103,7 @@
                     android:orientation="vertical">
 
                     <TextView
+                        style="@style/TextAppearance.Material3.TitleSmall"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="全局脚本"

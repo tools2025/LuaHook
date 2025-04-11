@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
-import android.graphics.PorterDuff
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.os.Handler
@@ -28,7 +27,7 @@ import androidx.annotation.AttrRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.content.ContextCompat
-import androidx.core.graphics.drawable.DrawableCompat
+import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -38,16 +37,10 @@ import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.color.DynamicColors
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import kotlin.random.Random
 import kotlin.system.exitProcess
 
 class EditActivity : AppCompatActivity() {
 
-
-    //分装一下下面函数:(
-    fun canHook(): Boolean {
-        return false
-    }
 
 
     private fun getAppVersionName(context: Context): String {
@@ -193,6 +186,13 @@ class EditActivity : AppCompatActivity() {
     }
 
     fun Context.softRestartApp(delayMillis: Long = 100) {
+        //保存状态
+        val prefs = getSharedPreferences("status", MODE_PRIVATE)
+        prefs.edit {
+            putString("current","global")
+        }
+
+
         val packageManager = packageManager
         val intent = packageManager.getLaunchIntentForPackage(packageName)
         intent?.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -311,56 +311,13 @@ class EditActivity : AppCompatActivity() {
         savePrefs(this@EditActivity, editor.text.toString())
     }
 
-
-    private fun updateToolbarLogo() {
-
-
-        val color = if (canHook()) {
-            defaultLogo = when (Random.nextInt(1, 3)) {
-                1 -> ContextCompat.getDrawable(this, R.drawable.clear_day_24px)!!
-                2 -> ContextCompat.getDrawable(this, R.drawable.cruelty_free_24px)!!
-                3 -> {
-                    ContextCompat.getDrawable(this, R.drawable.rocket_launch_24px)!!
-                }
-
-                else -> {
-                    ContextCompat.getDrawable(this, R.drawable.help_24px)!!
-                }
-            }
-            toolbar.setNavigationOnClickListener {
-                Toast.makeText(this, "模块已激活啦!", Toast.LENGTH_SHORT).show()
-            }
-            getDynamicColor(this, com.google.android.material.R.attr.colorPrimary)
-        } else {
-            defaultLogo = ContextCompat.getDrawable(this, R.drawable.info_24px)!!
-            toolbar.setNavigationOnClickListener {
-                Toast.makeText(this, "模块未激活?", Toast.LENGTH_SHORT).show()
-            }
-            getDynamicColor(this, com.google.android.material.R.attr.colorError)
-        }
-
-
-        val logoDrawable = DrawableCompat.wrap(defaultLogo).mutate() // 创建可变副本
-        DrawableCompat.setTint(logoDrawable, color)
-        DrawableCompat.setTintMode(logoDrawable, PorterDuff.Mode.SRC_IN)
-
-        toolbar.navigationIcon = logoDrawable
-
-
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
-        DynamicColors.applyIfAvailable(this)
         super.onCreate(savedInstanceState)
 
         enableEdgeToEdge()
 
-        setContentView(R.layout.activity_main_bak)
+        setContentView(R.layout.edit)
         setSupportActionBar(toolbar)
-
-        // 设置初始 Logo
-        updateToolbarLogo()
-
 
         val symbols =
             listOf("hook", "lp", "(", ")", "\"", ":", "=", "[", "]", "{", "}", "+", "-", "?", "!")

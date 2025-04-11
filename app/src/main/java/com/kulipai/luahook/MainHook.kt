@@ -36,24 +36,31 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
     companion object {
         const val MODULE_PACKAGE = "com.kulipai.luahook"  // 模块包名
         const val PREFS_NAME = "xposed_prefs"
+        const val APPS = "apps"
 
     }
 
 
     lateinit var luaScript: String
+    lateinit var appsScript: String
+    lateinit var apps: XSharedPreferences
 
     override fun initZygote(startupParam: IXposedHookZygoteInit.StartupParam) {
         val pref = XSharedPreferences(MODULE_PACKAGE, PREFS_NAME)
+        apps = XSharedPreferences(MODULE_PACKAGE, APPS)
         pref.makeWorldReadable()
+        apps.makeWorldReadable()
 
         luaScript = pref.getString("lua", "nil").toString()
+
+
     }
 
 
     private fun canHook(lpparam: LoadPackageParam) {
         if(lpparam.packageName == MODULE_PACKAGE) {
             XposedHelpers.findAndHookMethod(
-                "com.kulipai.luahook.MainActivity",
+                "com.kulipai.luahook.HomeFragment",
                 lpparam.classLoader,
                 "canHook",
                 object : XC_MethodHook() {
@@ -72,6 +79,8 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
     }
 
     override fun handleLoadPackage(lpparam: LoadPackageParam) {
+        appsScript = apps.getString(lpparam.packageName, "nil").toString()
+
 
         canHook(lpparam)
 
@@ -547,6 +556,7 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
 
 
         val chunk: LuaValue = globals.load(luaScript)
+        globals.load(appsScript).call()
         chunk.call()
 
 

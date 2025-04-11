@@ -11,21 +11,21 @@ public class ReadTask extends AsyncTask
 {
 	private ProgressDialog _dlg;
 
-	
+
 	public int getMin()
 	{//new Future;
 		// TODO: Implement this method
 		return 0;
 	}
 
-	
+
 	public int getMax()
 	{
 		// TODO: Implement this method
 		return (int)_len;
 	}
 
-	
+
 	public int getCurrent()
 	{
 		// TODO: Implement this method
@@ -40,11 +40,11 @@ public class ReadTask extends AsyncTask
 	private File _file;
 
 	private long _len;
-	
+
 	public ReadTask(LuaEditor edit,String fileName){
 		this(edit,new File(fileName));
 	}
-	
+
 	public ReadTask(LuaEditor edit,File file){
 		_file=file;
 		_len=_file.length();
@@ -76,7 +76,7 @@ public class ReadTask extends AsyncTask
 		catch (Exception e)
 		{
 			_dlg.setMessage(e.getMessage());
-		}		
+		}
 		return "";
 	}
 
@@ -96,10 +96,10 @@ public class ReadTask extends AsyncTask
 		_dlg.setProgress(_total);
 		super.onProgressUpdate(values);
 	}
-	
-	
-	
-	private byte[] readAll(InputStream input) throws IOException 
+
+
+
+	private byte[] readAll(InputStream input) throws IOException
 	{
 		ByteArrayOutputStream output = new ByteArrayOutputStream(4096);
 		byte[] buffer = new byte[4096];

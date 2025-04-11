@@ -1,27 +1,35 @@
 package com.kulipai.luahook
 
 import AppListViewModel
+import AppListViewModelFactory
+import android.app.Application
 import android.content.Context
+import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
 import android.view.Menu
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.edit
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.get
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.color.DynamicColors
+import com.kulipai.luahook.util.d
+import kotlinx.coroutines.launch
 
 
 class MainActivity : AppCompatActivity() {
 
 
-    val appListViewModel by viewModels<AppListViewModel>()
+
 
     fun isNightMode(context: Context): Boolean {
         return (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
@@ -31,15 +39,54 @@ class MainActivity : AppCompatActivity() {
     private val viewPager2: ViewPager2 by lazy { findViewById(R.id.viewPager2) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        DynamicColors.applyIfAvailable(this)
+//        DynamicColors.applyToActivityIfAvailable(this)
+
         super.onCreate(savedInstanceState)
 
         enableEdgeToEdge()
 
         setContentView(R.layout.activity_main)
 
+        //状态检查
+        val prefs = getSharedPreferences("status", MODE_PRIVATE)
+        val current = prefs.getString("current","null")
+        if(current == "null") {
+
+        } else if (current == "apps") {
+            val intent = Intent(this, AppsEdit::class.java)
+            intent.putExtra("packageName", prefs.getString("packageName",""))
+            intent.putExtra("appName", prefs.getString("appName",""))
+            startActivity(intent)
+            prefs.edit {
+                putString("current","null")
+            }
+        } else if (current == "global") {
+            val intent = Intent(this, EditActivity::class.java)
+            startActivity(intent)
+            prefs.edit {
+                putString("current","null")
+            }
+        }
+
+
+
+
         // 可以选择在这里观察是否加载完（调试用）
-        appListViewModel.isLoaded.observe(this) {}
+        val app = application as MyApplication
+        lifecycleScope.launch {
+            val apps = app.getAppListAsync()
+
+            val savedList = getStringList(this@MainActivity, "selectApps")
+            if (savedList.isEmpty()) {
+                // 列表为空的逻辑
+            } else {
+                val appInfoList = MyApplication.instance.getAppInfoList(savedList)
+                // 加载 appInfoList
+            }
+
+
+        }
+
 
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
@@ -122,6 +169,24 @@ class MainActivity : AppCompatActivity() {
 
 
     }
+
+
+    fun saveStringList(context: Context, key: String, list: List<String>) {
+        val prefs = context.getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE)
+        val serialized = list.joinToString(",")
+        prefs.edit { putString(key, serialized) }
+    }
+
+    fun getStringList(context: Context, key: String): MutableList<String> {
+        val prefs = context.getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE)
+        val serialized = prefs.getString(key, "") ?: ""
+        return if (serialized.isNotEmpty()) {
+            serialized.split(",").toMutableList()
+        } else {
+            mutableListOf()
+        }
+    }
+
 
 
 }

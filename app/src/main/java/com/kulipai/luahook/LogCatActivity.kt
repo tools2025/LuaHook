@@ -32,7 +32,6 @@ class LogCatActivity : AppCompatActivity() {
 
     private lateinit var adapter: LogAdapter
     override fun onCreate(savedInstanceState: Bundle?) {
-        DynamicColors.applyIfAvailable(this)
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_log_cat)

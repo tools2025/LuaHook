@@ -1,4 +1,5 @@
 import android.app.Application
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -32,3 +33,4 @@ class AppListViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 }
+

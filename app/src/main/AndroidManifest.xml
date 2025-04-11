@@ -2,14 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-permission android:name="android.permission.INTERNET"/>
-
-    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission
+        android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="QueryAllPackagesPermission" />
 
-
-
     <application
+        android:name=".MyApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:enableOnBackInvokedCallback="true"
@@ -19,6 +18,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.LuaHook"
         tools:targetApi="33">
+        <activity
+            android:name=".SelectApps"
+            android:exported="false" />
+        <activity
+            android:name=".AppsEdit"
+            android:exported="false" />
         <activity
             android:name=".Manual"
             android:exported="false" />
