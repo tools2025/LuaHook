@@ -32,7 +32,7 @@ This module is still in the early stages of development and may contain various 
 
 **Contact**
 
-Welcome to join our Telegram channel for communication and feedback: [Telegram频道](https://t.me/LuaXposed)
+Welcome to join our Telegram channel for communication and feedback: [Telegram Channel](https://t.me/LuaXposed)
 
 Alternatively, you can directly submit issues and suggestions on the project's Issue page. I will actively respond and do my best to resolve them.
 
