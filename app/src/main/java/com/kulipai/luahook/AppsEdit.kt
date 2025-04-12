@@ -91,7 +91,7 @@ class AppsEdit : AppCompatActivity() {
 
         val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
 
-        val script = prefs.getString(currentPackageName, "123")
+        val script = prefs.getString(currentPackageName, "")
 
         editor.setText(script)
 

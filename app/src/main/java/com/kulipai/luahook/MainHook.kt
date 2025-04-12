@@ -1,6 +1,10 @@
 package com.kulipai.luahook
 
 
+import LuaHttp
+import LuaImport
+import LuaJson
+import Luafile
 import android.content.pm.PackageManager
 import com.kulipai.luahook.util.d
 import de.robv.android.xposed.IXposedHookLoadPackage
@@ -17,7 +21,10 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.Response
+import org.json.JSONArray
+import org.json.JSONObject
 import org.luaj.vm2.Globals
+import org.luaj.vm2.LuaTable
 import org.luaj.vm2.LuaValue
 import org.luaj.vm2.Varargs
 import org.luaj.vm2.lib.OneArgFunction
@@ -26,11 +33,16 @@ import org.luaj.vm2.lib.VarArgFunction
 import org.luaj.vm2.lib.jse.CoerceJavaToLua
 import org.luaj.vm2.lib.jse.JsePlatform
 import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
+import java.nio.file.StandardOpenOption
+import java.io.File
 
 
 class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
 
-    private val client = OkHttpClient()  // 确保 OkHttpClient 实例已定义
+
 
 
     companion object {
@@ -43,13 +55,19 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
 
     lateinit var luaScript: String
     lateinit var appsScript: String
+    lateinit var SelectAppsString: String
     lateinit var apps: XSharedPreferences
+    lateinit var selectApps: XSharedPreferences
+    lateinit var SelectAppsList: MutableList<String>
 
     override fun initZygote(startupParam: IXposedHookZygoteInit.StartupParam) {
         val pref = XSharedPreferences(MODULE_PACKAGE, PREFS_NAME)
         apps = XSharedPreferences(MODULE_PACKAGE, APPS)
         pref.makeWorldReadable()
         apps.makeWorldReadable()
+
+        selectApps = XSharedPreferences(MODULE_PACKAGE, "MyAppPrefs")
+        selectApps.makeWorldReadable()
 
         luaScript = pref.getString("lua", "nil").toString()
 
@@ -58,9 +76,9 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
 
 
     private fun canHook(lpparam: LoadPackageParam) {
-        if(lpparam.packageName == MODULE_PACKAGE) {
+        if (lpparam.packageName == MODULE_PACKAGE) {
             XposedHelpers.findAndHookMethod(
-                "com.kulipai.luahook.HomeFragment",
+                "com.kulipai.luahook.fragment.HomeFragment",
                 lpparam.classLoader,
                 "canHook",
                 object : XC_MethodHook() {
@@ -79,142 +97,40 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
     }
 
     override fun handleLoadPackage(lpparam: LoadPackageParam) {
-        appsScript = apps.getString(lpparam.packageName, "nil").toString()
 
+        SelectAppsString = selectApps.getString("selectApps", "").toString()
 
+        if (SelectAppsString.isNotEmpty()) {
+            SelectAppsList = SelectAppsString.split(",").toMutableList()
+        } else {
+            SelectAppsList = mutableListOf()
+        }
+
+        SelectAppsList.toString().d()
         canHook(lpparam)
 
-        // 将Lua值转换回Java类型
-        fun fromLuaValue(value: LuaValue?): Any? {
-            return when {
-                value == null || value.isnil() -> null
-                value.isboolean() -> value.toboolean()
-                value.isint() -> value.toint()
-                value.islong() -> value.tolong()
-                value.isnumber() -> value.todouble()
-                value.isstring() -> value.tojstring()
-                value.isuserdata() -> value.touserdata()
-                else -> null
-            }
-        }
+
 
 
         val globals: Globals = JsePlatform.standardGlobals()
 
-        val http = LuaValue.tableOf()
-        http["get"] = object : VarArgFunction() {
-            override fun invoke(args: Varargs): LuaValue {
-                val url = args.checkjstring(1)
-                val callback = args.checkfunction(args.narg())
-                val headers = if (args.narg() > 2 && args.istable(2)) args.checktable(2) else null
-                val cookie = if (args.narg() > 3) args.optjstring(3, null) else null
-
-                val requestBuilder = Request.Builder().url(url)
-
-                // 添加请求头
-                headers?.let {
-                    val headerMap = mutableMapOf<String, String>()
-
-                    // 遍历 LuaTable
-                    var key: LuaValue = LuaValue.NIL
-                    while (true) {
-                        val nextPair = headers.next(key)
-                        key = nextPair.arg1()  // 获取下一个键
-                        val value = nextPair.arg(2)  // 获取键对应的值
-
-                        if (key.isnil()) break  // 遍历完所有键，退出循环
-
-                        headerMap[key.tojstring()] = value.tojstring()
-                    }
+        //加载Lua模块
+        LuaJson().call(globals)
+        LuaHttp().call(globals)
+        Luafile().call(globals)
+        globals["import"] = LuaImport(lpparam.classLoader,globals)
 
 
 
-                    for ((k, v) in headerMap) {
-                        requestBuilder.addHeader(k, v)
-                    }
-                }
-
-                // 添加 Cookie
-                cookie?.let {
-                    requestBuilder.addHeader("Cookie", it)
-                }
-
-                val request = requestBuilder.build()
-
-                client.newCall(request).enqueue(object : Callback {
-                    override fun onFailure(call: Call, e: IOException) {
-                        callback.call(LuaValue.valueOf(-1), LuaValue.valueOf(e.message ?: ""))
-                    }
-
-                    override fun onResponse(call: Call, response: Response) {
-                        val body = response.body?.string() ?: ""
-                        callback.call(LuaValue.valueOf(response.code), LuaValue.valueOf(body))
-                    }
-                })
-
-                return LuaValue.NIL
+        val LuaFile = object : OneArgFunction() {
+            override fun call(arg: LuaValue): LuaValue {
+                val path = arg.checkjstring()
+                val file = File(path)
+                return CoerceJavaToLua.coerce(file)
             }
         }
 
-
-        http["post"] = object : VarArgFunction() {
-            override fun invoke(args: Varargs): LuaValue {
-                val url = args.checkjstring(1)
-                val postData = args.checkjstring(2)
-                val callback = args.checkfunction(args.narg())
-                val headers = if (args.narg() > 3 && args.istable(3)) args.checktable(3) else null
-                val cookie = if (args.narg() > 4) args.optjstring(4, null) else null
-
-                val requestBody = RequestBody.create(
-                    "application/x-www-form-urlencoded".toMediaTypeOrNull(),
-                    postData
-                )
-
-                val requestBuilder = Request.Builder().url(url).post(requestBody)
-
-                // 添加请求头
-                headers?.let {
-                    val headerMap = mutableMapOf<String, String>()
-
-                    var key: LuaValue = LuaValue.NIL
-                    while (true) {
-                        val nextPair = headers.next(key)
-                        key = nextPair.arg1()  // 获取下一个键
-                        val value = nextPair.arg(2)  // 获取键对应的值
-
-                        if (key.isnil()) break  // 遍历完所有键，退出循环
-
-                        headerMap[key.tojstring()] = value.tojstring()
-                    }
-                    for ((k, v) in headerMap) {
-                        requestBuilder.addHeader(k, v)
-                    }
-                }
-
-                // 添加 Cookie
-                cookie?.let {
-                    requestBuilder.addHeader("Cookie", it)
-                }
-
-                val request = requestBuilder.build()
-
-                client.newCall(request).enqueue(object : Callback {
-                    override fun onFailure(call: Call, e: IOException) {
-                        callback.call(LuaValue.valueOf(-1), LuaValue.valueOf(e.message ?: ""))
-                    }
-
-                    override fun onResponse(call: Call, response: Response) {
-                        val body = response.body?.string() ?: ""
-                        callback.call(LuaValue.valueOf(response.code), LuaValue.valueOf(body))
-                    }
-                })
-
-                return LuaValue.NIL
-            }
-        }
-
-        globals["http"] = http
-
+        globals["File"] = LuaFile
 
 
         globals["lpparam"] = CoerceJavaToLua.coerce(lpparam)
@@ -554,11 +470,41 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
             }
         }
 
+        //全局脚本
+        try {
+            val chunk: LuaValue = globals.load(luaScript)
+            chunk.call()
+        } catch (e: Exception) {
+            e.toString().d()
+        }
 
-        val chunk: LuaValue = globals.load(luaScript)
-        globals.load(appsScript).call()
-        chunk.call()
+
+
+        //app单独脚本
+        try {
+        if (lpparam.packageName in SelectAppsList) {
+            appsScript = apps.getString(lpparam.packageName, "nil").toString()
+            globals.load(appsScript).call()
+        }
+        } catch (e: Exception) {
+            e.toString().d()
+        }
 
 
     }
+
+    // 将Lua值转换回Java类型
+    fun fromLuaValue(value: LuaValue?): Any? {
+        return when {
+            value == null || value.isnil() -> null
+            value.isboolean() -> value.toboolean()
+            value.isint() -> value.toint()
+            value.islong() -> value.tolong()
+            value.isnumber() -> value.todouble()
+            value.isstring() -> value.tojstring()
+            value.isuserdata() -> value.touserdata()
+            else -> null
+        }
+    }
+
 }

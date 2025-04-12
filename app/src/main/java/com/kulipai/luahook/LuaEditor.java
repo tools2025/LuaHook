@@ -85,7 +85,7 @@ public class LuaEditor extends FreeScrollingTextField {
         array.recycle();
         setTextColor(textColor);
         setTextHighlightColor(textColorHighlight);
-        String[] Names = {"hook","Xposed","log","setField","getField","invoke"};
+        String[] Names = {"hook","Xposed","log","setField","getField","invoke","file","lpparam","http","File"};
         addNames(Names);
         /*
         new AsyncTask<String, String, String[]>(){

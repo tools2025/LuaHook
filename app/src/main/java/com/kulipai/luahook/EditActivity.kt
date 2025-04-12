@@ -1,6 +1,6 @@
 package com.kulipai.luahook
 
-import ToolAdapter
+import com.kulipai.luahook.adapter.ToolAdapter
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager

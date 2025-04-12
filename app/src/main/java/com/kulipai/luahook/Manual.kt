@@ -1,6 +1,5 @@
 package com.kulipai.luahook
 
-import ManAdapter
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
@@ -19,8 +18,8 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.transition.TransitionManager
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.card.MaterialCardView
-import com.google.android.material.color.DynamicColors
 import com.google.android.material.transition.MaterialContainerTransform
+import com.kulipai.luahook.adapter.ManAdapter
 
 
 class Manual : AppCompatActivity(), OnCardExpandListener {
@@ -67,7 +66,17 @@ class Manual : AppCompatActivity(), OnCardExpandListener {
 
 
         val title =
-            listOf("获取包名", "hook介绍", "获取类", "调用函数", "修改/获取类字段", "http请求")
+            listOf(
+                "获取包名",
+                "hook介绍",
+                "获取类",
+                "调用函数",
+                "修改/获取类字段",
+                "http请求",
+                "file操作",
+                "json操作",
+                "import操作"
+            )
 
         val body = listOf(
             """
@@ -150,6 +159,65 @@ class Manual : AppCompatActivity(), OnCardExpandListener {
                         log(b)
                     end
                 end)
+            """.trimIndent(),
+            """
+                -- 方法1: 直接使用Java的File类
+                File("path"):isFile()
+                -- ...
+                
+                -- 方法2: 使用分装函数file类
+                -- 判断文件或目录是否存在
+                print("是否是文件:", file.isFile("/sdcard/demo.txt"))
+                print("是否是目录:", file.isDir("/sdcard/"))
+                print("是否存在:", file.isExists("/sdcard/demo.txt"))
+
+                -- 写入字符串
+                file.write("/sdcard/demo.txt", "Hello, LuaJ!")
+                -- 追加字符串
+                file.append("/sdcard/demo.txt", "\nAppend line 1.")
+                -- 读取内容
+                local content = file.read("/sdcard/demo.txt")
+                print("文件内容:\n" .. content)
+
+                -- 写入二进制（可用于图片、音频等）
+                file.writeBytes("/sdcard/demo.bin", "binary\x00data")
+                -- 追加二进制
+                file.appendBytes("/sdcard/demo.bin", "\xFF\xAA")
+                -- 读取二进制
+                local bin = file.readBytes("/sdcard/demo.bin")
+                print("读取的二进制内容（字符串显示）:\n" .. bin)
+
+                -- 文件复制与移动
+                file.copy("/sdcard/demo.txt", "/sdcard/demo_copy.txt")
+                file.move("/sdcard/demo_copy.txt", "/sdcard/demo_moved.txt")
+
+                -- 文件重命名（同目录）
+                file.rename("/sdcard/demo_moved.txt", "demo_renamed.txt")
+
+                -- 删除文件
+                file.delete("/sdcard/demo_renamed.txt")
+
+                -- 获取文件名与大小
+                print("文件名:", file.getName("/sdcard/demo.txt"))
+                print("文件大小:", file.getSize("/sdcard/demo.txt"), "bytes")
+            """.trimIndent(),
+            """
+                --decode / encode
+                
+                local data = json.decode('{"name":"Xposed","version":1.0}')
+                print("模块名:", data.name)
+    
+                local encoded = json.encode({status="ok", count=3})
+                print("编码结果:", encoded)
+            """.trimIndent(),
+            """
+                --全局引入一个类
+                import "android.widget.Toast"
+                Toast:makeText(activity,"hello",1000):show()
+                
+                --自定义名称
+                AAA = import "android.widget.Toast"
+                AAA:makeText(activity,"hello",1000):show()
             """.trimIndent()
         )
 

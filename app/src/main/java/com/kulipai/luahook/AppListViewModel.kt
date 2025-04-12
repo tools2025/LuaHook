@@ -1,11 +1,10 @@
 import android.app.Application
-import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import com.kulipai.luahook.AppInfo
-import com.kulipai.luahook.getInstalledApps
+import com.kulipai.luahook.fragment.AppInfo
+import com.kulipai.luahook.fragment.getInstalledApps
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext

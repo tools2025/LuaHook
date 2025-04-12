@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.color.DynamicColors
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.kulipai.luahook.fragment.AppInfo
 import kotlinx.coroutines.launch
 import kotlin.collections.mutableListOf
 import kotlin.getValue
@@ -67,13 +68,13 @@ class SelectApps : AppCompatActivity() {
     }
 
     fun saveStringList(context: Context, key: String, list: List<String>) {
-        val prefs = context.getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE)
+        val prefs = context.getSharedPreferences("MyAppPrefs", MODE_PRIVATE)
         val serialized = list.joinToString(",")
         prefs.edit { putString(key, serialized) }
     }
 
     fun getStringList(context: Context, key: String): MutableList<String> {
-        val prefs = context.getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE)
+        val prefs = context.getSharedPreferences("MyAppPrefs", MODE_PRIVATE)
         val serialized = prefs.getString(key, "") ?: ""
         return if (serialized.isNotEmpty()) {
             serialized.split(",").toMutableList()

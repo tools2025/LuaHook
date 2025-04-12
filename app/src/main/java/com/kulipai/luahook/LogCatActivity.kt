@@ -1,6 +1,6 @@
 package com.kulipai.luahook
 
-import LogAdapter
+import com.kulipai.luahook.adapter.LogAdapter
 import android.os.Bundle
 import android.view.View
 import android.widget.TextView

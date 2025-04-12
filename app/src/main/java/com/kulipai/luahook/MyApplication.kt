@@ -1,9 +1,10 @@
 package com.kulipai.luahook
 import android.app.Application
-import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import com.google.android.material.color.DynamicColors
+import com.kulipai.luahook.fragment.AppInfo
+import com.kulipai.luahook.fragment.getInstalledApps
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
