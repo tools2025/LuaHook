@@ -68,7 +68,7 @@ public class LuaEditor extends FreeScrollingTextField {
         setHighlightCurrentRow(true);
         setWordWrap(false);
         setAutoIndentWidth(2);
-        Lexer.setLanguage(LanguageLua.getInstance());
+        Lexer.Companion.setLanguage(LanguageLua.getInstance());
         if (isAccessibilityEnabled())
             setNavigationMethod(new TrackpadNavigationMethod(this));
         else
@@ -85,7 +85,8 @@ public class LuaEditor extends FreeScrollingTextField {
         array.recycle();
         setTextColor(textColor);
         setTextHighlightColor(textColorHighlight);
-        String[] Names = {"hook","Xposed","log","setField","getField","invoke","file","lpparam","http","File"};
+        String[] Names = {"hook","Xposed","log","setField","getField","invoke","file","lpparam","http","File","json","import"};
+        //String[] Names = {"hook","Xposed","log","setField","getField","invoke"};
         addNames(Names);
         /*
         new AsyncTask<String, String, String[]>(){
@@ -128,30 +129,30 @@ public class LuaEditor extends FreeScrollingTextField {
     }
 
     public void addNames(String[] names) {
-        LanguageLua lang = (LanguageLua) Lexer.getLanguage();
+        LanguageLua lang = (LanguageLua) Lexer.Companion.getLanguage();
         String[] old = lang.getNames();
         String[] news = new String[old.length + names.length];
         System.arraycopy(old, 0, news, 0, old.length);
         System.arraycopy(names, 0, news, old.length, names.length);
         lang.setNames(news);
-        Lexer.setLanguage(lang);
+        Lexer.Companion.setLanguage(lang);
         respan();
         invalidate();
 
     }
 
     public void addPackage(String pkg, String[] names) {
-        LanguageLua lang = (LanguageLua) Lexer.getLanguage();
+        LanguageLua lang = (LanguageLua) Lexer.Companion.getLanguage();
         lang.addBasePackage(pkg, names);
-        Lexer.setLanguage(lang);
+        Lexer.Companion.setLanguage(lang);
         respan();
         invalidate();
     }
 
     public void removePackage(String pkg) {
-        LanguageLua lang = (LanguageLua) Lexer.getLanguage();
+        LanguageLua lang = (LanguageLua) Lexer.Companion.getLanguage();
         lang.removeBasePackage(pkg);
-        Lexer.setLanguage(lang);
+        Lexer.Companion.setLanguage(lang);
         respan();
         invalidate();
     }

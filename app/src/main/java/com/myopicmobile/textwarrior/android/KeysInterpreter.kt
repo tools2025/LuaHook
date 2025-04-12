@@ -6,78 +6,70 @@
  *
  * This software is provided "as is". Use at your own risk.
  */
-package com.myopicmobile.textwarrior.android;
+package com.myopicmobile.textwarrior.android
 
-import com.myopicmobile.textwarrior.common.Language;
-
-import android.view.KeyEvent;
+import android.view.KeyEvent
+import com.myopicmobile.textwarrior.common.Language
 
 /**
  * Interprets shortcut key combinations and contains utility methods
  * to map Android keycodes to Unicode equivalents.
  */
-public class KeysInterpreter {
-	public static boolean isSwitchPanel(KeyEvent event){
-		return (event.isShiftPressed() &&
-					(event.getKeyCode() == KeyEvent.KEYCODE_ENTER));
-	}
+object KeysInterpreter {
+    fun isSwitchPanel(event: KeyEvent): Boolean {
+        return (event.isShiftPressed() &&
+                (event.getKeyCode() == KeyEvent.KEYCODE_ENTER))
+    }
 
-	/**
-	 * Maps shortcut keys and Android keycodes to printable characters.
-	 * Note that whitespace is considered printable.
-	 * 
-	 * @param event The KeyEvent to interpret
-	 * @return The printable character the event represents, 
-	 * 	or Language.NULL_CHAR if the event does not represent a printable char
-	 */
-	public static char keyEventToPrintableChar(KeyEvent event){
-		char c = Language.NULL_CHAR;
+    /**
+     * Maps shortcut keys and Android keycodes to printable characters.
+     * Note that whitespace is considered printable.
+     *
+     * @param event The KeyEvent to interpret
+     * @return The printable character the event represents,
+     * or Language.NULL_CHAR if the event does not represent a printable char
+     */
+	@JvmStatic
+	fun keyEventToPrintableChar(event: KeyEvent): Char {
+        var c = Language.NULL_CHAR
 
-    	// convert tab, backspace, newline and space keycodes to standard ASCII values
-    	if (isNewline(event)){
-    		c = Language.NEWLINE;
+        // convert tab, backspace, newline and space keycodes to standard ASCII values
+        if (isNewline(event)) {
+            c = Language.NEWLINE
+        } else if (isBackspace(event)) {
+            c = Language.BACKSPACE
+        } else if (isTab(event)) {
+            c = Language.TAB
+        } else if (isSpace(event)) {
+            c = ' '
+        } else if (event.isPrintingKey()) {
+            c = event.getUnicodeChar(event.getMetaState()).toChar()
         }
-    	else if (isBackspace(event)){
-    		c = Language.BACKSPACE;
-        }
-		// This should be before the check for isSpace() because the
-    	// shortcut for TAB uses the SPACE key.
-    	else if (isTab(event)){
-    		c = Language.TAB;
-        }
-    	else if (isSpace(event)){
-    		c = ' ';
-        }
-    	else if (event.isPrintingKey()){
-    		c = (char) event.getUnicodeChar(event.getMetaState());
-    	}
-    	
-		return c;
-	}
-	
-	private static boolean isTab(KeyEvent event){
-		return (event.isShiftPressed() &&
-					(event.getKeyCode() == KeyEvent.KEYCODE_SPACE)) ||
-				(event.getKeyCode() == KeyEvent.KEYCODE_TAB);
-	}
 
-	private static boolean isBackspace(KeyEvent event) {
-		return (event.getKeyCode() == KeyEvent.KEYCODE_DEL);
-	}
+        return c
+    }
 
-	private static boolean isNewline(KeyEvent event) {
-		return (event.getKeyCode() == KeyEvent.KEYCODE_ENTER);
-	}
+    private fun isTab(event: KeyEvent): Boolean {
+        return (event.isShiftPressed() &&
+                (event.getKeyCode() == KeyEvent.KEYCODE_SPACE)) ||
+                (event.getKeyCode() == KeyEvent.KEYCODE_TAB)
+    }
 
-	private static boolean isSpace(KeyEvent event) {
-		return (event.getKeyCode() == KeyEvent.KEYCODE_SPACE);
-	}
+    private fun isBackspace(event: KeyEvent): Boolean {
+        return (event.getKeyCode() == KeyEvent.KEYCODE_DEL)
+    }
 
-	public static boolean isNavigationKey(KeyEvent event) {
-		int keyCode = event.getKeyCode();
-		return keyCode == KeyEvent.KEYCODE_DPAD_DOWN ||
-			keyCode == KeyEvent.KEYCODE_DPAD_UP ||
-			keyCode == KeyEvent.KEYCODE_DPAD_RIGHT ||
-			keyCode == KeyEvent.KEYCODE_DPAD_LEFT;
-	}
+    private fun isNewline(event: KeyEvent): Boolean {
+        return (event.getKeyCode() == KeyEvent.KEYCODE_ENTER)
+    }
+
+    private fun isSpace(event: KeyEvent): Boolean {
+        return (event.getKeyCode() == KeyEvent.KEYCODE_SPACE)
+    }
+
+    @JvmStatic
+	fun isNavigationKey(event: KeyEvent): Boolean {
+        val keyCode = event.getKeyCode()
+        return keyCode == KeyEvent.KEYCODE_DPAD_DOWN || keyCode == KeyEvent.KEYCODE_DPAD_UP || keyCode == KeyEvent.KEYCODE_DPAD_RIGHT || keyCode == KeyEvent.KEYCODE_DPAD_LEFT
+    }
 }

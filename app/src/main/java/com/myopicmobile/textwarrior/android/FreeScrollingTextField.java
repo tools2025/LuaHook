@@ -1041,7 +1041,7 @@ public class FreeScrollingTextField extends View
     }
 
     private void doBlockLine(Canvas canvas) {
-        ArrayList<Rect> lines = Lexer.getLines();
+        ArrayList<Rect> lines = Lexer.Companion.getLines();
         if (lines == null || lines.isEmpty())
             return;
         Rect bounds = canvas.getClipBounds();
@@ -3534,7 +3534,7 @@ public class FreeScrollingTextField extends View
             if ((reqModes & InputType.TYPE_TEXT_FLAG_CAP_WORDS)
                     == InputType.TYPE_TEXT_FLAG_CAP_WORDS) {
                 int prevChar = _caretPosition - 1;
-                if (prevChar < 0 || Lexer.getLanguage().isWhitespace(_hDoc.charAt(prevChar))) {
+                if (prevChar < 0 || Lexer.Companion.getLanguage().isWhitespace(_hDoc.charAt(prevChar))) {
                     capsMode |= InputType.TYPE_TEXT_FLAG_CAP_WORDS;
 
                     //set CAP_SENTENCES if client is interested in it
@@ -3550,7 +3550,7 @@ public class FreeScrollingTextField extends View
             // Android bug? Therefore, we assume TYPE_TEXT_FLAG_CAP_SENTENCES
             // is always set to be on the safe side.
             else {
-                Language lang = Lexer.getLanguage();
+                Language lang = Lexer.Companion.getLanguage();
 
                 int prevChar = _caretPosition - 1;
                 int whitespaceCount = 0;

@@ -6,30 +6,6 @@
  *
  * This software is provided "as is". Use at your own risk.
  */
-package com.myopicmobile.textwarrior.common;
+package com.myopicmobile.textwarrior.common
 
-public final class Pair {
-	private int _first;
-	private int _second;
-	
-	public Pair(int x, int y){
-		_first = x;
-		_second = y;
-	}
-	
-	public final int getFirst(){
-		return _first;
-	}
-	
-	public final int getSecond(){
-		return _second;
-	}
-	
-	public final void setFirst(int value){
-		_first = value;
-	}
-	
-	public final void setSecond(int value){
-		_second = value;
-	}
-}
+class Pair(var first: Int, var second: Int)

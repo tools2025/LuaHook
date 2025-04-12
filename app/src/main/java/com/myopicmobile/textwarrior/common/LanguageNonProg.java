@@ -9,14 +9,14 @@
 package com.myopicmobile.textwarrior.common;
 
 /**
- * Singleton class that represents a non-programming language without keywords, 
+ * Singleton class that represents a non-programming language without keywords,
  * operators etc.
  */
 public class LanguageNonProg extends Language{
 	private static Language _theOne = null;
-	
+
 	private final static String[] keywords = {};
-	
+
 	private final static char[] operators = {};
 
 
@@ -26,7 +26,7 @@ public class LanguageNonProg extends Language{
 		}
 		return _theOne;
 	}
-	
+
 	private LanguageNonProg(){
 		super.setKeywords(keywords);
 		super.setOperators(operators);
@@ -51,7 +51,7 @@ public class LanguageNonProg extends Language{
 	public boolean isDelimiterB(char c){
 		return false;
 	}
-	
+
 	@Override
 	public boolean isLineAStart(char c){
 		return false;

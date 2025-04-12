@@ -318,6 +318,6 @@ public class DocumentProvider implements java.lang.CharSequence
 		// TODO: Implement this method
 		return _theText.toString();
 	}
-	
-	
+
+
 }

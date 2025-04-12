@@ -57,18 +57,18 @@ public class AutoCompletePanel {
 		gd.setStroke(1, color);
 		_autoCompletePanel.setBackgroundDrawable(gd);
 	}
-	
-	
+
+
 	public void setBackgroundColor(int color){
 		_backgroundColor=color;
 		gd.setColor(color);
 		_autoCompletePanel.setBackgroundDrawable(gd);
 	}
-	
+
 	public void setBackground(Drawable color){
 		_autoCompletePanel.setBackgroundDrawable(color);
 	}
-	
+
 	private void initAutoCompletePanel() {
 		_autoCompletePanel = new ListPopupWindow(_context);
 		_autoCompletePanel.setAnchorView(_textField);
@@ -78,12 +78,12 @@ public class AutoCompletePanel {
 		_filter = _adapter.getFilter();
 		setHeight(300);
 
-		TypedArray array = _context.getTheme().obtainStyledAttributes(new int[] {  
-																		  android.R.attr.colorBackground, 
-																		  android.R.attr.textColorPrimary, 
-																	  }); 
-		int backgroundColor = array.getColor(0, 0xFF00FF); 
-		int textColor = array.getColor(1, 0xFF00FF); 
+		TypedArray array = _context.getTheme().obtainStyledAttributes(new int[] {
+																		  android.R.attr.colorBackground,
+																		  android.R.attr.textColorPrimary,
+																	  });
+		int backgroundColor = array.getColor(0, 0xFF00FF);
+		int textColor = array.getColor(1, 0xFF00FF);
 		array.recycle();
 		gd=new GradientDrawable();
 		gd.setColor(backgroundColor);
@@ -101,7 +101,7 @@ public class AutoCompletePanel {
 					dismiss();
 				}
 			});
-			
+
 	}
 
 	public void setWidth(int width) {
@@ -181,19 +181,19 @@ public class AutoCompletePanel {
 			_abort = new Flag();
 			setNotifyOnChange(false);
 			dm=context.getResources().getDisplayMetrics();
-			
+
 		}
 
 		public void abort() {
 			_abort.set();
 		}
 
-		
+
 		private int dp(float n) {
 			// TODO: Implement this method
 			return (int)TypedValue.applyDimension(1,n,dm);
 		}
-		
+
 		@Override
 		public View getView(int position, View convertView, ViewGroup parent) {
 			// TODO: Implement this method
@@ -213,7 +213,7 @@ public class AutoCompletePanel {
 		}
 
 
-		
+
 		public void restart() {
 			// TODO: Implement this method
 			_abort.clear();
@@ -315,7 +315,7 @@ public class AutoCompletePanel {
 						int y = _textField.getCaretY() + _textField.rowHeight() / 2 - _textField.getScrollY();
 						setHeight(getItemHeight() * Math.min(2, results.count));
 						//setHeight((int)(Math.min(_textField.getContentHeight()*0.4,getItemHeight() * Math.min(6, results.count))));
-						
+
 						setHorizontalOffset(_textField.getCaretX() - _textField.getScrollX());
 						setVerticalOffset(y - _textField.getHeight());//_textField.getCaretY()-_textField.getScrollY()-_textField.getHeight());
 						notifyDataSetChanged();

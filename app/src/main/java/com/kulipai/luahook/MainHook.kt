@@ -14,17 +14,7 @@ import de.robv.android.xposed.XSharedPreferences
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
-import okhttp3.Call
-import okhttp3.Callback
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody
-import okhttp3.Response
-import org.json.JSONArray
-import org.json.JSONObject
 import org.luaj.vm2.Globals
-import org.luaj.vm2.LuaTable
 import org.luaj.vm2.LuaValue
 import org.luaj.vm2.Varargs
 import org.luaj.vm2.lib.OneArgFunction
@@ -32,24 +22,16 @@ import org.luaj.vm2.lib.TwoArgFunction
 import org.luaj.vm2.lib.VarArgFunction
 import org.luaj.vm2.lib.jse.CoerceJavaToLua
 import org.luaj.vm2.lib.jse.JsePlatform
-import java.io.IOException
-import java.nio.file.Files
-import java.nio.file.Paths
-import java.nio.file.StandardCopyOption
-import java.nio.file.StandardOpenOption
 import java.io.File
 
 
 class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
 
 
-
-
     companion object {
         const val MODULE_PACKAGE = "com.kulipai.luahook"  // 模块包名
         const val PREFS_NAME = "xposed_prefs"
         const val APPS = "apps"
-
     }
 
 
@@ -110,16 +92,13 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
         canHook(lpparam)
 
 
-
-
         val globals: Globals = JsePlatform.standardGlobals()
 
         //加载Lua模块
         LuaJson().call(globals)
         LuaHttp().call(globals)
         Luafile().call(globals)
-        globals["import"] = LuaImport(lpparam.classLoader,globals)
-
+        globals["import"] = LuaImport(lpparam.classLoader, globals)
 
 
         val LuaFile = object : OneArgFunction() {
@@ -472,20 +451,22 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
 
         //全局脚本
         try {
-            val chunk: LuaValue = globals.load(luaScript)
-            chunk.call()
+            //排除自己
+            if (lpparam.packageName != MODULE_PACKAGE) {
+                val chunk: LuaValue = globals.load(luaScript)
+                chunk.call()
+            }
         } catch (e: Exception) {
             e.toString().d()
         }
 
 
-
         //app单独脚本
         try {
-        if (lpparam.packageName in SelectAppsList) {
-            appsScript = apps.getString(lpparam.packageName, "nil").toString()
-            globals.load(appsScript).call()
-        }
+            if (lpparam.packageName in SelectAppsList) {
+                appsScript = apps.getString(lpparam.packageName, "nil").toString()
+                globals.load(appsScript).call()
+            }
         } catch (e: Exception) {
             e.toString().d()
         }

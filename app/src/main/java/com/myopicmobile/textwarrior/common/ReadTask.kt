@@ -1,119 +1,99 @@
-package com.myopicmobile.textwarrior.common;
-import java.io.*;
-import android.os.*;
-import com.androlua.*;
-import com.kulipai.luahook.LuaEditor;
-import com.myopicmobile.textwarrior.android.*;
-import android.app.*;
-import java.util.concurrent.*;
+package com.myopicmobile.textwarrior.common
 
-public class ReadTask extends AsyncTask
-{
-	private ProgressDialog _dlg;
+import android.R
+import android.app.ProgressDialog
+import android.os.AsyncTask
+import com.kulipai.luahook.LuaEditor
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileInputStream
+import java.io.IOException
+import java.io.InputStream
 
-
-	public int getMin()
-	{//new Future;
-		// TODO: Implement this method
-		return 0;
-	}
+class ReadTask(private val _edit: LuaEditor, private val _file: File) :
+    AsyncTask<Any?, Any?, Any?>() {
+    private val _dlg: ProgressDialog
 
 
-	public int getMax()
-	{
-		// TODO: Implement this method
-		return (int)_len;
-	}
+    val min: Int
+        get() =//new Future;
+            // TODO: Implement this method
+            0
 
 
-	public int getCurrent()
-	{
-		// TODO: Implement this method
-		return _total;
-	}
+    val max: Int
+        get() =// TODO: Implement this method
+            _len.toInt()
 
 
-	final protected Document _buf;
-	private static int _total = 0;
-	private LuaEditor _edit;
+    protected val _buf: Document
 
-	private File _file;
+    private val _len: Long
 
-	private long _len;
+    constructor(edit: LuaEditor, fileName: String) : this(edit, File(fileName))
 
-	public ReadTask(LuaEditor edit,String fileName){
-		this(edit,new File(fileName));
-	}
+    init {
+        _len = _file.length()
+        _buf = Document(_edit)
+        _dlg = ProgressDialog(_edit.getContext())
+        _dlg.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
+        _dlg.setTitle("正在打开")
+        _dlg.setIcon(R.drawable.ic_dialog_info)
+        _dlg.setMax(_len.toInt())
+    }
 
-	public ReadTask(LuaEditor edit,File file){
-		_file=file;
-		_len=_file.length();
-		_edit=edit;
-		_buf=new Document(edit);
-		_dlg=new ProgressDialog(edit.getContext());
-		_dlg.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-		_dlg.setTitle("正在打开");
-		_dlg.setIcon(android.R.drawable.ic_dialog_info);
-		_dlg.setMax((int)_len);
-	}
+    fun start() {
+        // TODO: Implement this method
+        execute()
+        _dlg.show()
+    }
 
-	public void start()
-	{
-		// TODO: Implement this method
-		execute();
-		_dlg.show();
-	}
-	@Override
-	protected Object doInBackground(Object[] p1)
-	{
-		// TODO: Implement this method
-		try
-		{
-			FileInputStream fi = new FileInputStream(_file);
-			byte[] buf=readAll(fi);
-			return new String(buf);
-		}
-		catch (Exception e)
-		{
-			_dlg.setMessage(e.getMessage());
-		}
-		return "";
-	}
+    override fun doInBackground(p1: Array<Any?>?): Any {
+        // TODO: Implement this method
+        try {
+            val fi = FileInputStream(_file)
+            val buf = readAll(fi)
+            return String(buf)
+        } catch (e: Exception) {
+            _dlg.setMessage(e.message)
+        }
+        return ""
+    }
 
-	@Override
-	protected void onPostExecute(Object result)
-	{
-		// TODO: Implement this method
-		super.onPostExecute(result);
-		_edit.setText((String)result);
-		_dlg.dismiss();
-	}
+    override fun onPostExecute(result: Any?) {
+        // TODO: Implement this method
+        super.onPostExecute(result)
+        _edit.setText(result as String?)
+        _dlg.dismiss()
+    }
 
-	@Override
-	protected void onProgressUpdate(Object[] values)
-	{
-		// TODO: Implement this method
-		_dlg.setProgress(_total);
-		super.onProgressUpdate(values);
-	}
+    override fun onProgressUpdate(values: Array<Any?>) {
+        // TODO: Implement this method
+        _dlg.setProgress(current)
+        super.onProgressUpdate(*values)
+    }
 
 
+    @Throws(IOException::class)
+    private fun readAll(input: InputStream): ByteArray {
+        val output = ByteArrayOutputStream(4096)
+        val buffer = ByteArray(4096)
+        var n = 0
+        current = 0
+        while (-1 != (input.read(buffer).also { n = it })) {
+            output.write(buffer, 0, n)
+            current += n
+            publishProgress()
+        }
+        val ret = output.toByteArray()
+        output.close()
+        return ret
+    }
 
-	private byte[] readAll(InputStream input) throws IOException
-	{
-		ByteArrayOutputStream output = new ByteArrayOutputStream(4096);
-		byte[] buffer = new byte[4096];
-		int n = 0;
-		_total=0;
-		while (-1 != (n = input.read(buffer)))
-		{
-			output.write(buffer, 0, n);
-			_total+=n;
-			publishProgress();
-		}
-		byte[] ret= output.toByteArray();
-		output.close();
-		return ret;
-	}
-
+    companion object {
+        var current: Int = 0
+            get() =// TODO: Implement this method
+                field
+            private set
+    }
 }

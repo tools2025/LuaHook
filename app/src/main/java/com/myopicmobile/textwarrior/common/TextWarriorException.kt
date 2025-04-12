@@ -6,29 +6,28 @@
  *
  * This software is provided "as is". Use at your own risk.
  */
-package com.myopicmobile.textwarrior.common;
-import android.util.*;
+package com.myopicmobile.textwarrior.common
 
-public class TextWarriorException extends Exception {
-	private static final boolean NDEBUG = false; // set to true to suppress assertions
-	private static final long serialVersionUID = -8393914265675038931L;
+import android.util.Log
 
-	public TextWarriorException(String msg){
-		super(msg);
-	}
+class TextWarriorException(msg: String?) : Exception(msg) {
+    companion object {
+        private const val NDEBUG = false // set to true to suppress assertions
+        private val serialVersionUID = -8393914265675038931L
 
-	static public void fail(final String details){
-		assertVerbose(false, details);
-	}
+        @JvmStatic
+		fun fail(details: String) {
+            assertVerbose(false, details)
+        }
 
-	@SuppressWarnings("all") //suppress dead code warning when NDEBUG == true
-	static public void assertVerbose(boolean condition, final String details){
-		if(NDEBUG){
-			return;
-		}
+        @JvmStatic
+		fun assertVerbose(condition: Boolean, details: String) {
+            if (NDEBUG) {
+                return
+            }
 
-		if (!condition){
-			/* BlackBerry dialog way of displaying errors
+            if (!condition) {
+                /* BlackBerry dialog way of displaying errors
 		        UiApplication.getUiApplication().invokeLater(new Runnable()
 		        {
 		            public void run()
@@ -38,12 +37,13 @@ public class TextWarriorException extends Exception {
 		        });
 		    */
 
-			/* For Android, a Context has to be passed into this method
+                /* For Android, a Context has to be passed into this method
 			 * to display the error message on the device screen */
 
-			System.err.print("TextWarrior assertion failed: ");
-			System.err.println(details);
-			Log.i("lua",details);
-		}
-	}
+                System.err.print("TextWarrior assertion failed: ")
+                System.err.println(details)
+                Log.i("lua", details)
+            }
+        }
+    }
 }

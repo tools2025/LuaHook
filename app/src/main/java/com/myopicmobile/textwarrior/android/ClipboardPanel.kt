@@ -1,117 +1,107 @@
-package com.myopicmobile.textwarrior.android;
-import android.widget.*;
-import android.content.*;
-import android.view.View.*;
-import android.view.*;
-import com.myopicmobile.textwarrior.common.ColorScheme.Colorable;
-import android.content.res.*;
+package com.myopicmobile.textwarrior.android
 
-public class ClipboardPanel {
-	protected FreeScrollingTextField _textField;
-	private Context _context;
-	private ActionMode  _clipboardActionMode;
+import android.R
+import android.annotation.SuppressLint
+import android.content.Context
+import android.view.ActionMode
+import android.view.Menu
+import android.view.MenuItem
 
-	public ClipboardPanel(FreeScrollingTextField textField) {
-		_textField = textField;
-		_context = textField.getContext();
-		
-		
-	}
+class ClipboardPanel(protected var _textField: FreeScrollingTextField) {
+    val context: Context
+    private var _clipboardActionMode: ActionMode? = null
+
+    init {
+        this.context = _textField.getContext()
+    }
 
 
-	public Context getContext() {
-		return _context;
-	}
+    fun show() {
+        startClipboardAction()
+    }
 
-	public void show() {
-		startClipboardAction();
-	}
+    fun hide() {
+        stopClipboardAction()
+    }
 
-	public void hide() {
-		stopClipboardAction();
-	}
+    fun startClipboardAction() {
+        // TODO: Implement this method
+        if (_clipboardActionMode == null) _textField.startActionMode(object : ActionMode.Callback {
+            @SuppressLint("ResourceType")
+            override fun onCreateActionMode(mode: ActionMode, menu: Menu): Boolean {
+                // TODO: Implement this method
+                _clipboardActionMode = mode
+                mode.setTitle(R.string.selectTextMode)
+                val array = context.getTheme().obtainStyledAttributes(
+                    intArrayOf(
+                        R.attr.actionModeSelectAllDrawable,
+                        R.attr.actionModeCutDrawable,
+                        R.attr.actionModeCopyDrawable,
+                        R.attr.actionModePasteDrawable,
+                    )
+                )
+                menu.add(0, 0, 0, context.getString(R.string.selectAll))
+                    .setShowAsActionFlags(2)
+                    .setAlphabeticShortcut('a')
+                    .setIcon(array.getDrawable(0))
 
-	public void startClipboardAction() {
-		// TODO: Implement this method
-		if (_clipboardActionMode == null)
-			_textField.startActionMode(new ActionMode.Callback(){
+                menu.add(0, 1, 0, context.getString(R.string.cut))
+                    .setShowAsActionFlags(2)
+                    .setAlphabeticShortcut('x')
+                    .setIcon(array.getDrawable(1))
 
-					@Override
-					public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-						// TODO: Implement this method
-						_clipboardActionMode = mode;
-						mode.setTitle(android.R.string.selectTextMode);
-						TypedArray array = _context.getTheme().obtainStyledAttributes(new int[] {  
-																						  android.R.attr.actionModeSelectAllDrawable, 
-																						  android.R.attr.actionModeCutDrawable, 
-																						  android.R.attr.actionModeCopyDrawable, 
-																						  android.R.attr.actionModePasteDrawable, 
-																					  }); 
-						menu.add(0, 0, 0, _context.getString(android.R.string.selectAll))
-							.setShowAsActionFlags(2)
-							.setAlphabeticShortcut('a')
-							.setIcon(array.getDrawable(0));
+                menu.add(0, 2, 0, context.getString(R.string.copy))
+                    .setShowAsActionFlags(2)
+                    .setAlphabeticShortcut('c')
+                    .setIcon(array.getDrawable(2))
 
-						menu.add(0, 1, 0, _context.getString(android.R.string.cut))
-							.setShowAsActionFlags(2)
-							.setAlphabeticShortcut('x')
-							.setIcon(array.getDrawable(1));
+                menu.add(0, 3, 0, context.getString(R.string.paste))
+                    .setShowAsActionFlags(2)
+                    .setAlphabeticShortcut('v')
+                    .setIcon(array.getDrawable(3))
+                array.recycle()
+                return true
+            }
 
-						menu.add(0, 2, 0, _context.getString(android.R.string.copy))
-							.setShowAsActionFlags(2)
-							.setAlphabeticShortcut('c')
-							.setIcon(array.getDrawable(2));
-						
-						menu.add(0, 3, 0, _context.getString(android.R.string.paste))
-							.setShowAsActionFlags(2)
-							.setAlphabeticShortcut('v')
-							.setIcon(array.getDrawable(3));
-						array.recycle();
-						return true;
-					}
+            override fun onPrepareActionMode(mode: ActionMode?, menu: Menu?): Boolean {
+                // TODO: Implement this method
+                return false
+            }
 
-					@Override
-					public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-						// TODO: Implement this method
-						return false;
-					}
+            override fun onActionItemClicked(mode: ActionMode, item: MenuItem): Boolean {
+                // TODO: Implement this method
+                when (item.getItemId()) {
+                    0 -> _textField.selectAll()
+                    1 -> {
+                        _textField.cut()
+                        mode.finish()
+                    }
 
-					@Override
-					public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-						// TODO: Implement this method
-						switch (item.getItemId()) {
-							case 0:
-								_textField.selectAll();
-								break;
-							case 1:
-								_textField.cut();
-								mode.finish();
-								break;
-							case 2:
-								_textField.copy();
-								mode.finish();
-								break;
-							case 3:
-								_textField.paste();
-								mode.finish();
-						}
-						return false;
-					}
+                    2 -> {
+                        _textField.copy()
+                        mode.finish()
+                    }
 
-					@Override
-					public void onDestroyActionMode(ActionMode p1) {
-						// TODO: Implement this method
-						_textField.selectText(false);
-						_clipboardActionMode = null;
-					}
-				});
+                    3 -> {
+                        _textField.paste()
+                        mode.finish()
+                    }
+                }
+                return false
+            }
 
-	}
-	public void stopClipboardAction() {
-		if (_clipboardActionMode != null) {
-			_clipboardActionMode.finish();
-			_clipboardActionMode = null;
-		}
-	}
+            override fun onDestroyActionMode(p1: ActionMode?) {
+                // TODO: Implement this method
+                _textField.selectText(false)
+                _clipboardActionMode = null
+            }
+        })
+    }
 
+    fun stopClipboardAction() {
+        if (_clipboardActionMode != null) {
+            _clipboardActionMode!!.finish()
+            _clipboardActionMode = null
+        }
+    }
 }

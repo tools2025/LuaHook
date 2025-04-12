@@ -6,8 +6,8 @@
  *
  * This software is provided "as is". Use at your own risk.
  */
-package com.myopicmobile.textwarrior.common;
+package com.myopicmobile.textwarrior.common
 
-public interface RowListener {
-	public void onRowChange(int newRowIndex);
+interface RowListener {
+    fun onRowChange(newRowIndex: Int)
 }

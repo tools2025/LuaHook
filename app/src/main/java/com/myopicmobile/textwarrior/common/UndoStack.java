@@ -12,11 +12,11 @@ import java.util.LinkedList;
 
 /**
  * Implements undo/redo for insertion and deletion events of TextBuffer
- * 
- * This class is tightly coupled to the implementation of TextBuffer, in 
- * particular the inner workings of the gap data structure to optimize 
+ *
+ * This class is tightly coupled to the implementation of TextBuffer, in
+ * particular the inner workings of the gap data structure to optimize
  * undo/redo efficiency
- * 
+ *
  * When text is inserted/deleted...
  * 1. Before text is inserted/deleted, TextBuffer calls captureInsert()/captureDelete()
  * 2. If the insertion/deletion is a continuation of the previous edit,
@@ -27,17 +27,17 @@ import java.util.LinkedList;
  *    the earlier edit.
  * 3. If the incoming edit is not continuous with the previous one, a new entry
  *    for it is pushed on the stack
- * 
+ *
  * Batch mode:
  * A client application can specify consecutive insert/delete operations to
  * undo/redo as a group. Edits made between a call to beginBatchEdit()
  * and a closing endBatchEdit() call are grouped as a unit.
- * 
+ *
  * Undo/redo:
- * Undo/redo commands merely move the stack pointer and do not delete or insert 
+ * Undo/redo commands merely move the stack pointer and do not delete or insert
  * entries. Only when a new edit is made will the entries after the stack
  * pointer be deleted.
- * 
+ *
  * Optimizaton notes:
  * Edited characters are copied lazily. When a new entry is pushed on the undo
  * stack, only the starting position and length of the inserted/deleted segment
@@ -58,14 +58,14 @@ public class UndoStack {
 	private int _top = 0;
 	/** timestamp for the previous edit operation */
 	long _lastEditTime = -1;
-	
+
 	public UndoStack(TextBuffer buf){
 		_buf = buf;
 	}
-	
+
 	/**
 	 * Undo the previous insert/delete operation
-	 * 
+	 *
 	 * @return The suggested position of the caret after the undo, or -1 if
 	 *			there is nothing to undo
 	 */
@@ -78,7 +78,7 @@ public class UndoStack {
 				if(c._group != group){
 					break;
 				}
-				
+
 				lastUndone = c;
 				c.undo();
 				--_top;
@@ -87,13 +87,13 @@ public class UndoStack {
 
 			return lastUndone.findUndoPosition();
 		}
-		
+
 		return -1;
 	}
-	
+
 	/**
 	 * Redo the previous insert/delete operation
-	 * 
+	 *
 	 * @return The suggested position of the caret after the redo, or -1 if
 	 *			there is nothing to redo
 	 */
@@ -112,7 +112,7 @@ public class UndoStack {
 				++_top;
 			}
 			while(canRedo());
-			
+
 			return lastRedone.findRedoPosition();
 		}
 
@@ -126,10 +126,10 @@ public class UndoStack {
 	 */
 	public void captureInsert(int start, int length, long time){
 		boolean mergeSuccess = false;
-		
+
 		if(canUndo()){
 			Command c = _stack.get(_top - 1);
-			
+
 			if(c instanceof InsertCommand
 					&& c.merge(start, length, time)){
 				mergeSuccess = true;
@@ -138,15 +138,15 @@ public class UndoStack {
 				c.recordData();
 			}
 		}
-		
+
 		if(!mergeSuccess){
 			push(new InsertCommand(start, length, _groupId));
-			
+
 			if(!_isBatchEdit){
 				_groupId++;
 			}
 		}
-		
+
 		_lastEditTime = time;
 	}
 
@@ -156,10 +156,10 @@ public class UndoStack {
 	 */
 	public void captureDelete(int start, int length, long time){
 		boolean mergeSuccess = false;
-		
+
 		if(canUndo()){
 			Command c = _stack.get(_top - 1);
-			
+
 			if(c instanceof DeleteCommand
 					&& c.merge(start, length, time)){
 				mergeSuccess = true;
@@ -168,7 +168,7 @@ public class UndoStack {
 				c.recordData();
 			}
 		}
-		
+
 		if(!mergeSuccess){
 			push(new DeleteCommand(start, length, _groupId));
 
@@ -176,22 +176,22 @@ public class UndoStack {
 				_groupId++;
 			}
 		}
-		
+
 		_lastEditTime = time;
 	}
-	
+
 	private void push(Command c){
 		trimStack();
 		++_top;
 		_stack.add(c);
 	}
-	
+
 	private void trimStack(){
 		while(_stack.size() > _top){
 			_stack.removeLast();
 		}
 	}
-	
+
 	public final boolean canUndo(){
 		return _top > 0;
 	}
@@ -203,18 +203,18 @@ public class UndoStack {
 	public boolean isBatchEdit(){
 		return _isBatchEdit;
 	}
-	
+
 	public void beginBatchEdit(){
 		_isBatchEdit = true;
 	}
-	
+
 	public void endBatchEdit(){
 		_isBatchEdit = false;
 		_groupId++;
 	}
-	
-	
-	
+
+
+
 	private abstract class Command{
 		public final static long MERGE_TIME = 1000000000; //750ms in nanoseconds
 		/** Start position of the edit */
@@ -225,7 +225,7 @@ public class UndoStack {
 		public String _data;
 		/** Group ID. Commands of the same group are undone/redone as a unit */
 		public int _group;
-		
+
 		public abstract void undo();
 		public abstract void redo();
 		/** Populates _data with the affected text */
@@ -237,18 +237,18 @@ public class UndoStack {
 		 * Attempts to merge in an edit. This will only be successful if the new
 		 * edit is continuous. See {@link UndoStack} for the requirements
 		 * of a continuous edit.
-		 * 
+		 *
 		 * @param start Start position of the new edit
 		 * @param length Length of the newly edited segment
-		 * @param time Timestamp when the new edit was made. There are no 
-		 * restrictions  on the units used, as long as it is consistently used 
+		 * @param time Timestamp when the new edit was made. There are no
+		 * restrictions  on the units used, as long as it is consistently used
 		 * in the whole program
-		 * 
+		 *
 		 * @return Whether the merge was successful
 		 */
 		public abstract boolean merge(int start, int length, long time);
 	}
-	
+
 	private class InsertCommand extends Command{
 		/**
 		 * Corresponds to an insertion of text of size length just before
@@ -265,14 +265,14 @@ public class UndoStack {
 			if(_lastEditTime < 0){
 				return false;
 			}
-			
+
 			if((time - _lastEditTime) < MERGE_TIME
 					&& newStart == _start + _length){
 				_length += length;
 				trimStack();
 				return true;
 			}
-			
+
 			return false;
 		}
 
@@ -310,8 +310,8 @@ public class UndoStack {
 			return _start;
 		}
 	}
-	
-	
+
+
 	private class DeleteCommand extends Command{
 		/**
 		 * Corresponds to an deletion of text of size length starting from
@@ -328,7 +328,7 @@ public class UndoStack {
 			if(_lastEditTime < 0){
 				return false;
 			}
-			
+
 			if((time - _lastEditTime) < MERGE_TIME
 					&& newStart == _start - _length - length + 1){
 				_start = newStart;
@@ -336,7 +336,7 @@ public class UndoStack {
 				trimStack();
 				return true;
 			}
-			
+
 			return false;
 		}
 

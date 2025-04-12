@@ -1,124 +1,106 @@
-package com.myopicmobile.textwarrior.common;
+package com.myopicmobile.textwarrior.common
 
-import com.androlua.LuaLexer;
-import com.androlua.LuaTokenTypes;
+import com.androlua.LuaLexer
+import com.androlua.LuaTokenTypes
+import java.io.IOException
+import kotlin.math.max
 
-import java.io.IOException;
-
-public class AutoIndent {
-    public static int createAutoIndent(CharSequence text) {
-        LuaLexer lexer = new LuaLexer(text);
-        int idt = 0;
+object AutoIndent {
+    @JvmStatic
+    fun createAutoIndent(text: CharSequence?): Int {
+        val lexer = LuaLexer(text)
+        var idt = 0
         try {
             while (true) {
-                LuaTokenTypes type = lexer.advance();
+                val type = lexer.advance()
                 if (type == null) {
-                    break;
+                    break
                 }
-                if (lexer.yytext().equals("switch"))
-                    idt += 1;
-                else
-                    idt += indent(type);
+                if (lexer.yytext() == "switch") idt += 1
+                else idt += indent(type)
             }
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (e: IOException) {
+            e.printStackTrace()
         }
-        return idt;
+        return idt
     }
 
 
-    private static int indent(LuaTokenTypes t) {
-        switch (t) {
-            case FOR:
-            case WHILE:
-            case FUNCTION:
-            case IF:
-            case REPEAT:
-            case LCURLY:
-            case SWITCH:
-                return 1;
-            case UNTIL:
-            case END:
-            case RCURLY:
-                return -1;
-            default:
-                return 0;
+    private fun indent(t: LuaTokenTypes): Int {
+        when (t) {
+            LuaTokenTypes.FOR, LuaTokenTypes.WHILE, LuaTokenTypes.FUNCTION, LuaTokenTypes.IF, LuaTokenTypes.REPEAT, LuaTokenTypes.LCURLY, LuaTokenTypes.SWITCH -> return 1
+            LuaTokenTypes.UNTIL, LuaTokenTypes.END, LuaTokenTypes.RCURLY -> return -1
+            else -> return 0
         }
     }
 
-    public static CharSequence format(CharSequence text, int width) {
-        StringBuilder builder = new StringBuilder();
-        boolean isNewLine = true;
-        LuaLexer lexer = new LuaLexer(text);
+    @JvmStatic
+    fun format(text: CharSequence?, width: Int): CharSequence {
+        val builder = StringBuilder()
+        var isNewLine = true
+        val lexer = LuaLexer(text)
         try {
-            int idt = 0;
+            var idt = 0
 
             while (true) {
-                LuaTokenTypes type = lexer.advance();
-                if (type == null)
-                    break;
+                val type = lexer.advance()
+                if (type == null) break
 
                 if (type == LuaTokenTypes.NEW_LINE) {
-                    if(builder.length()>0&&builder.charAt(builder.length()-1)==' ')
-                        builder.deleteCharAt(builder.length()-1);
-                    isNewLine = true;
-                    builder.append('\n');
-                    idt = Math.max(0, idt);
+                    if (builder.length > 0 && builder.get(builder.length - 1) == ' ') builder.deleteCharAt(
+                        builder.length - 1
+                    )
+                    isNewLine = true
+                    builder.append('\n')
+                    idt = max(0.0, idt.toDouble()).toInt()
                 } else if (isNewLine) {
-                    switch (type) {
-                        case WHITE_SPACE:
-                            break;
-                        case ELSE:
-                        case ELSEIF:
-                        case CASE:
-                        case DEFAULT:
+                    when (type) {
+                        LuaTokenTypes.WHITE_SPACE -> {}
+                        LuaTokenTypes.ELSE, LuaTokenTypes.ELSEIF, LuaTokenTypes.CASE, LuaTokenTypes.DEFAULT -> {
                             //idt--;
-                            builder.append(createIndent(idt * width - width / 2));
-                            builder.append(lexer.yytext());
+                            builder.append(createIndent(idt * width - width / 2))
+                            builder.append(lexer.yytext())
                             //idt++;
-                            isNewLine = false;
-                            break;
-                        case DOUBLE_COLON:
-                        case AT:
-                            builder.append(lexer.yytext());
-                            isNewLine = false;
-                            break;
-                        case END:
-                        case UNTIL:
-                        case RCURLY:
-                            idt--;
-                            builder.append(createIndent(idt * width));
-                            builder.append(lexer.yytext());
-                            isNewLine = false;
-                            break;
-                        default:
-                            builder.append(createIndent(idt * width));
-                            builder.append(lexer.yytext());
-                            idt += indent(type);
-                            isNewLine = false;
+                            isNewLine = false
+                        }
+
+                        LuaTokenTypes.DOUBLE_COLON, LuaTokenTypes.AT -> {
+                            builder.append(lexer.yytext())
+                            isNewLine = false
+                        }
+
+                        LuaTokenTypes.END, LuaTokenTypes.UNTIL, LuaTokenTypes.RCURLY -> {
+                            idt--
+                            builder.append(createIndent(idt * width))
+                            builder.append(lexer.yytext())
+                            isNewLine = false
+                        }
+
+                        else -> {
+                            builder.append(createIndent(idt * width))
+                            builder.append(lexer.yytext())
+                            idt += indent(type)
+                            isNewLine = false
+                        }
                     }
                 } else if (type == LuaTokenTypes.WHITE_SPACE) {
-                    builder.append(' ');
+                    builder.append(' ')
                 } else {
-                    builder.append(lexer.yytext());
-                    idt += indent(type);
+                    builder.append(lexer.yytext())
+                    idt += indent(type)
                 }
-
             }
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (e: IOException) {
+            e.printStackTrace()
         }
 
-        return builder;
+        return builder
     }
 
-    private static char[] createIndent(int n) {
-        if (n < 0)
-            return new char[0];
-        char[] idts = new char[n];
-        for (int i = 0; i < n; i++)
-            idts[i] = ' ';
-        return idts;
+    private fun createIndent(n: Int): CharArray? {
+        if (n < 0) return CharArray(0)
+        val idts = CharArray(n)
+        for (i in 0..<n) idts[i] = ' '
+        return idts
     }
-
 }
