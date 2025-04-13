@@ -176,7 +176,7 @@ class Document(
             return
         }
 
-        analyzeWordWrap(1, 0, getTextLength())
+        analyzeWordWrap(1, 0,textLength)
     }
 
     private fun hasMinimumWidthForWordWrap(): Boolean {
@@ -309,7 +309,7 @@ class Document(
             return _rowTable!!.get(rowNumber + 1)!! - _rowTable!!.get(rowNumber)!!
         } else {
             //last row
-            return getTextLength() - _rowTable!!.get(rowNumber)!!
+            return textLength - _rowTable!!.get(rowNumber)!!
         }
     }
 
@@ -340,7 +340,7 @@ class Document(
         while (right >= left) {
             val mid = (left + right) / 2
             val nextLineOffset =
-                (if ((mid + 1) < _rowTable!!.size) _rowTable!!.get(mid + 1) else getTextLength())!!
+                (if ((mid + 1) < _rowTable!!.size) _rowTable!!.get(mid + 1) else textLength)!!
             if (charOffset >= _rowTable!!.get(mid)!! && charOffset < nextLineOffset) {
                 return mid
             }

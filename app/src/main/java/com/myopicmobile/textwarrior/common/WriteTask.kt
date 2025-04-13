@@ -1,109 +1,85 @@
-package com.myopicmobile.textwarrior.common;
+package com.myopicmobile.textwarrior.common
 
-import android.app.ProgressDialog;
-import android.os.AsyncTask;
-
-import com.kulipai.luahook.LuaEditor;
-
-import java.io.BufferedOutputStream;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStreamWriter;
+import android.R
+import android.app.ProgressDialog
+import android.os.AsyncTask
+import com.kulipai.luahook.LuaEditor
+import java.io.BufferedOutputStream
+import java.io.BufferedWriter
+import java.io.File
+import java.io.FileOutputStream
+import java.io.OutputStreamWriter
 
 /**
  * Created by Administrator on 2018/07/18 0018.
  */
+class WriteTask(private val _edit: LuaEditor, private val _file: File) :
+    AsyncTask<Any?, Any?, Any?>() {
+    private val _dlg: ProgressDialog
 
-public class WriteTask extends AsyncTask
-{
-    private ProgressDialog _dlg;
+
+    val min: Int
+        get() =//new Future;
+            // TODO: Implement this method
+            0
 
 
-    public int getMin()
-    {//new Future;
+    val max: Int
+        get() =// TODO: Implement this method
+            _len.toInt()
+
+
+    protected val _buf: Document
+
+    private val _len: Long
+
+    constructor(edit: LuaEditor, fileName: String) : this(edit, File(fileName))
+
+    init {
+        _len = _file.length()
+        _buf = Document(_edit)
+        _dlg = ProgressDialog(_edit.getContext())
+        _dlg.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
+        _dlg.setTitle("正在保存")
+        _dlg.setIcon(R.drawable.ic_dialog_info)
+        _dlg.setMax(_len.toInt())
+    }
+
+    fun start() {
         // TODO: Implement this method
-        return 0;
+        execute()
+        _dlg.show()
     }
 
-
-    public int getMax()
-    {
+    override fun doInBackground(p1: Array<Any?>?): Any {
         // TODO: Implement this method
-        return (int)_len;
-    }
-
-
-    public int getCurrent()
-    {
-        // TODO: Implement this method
-        return _total;
-    }
-
-
-    final protected Document _buf;
-    private static int _total = 0;
-    private LuaEditor _edit;
-
-    private File _file;
-
-    private long _len;
-
-    public WriteTask(LuaEditor edit,String fileName){
-        this(edit,new File(fileName));
-    }
-
-    public WriteTask(LuaEditor edit,File file){
-        _file=file;
-        _len=_file.length();
-        _edit=edit;
-        _buf=new Document(edit);
-        _dlg=new ProgressDialog(edit.getContext());
-        _dlg.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-        _dlg.setTitle("正在保存");
-        _dlg.setIcon(android.R.drawable.ic_dialog_info);
-        _dlg.setMax((int)_len);
-    }
-
-    public void start()
-    {
-        // TODO: Implement this method
-        execute();
-        _dlg.show();
-    }
-    @Override
-    protected Object doInBackground(Object[] p1)
-    {
-        // TODO: Implement this method
-        try
-        {
-
-            BufferedWriter fi = new BufferedWriter( new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(_file))));
-            fi.write(_edit.getText().toString());
-            return true;
+        try {
+            val fi =
+                BufferedWriter(OutputStreamWriter(BufferedOutputStream(FileOutputStream(_file))))
+            fi.write(_edit.text.toString())
+            return true
+        } catch (e: Exception) {
+            _dlg.setMessage(e.message)
         }
-        catch (Exception e)
-        {
-            _dlg.setMessage(e.getMessage());
-        }
-        return "";
+        return ""
     }
 
-    @Override
-    protected void onPostExecute(Object result)
-    {
+    override fun onPostExecute(result: Any?) {
         // TODO: Implement this method
-        super.onPostExecute(result);
-         _dlg.dismiss();
+        super.onPostExecute(result)
+        _dlg.dismiss()
     }
 
-    @Override
-    protected void onProgressUpdate(Object[] values)
-    {
+    override fun onProgressUpdate(values: Array<Any?>) {
         // TODO: Implement this method
-        _dlg.setProgress(_total);
-        super.onProgressUpdate(values);
+        _dlg.setProgress(current)
+        super.onProgressUpdate(*values)
     }
 
 
+    companion object {
+        val current: Int = 0
+            get() =// TODO: Implement this method
+                field
+    }
 }

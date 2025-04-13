@@ -18,7 +18,7 @@ class TrackpadNavigationMethod(textField: FreeScrollingTextField) :
 
     override fun onDown(e: MotionEvent): Boolean {
         fling = 0
-        MOVEMENT_PIXELS = _textField.rowHeight() * 2
+        MOVEMENT_PIXELS = _textField!!.rowHeight() * 2
         return true
     }
 
@@ -70,7 +70,7 @@ class TrackpadNavigationMethod(textField: FreeScrollingTextField) :
     private var _yAccum = 0.0f
 
     init {
-        MOVEMENT_PIXELS = _textField.rowHeight() * 2
+        MOVEMENT_PIXELS = _textField!!.rowHeight() * 2
     }
 
     private fun moveCaretWithTrackpad(distanceX: Float, distanceY: Float) {
@@ -91,12 +91,12 @@ class TrackpadNavigationMethod(textField: FreeScrollingTextField) :
             _xAccum = x - (xUnits * MOVEMENT_PIXELS)
 
             while (xUnits > 0) {
-                _textField.moveCaretRight()
+                _textField!!.moveCaretRight()
                 --xUnits
                 if (fling == 0) fling = 1
             }
             while (xUnits < 0) {
-                _textField.moveCaretLeft()
+                _textField!!.moveCaretLeft()
                 ++xUnits
                 if (fling == 0) fling = 1
             }
@@ -109,11 +109,11 @@ class TrackpadNavigationMethod(textField: FreeScrollingTextField) :
             _yAccum = y - (yUnits * MOVEMENT_PIXELS)
 
             for (i in yUnits downTo 1) {
-                _textField.moveCaretDown()
+                _textField!!.moveCaretDown()
                 if (fling == 0) fling = -1
             }
             for (i in yUnits..-1) {
-                _textField.moveCaretUp()
+                _textField!!.moveCaretUp()
                 if (fling == 0) fling = -1
             }
         }
@@ -124,13 +124,13 @@ class TrackpadNavigationMethod(textField: FreeScrollingTextField) :
     }
 
     override fun onLongPress(e: MotionEvent) {
-        _textField.setSelected(!_textField.isSelectText())
-        _textField.setSelectionRange(_textField.getCaretPosition(), 0)
+        _textField!!.setSelected(!_textField!!.isSelectText)
+        _textField!!.setSelectionRange(_textField!!.caretPosition, 0)
     }
 
     override fun onDoubleTap(e: MotionEvent): Boolean {
-        _textField.setSelected(!_textField.isSelectText())
-        _textField.setSelectionRange(_textField.getCaretPosition(), 0)
+        _textField!!.setSelected(!_textField!!.isSelectText)
+        _textField!!.setSelectionRange(_textField!!.caretPosition, 0)
         return true
     }
 

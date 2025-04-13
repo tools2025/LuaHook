@@ -2,18 +2,27 @@ package com.kulipai.luahook
 
 import SelectAppsAdapter
 import android.content.Context
+import android.graphics.Rect
 import android.os.Bundle
+import android.view.View
+import android.widget.EditText
+import android.widget.ImageView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.edit
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.color.DynamicColors
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.kulipai.luahook.fragment.AppInfo
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.collections.mutableListOf
 import kotlin.getValue
@@ -21,10 +30,17 @@ import kotlin.getValue
 class SelectApps : AppCompatActivity() {
 
     var selectApps = mutableListOf<String>()
+    var searchJob: Job? = null
+    lateinit var availableAppsToShow:List<AppInfo>
+    lateinit var adapter: SelectAppsAdapter
+
 
 
     private val rec: RecyclerView by lazy { findViewById(R.id.rec) }
     private val fab: FloatingActionButton by lazy { findViewById(R.id.fab) }
+    private  val searchEdit: EditText by lazy { findViewById(R.id.search_bar_text_view) }
+    private val clearImage: ImageView by lazy { findViewById(R.id.clear_text) }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         DynamicColors.applyToActivityIfAvailable(this)
         super.onCreate(savedInstanceState)
@@ -33,14 +49,14 @@ class SelectApps : AppCompatActivity() {
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            v.setPadding(systemBars.left, 0, systemBars.right, 0)
             insets
         }
 
         val selectedPackageNames = getStringList(this@SelectApps,"selectApps")
         selectApps = selectedPackageNames
 
-        val adapter = SelectAppsAdapter(emptyList(),this,selectApps) // 先传空列表
+        adapter = SelectAppsAdapter(emptyList(),this,selectApps) // 先传空列表
         rec.layoutManager = LinearLayoutManager(this)
         rec.adapter = adapter
 
@@ -50,11 +66,40 @@ class SelectApps : AppCompatActivity() {
             //去除已选择app
 
             val selectedPackagesSet: Set<String> = selectedPackageNames.toSet()
-            val availableAppsToShow: List<AppInfo> = apps.filter { appInfo ->
+            availableAppsToShow = apps.filter { appInfo ->
                 !selectedPackagesSet.contains(appInfo.packageName)
                 // 或者写成: appInfo.packageName !in selectedPackagesSet
             }
             adapter.updateData(availableAppsToShow)
+        }
+
+
+        rec.addItemDecoration(object : RecyclerView.ItemDecoration() {
+            override fun getItemOffsets(
+                outRect: Rect,
+                view: View,
+                parent: RecyclerView,
+                state: RecyclerView.State
+            ) {
+                if (parent.getChildAdapterPosition(view) == 0) {
+                    outRect.top = (88 * resources.displayMetrics.density).toInt()
+                }
+            }
+        })
+
+        //搜索
+        searchEdit.doAfterTextChanged { s ->
+            val input = s.toString()
+            searchJob?.cancel()
+            searchJob = CoroutineScope(Dispatchers.Main).launch {
+                delay(100) // 延迟300ms
+                filterAppList(s.toString().trim(),clearImage)
+            }
+        }
+
+        clearImage.setOnClickListener {
+            searchEdit.setText("")
+            clearImage.visibility = View.INVISIBLE
         }
 
         fab.setOnClickListener {
@@ -82,5 +127,20 @@ class SelectApps : AppCompatActivity() {
             mutableListOf()
         }
     }
+    private fun filterAppList(query: String,clearImage: ImageView) {
+        val filteredList = if (query.isEmpty()) {
+            clearImage.visibility = View.INVISIBLE
+            availableAppsToShow // 显示全部
+        } else {
+            clearImage.visibility = View.VISIBLE
+            availableAppsToShow.filter {
+                it.appName.contains(query, ignoreCase = true) ||
+                        it.packageName.contains(query, ignoreCase = true)
+            }
+        }
+        adapter.updateData(filteredList)
+    }
+
+
 
 }

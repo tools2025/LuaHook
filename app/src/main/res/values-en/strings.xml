@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">LuaHook</string>
+    <string name="push">push</string>
+    <string name="search">Search</string>
+    <string name="Xposed_status_no">Not activated</string>
+    <string name="Global_scripts">Global Scripts</string>
+    <string name="Global_script_description">Global scripts for all apps</string>
+    <string name="add_app">Add app</string>
+    <string name="format">Format</string>
+    <string name="log">Log</string>
+    <string name="manual">Manual</string>
+    <string name="about">About</string>
+    <string name="save_ok">Saved successfully</string>
+    <string name="home">Home</string>
+    <string name="apps">Apps</string>
+    <string name="Xposed_status_ok">Activated</string>
+</resources>

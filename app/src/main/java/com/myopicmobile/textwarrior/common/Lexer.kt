@@ -24,7 +24,7 @@ class Lexer(callback: LexCallback?) {
     private var _workerThread: LexThread? = null
 
     fun tokenize(hDoc: DocumentProvider) {
-        if (!language.isProgLang()) {
+        if (!language.isProgLang) {
             return
         }
 
@@ -112,7 +112,7 @@ class Lexer(callback: LexCallback?) {
 
         fun tokenize() {
             val hDoc: DocumentProvider = document
-            val rowCount = hDoc.getRowCount()
+            val rowCount = hDoc.rowCount
             val maxRow = 9999
             val tokens = ArrayList<Pair>(8196)
             val lines = ArrayList<Rect?>(8196)
@@ -320,7 +320,7 @@ class Lexer(callback: LexCallback?) {
                 language
             val tokens = ArrayList<Pair>()
 
-            if (!language.isProgLang()) {
+            if (!language.isProgLang) {
                 tokens.add(Pair(0, NORMAL))
                 _tokens = tokens
                 return
@@ -545,7 +545,7 @@ class Lexer(callback: LexCallback?) {
 
         @get:Synchronized
         @set:Synchronized
-        var language: Language = LanguageNonProg.getInstance()
+        var language: Language = LanguageNonProg.instance
 
         private fun isKeyword(t: LuaTokenTypes): Boolean {
             when (t) {

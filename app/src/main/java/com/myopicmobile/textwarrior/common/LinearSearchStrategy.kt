@@ -6,198 +6,244 @@
  *
  * This software is provided "as is". Use at your own risk.
  */
-package com.myopicmobile.textwarrior.common;
+package com.myopicmobile.textwarrior.common
+
+import com.myopicmobile.textwarrior.common.Lexer.Companion.language
+import com.myopicmobile.textwarrior.common.TextWarriorException.Companion.fail
+import kotlin.math.max
+import kotlin.math.min
 
 
-public class LinearSearchStrategy implements SearchStrategy{
-	private int _unitsDone = 0;
+class LinearSearchStrategy : SearchStrategy {
+    // only applicable to replaceAll operation
+    override var progress: Int = 0
+        private set
 
-	@Override
-	// only applicable to replaceAll operation
-	public int getProgress(){
-		return _unitsDone;
-	}
+    override fun wrappedFind(
+        src: DocumentProvider?,
+        target: String?,
+        start: Int,
+        isCaseSensitive: Boolean,
+        isWholeWord: Boolean
+    ): Int {
+        // search towards end of doc first...
 
-	@Override
-	public int wrappedFind(DocumentProvider src, String target, int start,
-			boolean isCaseSensitive, boolean isWholeWord){
+        var foundOffset = find(
+            src, target, start, src!!.docLength(),
+            isCaseSensitive, isWholeWord
+        )
+        // ...then from beginning of doc
+        if (foundOffset < 0) {
+            foundOffset = find(
+                src, target, 0, start,
+                isCaseSensitive, isWholeWord
+            )
+        }
 
-		// search towards end of doc first...
-		int foundOffset = find(src, target, start, src.docLength(),
-				isCaseSensitive, isWholeWord);
-		// ...then from beginning of doc
-		if(foundOffset < 0){
-			foundOffset = find(src, target, 0, start,
-					isCaseSensitive, isWholeWord);
-		}
+        return foundOffset
+    }
 
-		return foundOffset;
-	}
+    override fun find(
+        src: DocumentProvider?,
+        target: String?,
+        start: Int,
+        end: Int,
+        isCaseSensitive: Boolean,
+        isWholeWord: Boolean
+    ): Int {
+        var start = start
+        var end = end
+        if (target?.length == 0) {
+            return -1
+        }
+        if (start < 0) {
+            fail("TextBuffer.find: Invalid start position")
+            start = 0
+        }
+        if (end > src!!.docLength()) {
+            fail("TextBuffer.find: Invalid end position")
+            end = src.docLength()
+        }
 
-	@Override
-	public int find(DocumentProvider src, String target, int start, int end,
-			boolean isCaseSensitive, boolean isWholeWord) {
-		if(target.length() == 0){
-			return -1;
-		}
-		if(start < 0){
-			TextWarriorException.fail("TextBuffer.find: Invalid start position");
-			start = 0;
-		}
-		if(end > src.docLength()){
-			TextWarriorException.fail("TextBuffer.find: Invalid end position");
-			end = src.docLength();
-		}
+        end = min(end.toDouble(), (src.docLength() - target!!.length + 1).toDouble()).toInt()
+        var offset = start
+        while (offset < end) {
+            if (equals(src, target.toString(), offset, isCaseSensitive) &&
+                (!isWholeWord || isSandwichedByWhitespace(src, offset, target.length))
+            ) {
+                break
+            }
 
-		end = Math.min(end, src.docLength() - target.length() + 1);
-		int offset = start;
-		while(offset < end){
-			if(equals(src, target, offset, isCaseSensitive) &&
-			(!isWholeWord || isSandwichedByWhitespace(src, offset, target.length())) ){
-				break;
-			}
+            ++offset
+            ++this.progress
+        }
 
-			++offset;
-			++_unitsDone;
-		}
+        if (offset < end) {
+            return offset
+        } else {
+            return -1
+        }
+    }
 
-		if (offset < end){
-			return offset;
-		}
-		else{
-			return -1;
-		}
-	}
+    override fun wrappedFindBackwards(
+        src: DocumentProvider?,
+        target: String?,
+        start: Int,
+        isCaseSensitive: Boolean,
+        isWholeWord: Boolean
+    ): Int {
+        // search towards beginning of doc first...
 
-	@Override
-	public int wrappedFindBackwards(DocumentProvider src, String target, int start,
-			boolean isCaseSensitive, boolean isWholeWord){
+        var foundOffset = findBackwards(
+            src, target, start, -1,
+            isCaseSensitive, isWholeWord
+        )
+        // ...then from end of doc
+        if (foundOffset < 0) {
+            foundOffset = findBackwards(
+                src, target, src!!.docLength() - 1, start,
+                isCaseSensitive, isWholeWord
+            )
+        }
 
-		// search towards beginning of doc first...
-		int foundOffset = findBackwards(src, target, start, -1,
-				isCaseSensitive, isWholeWord);
-		// ...then from end of doc
-		if(foundOffset < 0){
-			foundOffset = findBackwards(src, target, src.docLength()-1, start,
-					isCaseSensitive, isWholeWord);
-		}
-
-		return foundOffset;
-	}
-
-
-	@Override
-	public int findBackwards(DocumentProvider src, String target, int start, int end,
-			boolean isCaseSensitive, boolean isWholeWord) {
-		if(target.length() == 0){
-			return -1;
-		}
-		if(start >= src.docLength()){
-			TextWarriorException.fail("Invalid start position given to TextBuffer.find");
-			start = src.docLength() - 1;
-		}
-		if(end < -1){
-			TextWarriorException.fail("Invalid end position given to TextBuffer.find");
-			end = -1;
-		}
-		int offset = Math.min(start, src.docLength()-target.length());
-		while(offset > end){
-			if(equals(src, target, offset, isCaseSensitive) &&
-				(!isWholeWord || isSandwichedByWhitespace(src, offset, target.length()) )){
-				break;
-			}
-
-			--offset;
-		}
-
-		if (offset > end){
-			return offset;
-		}
-		else{
-			return -1;
-		}
-	}
-
-	@Override
-	public Pair replaceAll(DocumentProvider src, String searchText,
-			String replacementText, int mark,
-			boolean isCaseSensitive, boolean isWholeWord){
-		int replacementCount = 0;
-		int anchor = mark;
-		_unitsDone = 0;
-
-		final char[] replacement = replacementText.toCharArray();
-		int foundIndex = find(src, searchText, 0, src.docLength(),
-				isCaseSensitive, isWholeWord);
-		long timestamp = System.nanoTime();
-
-		src.beginBatchEdit();
-		while (foundIndex != -1){
-			src.deleteAt(foundIndex, searchText.length(), timestamp);
-			src.insertBefore(replacement, foundIndex, timestamp);
-			if(foundIndex < anchor){
-				// adjust anchor because of differences in doc length
-				// after word replacement
-				anchor += replacementText.length() - searchText.length();
-			}
-			++replacementCount;
-			_unitsDone += searchText.length(); //skip replaced chars
-			foundIndex = find(
-					src,
-					searchText,
-					foundIndex + replacementText.length(),
-					src.docLength(),
-					isCaseSensitive,
-					isWholeWord);
-		}
-		src.endBatchEdit();
-
-		return new Pair(replacementCount, Math.max(anchor, 0));
-	}
+        return foundOffset
+    }
 
 
-	protected boolean equals(DocumentProvider src, String target,
-			int srcOffset, boolean isCaseSensitive){
-		if((src.docLength() - srcOffset) < target.length()){
-			//compared range in src must at least be as long as target
-			return false;
-		}
+    override fun findBackwards(
+        src: DocumentProvider?,
+        target: String?,
+        start: Int,
+        end: Int,
+        isCaseSensitive: Boolean,
+        isWholeWord: Boolean
+    ): Int {
+        var start = start
+        var end = end
+        if (target?.length == 0) {
+            return -1
+        }
+        if (start >= src!!.docLength()) {
+            fail("Invalid start position given to TextBuffer.find")
+            start = src.docLength() - 1
+        }
+        if (end < -1) {
+            fail("Invalid end position given to TextBuffer.find")
+            end = -1
+        }
+        var offset = min(start.toDouble(), (src.docLength() - target!!.length).toDouble()).toInt()
+        while (offset > end) {
+            if (equals(src, target.toString(), offset, isCaseSensitive) &&
+                (!isWholeWord || isSandwichedByWhitespace(src, offset, target.length))
+            ) {
+                break
+            }
 
-		int i;
-		for(i = 0; i < target.length(); ++i){
-			if (isCaseSensitive &&
-					target.charAt(i) != src.charAt(i + srcOffset)){
-				return false;
-			}
-			// for case-insensitive search, compare both strings in lower case
-			if (!isCaseSensitive &&
-					Character.toLowerCase(target.charAt(i)) !=
-					Character.toLowerCase(src.charAt(i + srcOffset))){
-				return false;
-			}
+            --offset
+        }
 
-		}
+        if (offset > end) {
+            return offset
+        } else {
+            return -1
+        }
+    }
 
-		return true;
-	}
+    override fun replaceAll(
+        src: DocumentProvider?,
+        searchText: String?,
+        replacementText: String?,
+        mark: Int,
+        isCaseSensitive: Boolean,
+        isWholeWord: Boolean
+    ): Pair? {
+        var replacementCount = 0
+        var anchor = mark
+        this.progress = 0
 
-	/**
-	 * Checks if a word starting at startPosition with size length is bounded
-	 * by whitespace.
-	 */
-	protected boolean isSandwichedByWhitespace(DocumentProvider src,
-			int start, int length){
-		Language charSet = Lexer.Companion.getLanguage();
-		boolean startWithWhitespace = (start == 0)
-				? true
-				: charSet.isWhitespace(src.charAt(start - 1));
+        val replacement = replacementText?.toCharArray()
+        var foundIndex = find(
+            src, searchText, 0, src!!.docLength(),
+            isCaseSensitive, isWholeWord
+        )
+        val timestamp = System.nanoTime()
 
-		int end = start + length;
-		boolean endWithWhitespace = (end == src.docLength())
-				? true
-				: charSet.isWhitespace(src.charAt(end));
+        src.beginBatchEdit()
+        while (foundIndex != -1) {
+            src.deleteAt(foundIndex, searchText!!.length, timestamp)
+            src.insertBefore(replacement, foundIndex, timestamp)
+            if (foundIndex < anchor) {
+                // adjust anchor because of differences in doc length
+                // after word replacement
+                anchor += replacementText!!.length - searchText.length
+            }
+            ++replacementCount
+            this.progress += searchText.length //skip replaced chars
+            foundIndex = find(
+                src,
+                searchText,
+                foundIndex + replacementText!!.length,
+                src.docLength(),
+                isCaseSensitive,
+                isWholeWord
+            )
+        }
+        src.endBatchEdit()
 
-		return (startWithWhitespace && endWithWhitespace);
-	}
+        return Pair(replacementCount, max(anchor.toDouble(), 0.0).toInt())
+    }
 
+
+    protected fun equals(
+        src: DocumentProvider, target: String,
+        srcOffset: Int, isCaseSensitive: Boolean
+    ): Boolean {
+        if ((src.docLength() - srcOffset) < target.length) {
+            //compared range in src must at least be as long as target
+            return false
+        }
+
+        var i: Int
+        i = 0
+        while (i < target.length) {
+            if (isCaseSensitive &&
+                target.get(i) != src.get(i + srcOffset)
+            ) {
+                return false
+            }
+            // for case-insensitive search, compare both strings in lower case
+            if (!isCaseSensitive &&
+                target.get(i).lowercaseChar() != src.get(i + srcOffset).lowercaseChar()
+            ) {
+                return false
+            }
+
+            ++i
+        }
+
+        return true
+    }
+
+    /**
+     * Checks if a word starting at startPosition with size length is bounded
+     * by whitespace.
+     */
+    protected fun isSandwichedByWhitespace(
+        src: DocumentProvider,
+        start: Int, length: Int
+    ): Boolean {
+        val charSet = language
+        val startWithWhitespace = if (start == 0)
+            true
+        else
+            charSet.isWhitespace(src.get(start - 1))
+
+        val end = start + length
+        val endWithWhitespace = if (end == src.docLength())
+            true
+        else
+            charSet.isWhitespace(src.get(end))
+
+        return (startWithWhitespace && endWithWhitespace)
+    }
 }

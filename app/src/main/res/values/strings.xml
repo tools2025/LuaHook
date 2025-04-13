@@ -1,4 +1,17 @@
 <resources>
     <string name="app_name">LuaHook</string>
     <string name="push">push</string>
+    <string name="search">搜索</string>
+    <string name="Xposed_status_no">未激活</string>
+    <string name="Global_scripts">全局脚本</string>
+    <string name="Global_script_description">适用于所有app的全局脚本</string>
+    <string name="add_app">添加App</string>
+    <string name="format">格式化</string>
+    <string name="log">日志</string>
+    <string name="manual">手册</string>
+    <string name="about">关于</string>
+    <string name="save_ok">保存成功</string>
+    <string name="home">主页</string>
+    <string name="apps">应用</string>
+    <string name="Xposed_status_ok">已激活</string>
 </resources>

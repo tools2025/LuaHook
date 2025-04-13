@@ -1,6 +1,7 @@
 package com.kulipai.luahook
 import android.app.Application
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.os.Build
 import com.google.android.material.color.DynamicColors
 import com.kulipai.luahook.fragment.AppInfo
@@ -87,6 +88,16 @@ class MyApplication : Application() {
         super.onCreate()
         DynamicColors.applyToActivitiesIfAvailable(this)
         instance = this
+        LanguageUtil.applyLanguage(this)
+
+
 
     }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        // 确保配置变更时应用语言
+        LanguageUtil.applyLanguage(this)
+    }
+
 }

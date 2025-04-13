@@ -73,7 +73,7 @@ class HomeFragment : Fragment() {
         version.text = getAppVersionName(requireContext()).toString()+" ("+getAppVersionCode(requireContext()).toString()+")"
 
         if(canHook()) {
-            status.text="已激活"
+            status.text=resources.getString(R.string.Xposed_status_ok)
             card.setCardBackgroundColor(getDynamicColor(requireContext(),com.google.android.material.R.attr.colorPrimary))
             status.setTextColor(getDynamicColor(requireContext(),com.google.android.material.R.attr.colorOnPrimary))
             version.setTextColor(getDynamicColor(requireContext(),com.google.android.material.R.attr.colorOnPrimary))

@@ -33,7 +33,7 @@ class YoyoNavigationMethod(textField: FreeScrollingTextField) : TouchNavigationM
     init {
         val dm = textField.getContext().getResources().getDisplayMetrics()
         _yoyoSize = TypedValue.applyDimension(
-            2,
+            TypedValue.COMPLEX_UNIT_SP,
             (FreeScrollingTextField.BASE_TEXT_SIZE_PIXELS * 1.5).toFloat(),
             dm
         ).toInt()
@@ -45,8 +45,8 @@ class YoyoNavigationMethod(textField: FreeScrollingTextField) : TouchNavigationM
     override fun onDown(e: MotionEvent): Boolean {
         super.onDown(e)
         if (!_isCaretTouched) {
-            val x = e.getX().toInt() + _textField.getScrollX()
-            val y = e.getY().toInt() + _textField.getScrollY()
+            val x = e.getX().toInt() + _textField!!.getScrollX()
+            val y = e.getY().toInt() + _textField!!.getScrollY()
             _isCaretHandleTouched = _yoyoCaret.isInHandle(x, y)
             _isStartHandleTouched = _yoyoStart.isInHandle(x, y)
             _isEndHandleTouched = _yoyoEnd.isInHandle(x, y)
@@ -57,11 +57,11 @@ class YoyoNavigationMethod(textField: FreeScrollingTextField) : TouchNavigationM
                 _yoyoCaret.invalidateHandle()
             } else if (_isStartHandleTouched) {
                 _yoyoStart.setInitialTouch(x, y)
-                _textField.focusSelectionStart()
+                _textField!!.focusSelectionStart()
                 _yoyoStart.invalidateHandle()
             } else if (_isEndHandleTouched) {
                 _yoyoEnd.setInitialTouch(x, y)
-                _textField.focusSelectionEnd()
+                _textField!!.focusSelectionEnd()
                 _yoyoEnd.invalidateHandle()
             }
         }
@@ -122,11 +122,11 @@ class YoyoNavigationMethod(textField: FreeScrollingTextField) : TouchNavigationM
         val newCaretIndex = foundIndex.first
 
         if (newCaretIndex >= 0) {
-            _textField.moveCaret(newCaretIndex)
+            _textField!!.moveCaret(newCaretIndex)
             //snap the handle to the caret
-            val newCaretBounds = _textField.getBoundingBox(newCaretIndex)
-            val newX = newCaretBounds.left + _textField.getPaddingLeft()
-            val newY = newCaretBounds.bottom + _textField.getPaddingTop()
+            val newCaretBounds = _textField!!.getBoundingBox(newCaretIndex)
+            val newX = newCaretBounds.left + _textField!!.getPaddingLeft()
+            val newY = newCaretBounds.bottom + _textField!!.getPaddingTop()
 
             _yoyo.attachYoyo(newX, newY)
         }
@@ -134,8 +134,8 @@ class YoyoNavigationMethod(textField: FreeScrollingTextField) : TouchNavigationM
 
 
     override fun onSingleTapUp(e: MotionEvent): Boolean {
-        val x = e.getX().toInt() + _textField.getScrollX()
-        val y = e.getY().toInt() + _textField.getScrollY()
+        val x = e.getX().toInt() + _textField!!.getScrollX()
+        val y = e.getY().toInt() + _textField!!.getScrollY()
 
         //ignore taps on handle
         if (_yoyoCaret.isInHandle(x, y) || _yoyoStart.isInHandle(x, y) || _yoyoEnd.isInHandle(
@@ -151,12 +151,12 @@ class YoyoNavigationMethod(textField: FreeScrollingTextField) : TouchNavigationM
     }
 
     override fun onDoubleTap(e: MotionEvent): Boolean {
-        val x = e.getX().toInt() + _textField.getScrollX()
-        val y = e.getY().toInt() + _textField.getScrollY()
+        val x = e.getX().toInt() + _textField!!.getScrollX()
+        val y = e.getY().toInt() + _textField!!.getScrollY()
 
         //ignore taps on handle
         if (_yoyoCaret.isInHandle(x, y)) {
-            _textField.selectText(true)
+            _textField!!.selectText(true)
             return true
         } else if (_yoyoStart.isInHandle(x, y)) {
             return true
@@ -185,19 +185,19 @@ class YoyoNavigationMethod(textField: FreeScrollingTextField) : TouchNavigationM
         }
     }
 
-    override fun onTextDrawComplete(canvas: Canvas) {
-        if (!_textField.isSelectText2()) {
+    override fun onTextDrawComplete(canvas: Canvas?) {
+        if (!_textField!!.isSelectText2) {
             _yoyoCaret.show()
             _yoyoStart.hide()
             _yoyoEnd.hide()
 
             if (!_isCaretHandleTouched) {
-                val caret = _textField.getBoundingBox(_textField.getCaretPosition())
-                val x = caret.left + _textField.getPaddingLeft()
-                val y = caret.bottom + _textField.getPaddingTop()
+                val caret = _textField!!.getBoundingBox(_textField!!.caretPosition)
+                val x = caret.left + _textField!!.getPaddingLeft()
+                val y = caret.bottom + _textField!!.getPaddingTop()
                 _yoyoCaret.setRestingCoord(x, y)
             }
-            if (_isShowYoyoCaret) _yoyoCaret.draw(canvas, _isCaretHandleTouched)
+            if (_isShowYoyoCaret) _yoyoCaret.draw(canvas!!, _isCaretHandleTouched)
             _isShowYoyoCaret = false
         } else {
             _yoyoCaret.hide()
@@ -205,18 +205,18 @@ class YoyoNavigationMethod(textField: FreeScrollingTextField) : TouchNavigationM
             _yoyoEnd.show()
 
             if (!(_isStartHandleTouched && _isEndHandleTouched)) {
-                val caret = _textField.getBoundingBox(_textField.getSelectionStart())
-                val x = caret.left + _textField.getPaddingLeft()
-                val y = caret.bottom + _textField.getPaddingTop()
+                val caret = _textField!!.getBoundingBox(_textField!!.selectionStart)
+                val x = caret.left + _textField!!.getPaddingLeft()
+                val y = caret.bottom + _textField!!.getPaddingTop()
                 _yoyoStart.setRestingCoord(x, y)
 
-                val caret2 = _textField.getBoundingBox(_textField.getSelectionEnd())
-                val x2 = caret2.left + _textField.getPaddingLeft()
-                val y2 = caret2.bottom + _textField.getPaddingTop()
+                val caret2 = _textField!!.getBoundingBox(_textField!!.selectionEnd)
+                val x2 = caret2.left + _textField!!.getPaddingLeft()
+                val y2 = caret2.bottom + _textField!!.getPaddingTop()
                 _yoyoEnd.setRestingCoord(x2, y2)
             }
 
-            _yoyoStart.draw(canvas, _isStartHandleTouched)
+            _yoyoStart.draw(canvas!!, _isStartHandleTouched)
             _yoyoEnd.draw(canvas, _isStartHandleTouched)
         }
     }
@@ -225,9 +225,9 @@ class YoyoNavigationMethod(textField: FreeScrollingTextField) : TouchNavigationM
         return _yoyoCaret.HANDLE_BLOAT
     }
 
-    override fun onColorSchemeChanged(colorScheme: ColorScheme) {
+    override fun onColorSchemeChanged(colorScheme: ColorScheme?) {
         // TODO: Implement this method
-        _yoyoCaret.setHandleColor(colorScheme.getColor(Colorable.CARET_BACKGROUND))
+        _yoyoCaret.setHandleColor(colorScheme!!.getColor(Colorable.CARET_BACKGROUND))
     }
 
     private inner class Yoyo {
@@ -263,7 +263,7 @@ class YoyoNavigationMethod(textField: FreeScrollingTextField) : TouchNavigationM
             )
 
             _brush = Paint()
-            _brush.setColor(_textField.getColorScheme().getColor(Colorable.CARET_BACKGROUND))
+            _brush.setColor(_textField!!.colorScheme.getColor(Colorable.CARET_BACKGROUND))
             //,_brush.setStrokeWidth(2);
             _brush.setAntiAlias(true)
         }
@@ -354,7 +354,7 @@ class YoyoNavigationMethod(textField: FreeScrollingTextField) : TouchNavigationM
             }
 
             //invalidate the string area
-            _textField.invalidate(x0, y0, x1, y1)
+            _textField!!.invalidate(x0, y0, x1, y1)
             invalidateHandle()
         }
 
@@ -363,7 +363,7 @@ class YoyoNavigationMethod(textField: FreeScrollingTextField) : TouchNavigationM
                 _handleX, _handleY,
                 _handleX + HANDLE_RECT.right, _handleY + HANDLE_RECT.bottom
             )
-            _textField.invalidate(handleExtent)
+            _textField!!.invalidate(handleExtent)
         }
 
         /**
@@ -383,8 +383,8 @@ class YoyoNavigationMethod(textField: FreeScrollingTextField) : TouchNavigationM
             val attachedBottom = screenToViewY(handleY) - _yOffset - YOYO_STRING_RESTING_HEIGHT - 2
 
             return Pair(
-                _textField.coordToCharIndex(attachedLeft, attachedBottom),
-                _textField.coordToCharIndexStrict(attachedLeft, attachedBottom)
+                _textField!!.coordToCharIndex(attachedLeft, attachedBottom),
+                _textField!!.coordToCharIndexStrict(attachedLeft, attachedBottom)
             )
         }
 
@@ -418,6 +418,7 @@ class YoyoNavigationMethod(textField: FreeScrollingTextField) : TouchNavigationM
             return this.isShow && (x >= _handleX && x < (_handleX + HANDLE_RECT.right) && y >= _handleY && y < (_handleY + HANDLE_RECT.bottom)
                     )
         }
+
 
 
     } //end inner class

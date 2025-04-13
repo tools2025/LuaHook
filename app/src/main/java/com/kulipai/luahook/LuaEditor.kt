@@ -1,57 +1,71 @@
-package com.kulipai.luahook;
+package com.kulipai.luahook
 
-import android.annotation.SuppressLint;
-import android.content.*;
-import android.content.res.*;
-import android.graphics.*;
-import android.util.*;
-import android.view.*;
-import android.widget.*;
-import android.widget.RadioGroup.*;
-import android.widget.TextView.*;
+import android.annotation.SuppressLint
+import android.content.Context
+import android.graphics.Typeface
+import android.util.AttributeSet
+import android.util.TypedValue
+import android.view.ActionMode
+import android.view.KeyEvent
+import android.view.Menu
+import android.view.MenuItem
+import android.widget.EditText
+import android.widget.RadioGroup
+import android.widget.TextView
+import android.widget.TextView.OnEditorActionListener
+import android.widget.Toast
+import androidx.appcompat.R
+import androidx.appcompat.widget.AppCompatEditText
+import com.myopicmobile.textwarrior.android.FreeScrollingTextField
+import com.myopicmobile.textwarrior.android.TrackpadNavigationMethod
+import com.myopicmobile.textwarrior.android.YoyoNavigationMethod
+import com.myopicmobile.textwarrior.common.ColorScheme
+import com.myopicmobile.textwarrior.common.ColorSchemeDark
+import com.myopicmobile.textwarrior.common.ColorSchemeLight
+import com.myopicmobile.textwarrior.common.Document
+import com.myopicmobile.textwarrior.common.DocumentProvider
+import com.myopicmobile.textwarrior.common.LanguageLua
+import com.myopicmobile.textwarrior.common.LanguageLua.Companion.instance
+import com.myopicmobile.textwarrior.common.Lexer.Companion.language
+import com.myopicmobile.textwarrior.common.LinearSearchStrategy
+import java.io.BufferedReader
+import java.io.BufferedWriter
+import java.io.File
+import java.io.FileReader
+import java.io.FileWriter
+import java.io.IOException
 
-import com.myopicmobile.textwarrior.android.*;
-import com.myopicmobile.textwarrior.common.*;
+class LuaEditor : FreeScrollingTextField {
+    private val _inputtingDoc: Document? = null
 
-import org.luaj.vm2.ast.Str;
+    private var _isWordWrap = false
 
-import java.io.*;
+    private var mContext: Context? = null
 
-public class LuaEditor extends FreeScrollingTextField {
+    var filePath: String? = null
+        private set
 
-    private Document _inputtingDoc;
-
-    private boolean _isWordWrap;
-
-    private Context mContext;
-
-    private String _lastSelectedFile;
-
-//    private String fontDir = LuaApplication.getInstance().getLuaExtDir("fonts");
-//    private String libDir = LuaApplication.getInstance().getLuaExtPath("android.jar");
-
-    private int _index;
-    private LinearSearchStrategy finder;
-    private int idx;
-    private String mKeyword;
+    //    private String fontDir = LuaApplication.getInstance().getLuaExtDir("fonts");
+    //    private String libDir = LuaApplication.getInstance().getLuaExtPath("android.jar");
+    private var _index = 0
+    private var finder: LinearSearchStrategy? = null
+    private var idx = 0
+    private var mKeyword: String? = null
 
     @SuppressLint("StaticFieldLeak")
-
-    public LuaEditor(Context context) {
-        super(context);
-        init(context);
+    constructor(context: Context) : super(context) {
+        init(context)
     }
 
-    public LuaEditor(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        init(context);
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
+        init(context)
     }
 
-    @SuppressLint("StaticFieldLeak")
-    public void init(Context context) {
-        mContext = context;
-        setTypeface(Typeface.MONOSPACE);
-//        File df = new File(fontDir, "default.ttf");
+    @SuppressLint("StaticFieldLeak", "ResourceType")
+    fun init(context: Context) {
+        mContext = context
+        setTypeface(Typeface.MONOSPACE)
+        //        File df = new File(fontDir, "default.ttf");
 //        if (df.exists())
 //            setTypeface(Typeface.createFromFile(df));
 //        File bf = new File(fontDir, "bold.ttf");
@@ -60,34 +74,51 @@ public class LuaEditor extends FreeScrollingTextField {
 //        File tf = new File(fontDir, "italic.ttf");
 //        if (tf.exists())
 //            setItalicTypeface(Typeface.createFromFile(tf));
-        DisplayMetrics dm = context.getResources().getDisplayMetrics();
+        val dm = context.getResources().getDisplayMetrics()
 
-        float size = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, BASE_TEXT_SIZE_PIXELS, dm);
-        setTextSize((int) size);
-        setShowLineNumbers(true);
-        setHighlightCurrentRow(true);
-        setWordWrap(false);
-        setAutoIndentWidth(2);
-        Lexer.Companion.setLanguage(LanguageLua.getInstance());
-        if (isAccessibilityEnabled())
-            setNavigationMethod(new TrackpadNavigationMethod(this));
-        else
-            setNavigationMethod(new YoyoNavigationMethod(this));
-        TypedArray array = mContext.getTheme().obtainStyledAttributes(new int[]{
-//                android.R.attr.colorBackground,
-                androidx.appcompat.R.attr.colorPrimary,
+        val size = TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_SP,
+            BASE_TEXT_SIZE_PIXELS.toFloat(),
+            dm
+        )
+        setTextSize(size.toInt())
+        isShowLineNumbers = true
+        setHighlightCurrentRow(true)
+        isWordWrap = false
+        autoIndentWidth = 2
+        language = instance
+        if (isAccessibilityEnabled) setNavigationMethod(TrackpadNavigationMethod(this))
+        else setNavigationMethod(YoyoNavigationMethod(this))
+        val array = mContext!!.getTheme().obtainStyledAttributes(
+            intArrayOf(
+                //                android.R.attr.colorBackground,
+                R.attr.colorPrimary,
                 android.R.attr.textColorPrimary,
                 android.R.attr.textColorHighlight,
-        });
-        int backgroundColor = array.getColor(0, 0xFF00FF);
-        int textColor = array.getColor(1, 0xFF00FF);
-        int textColorHighlight = array.getColor(2, 0xFF00FF);
-        array.recycle();
-        setTextColor(textColor);
-        setTextHighlightColor(textColorHighlight);
-        String[] Names = {"hook","Xposed","log","setField","getField","invoke","file","lpparam","http","File","json","import"};
+            )
+        )
+        val backgroundColor = array.getColor(0, 0xFF00FF)
+        val textColor = array.getColor(1, 0xFF00FF)
+        val textColorHighlight = array.getColor(2, 0xFF00FF)
+        array.recycle()
+        setTextColor(textColor)
+        setTextHighlightColor(textColorHighlight)
+        val Names = arrayOf<String?>(
+            "hook",
+            "Xposed",
+            "log",
+            "setField",
+            "getField",
+            "invoke",
+            "file",
+            "lpparam",
+            "http",
+            "File",
+            "json",
+            "import"
+        )
         //String[] Names = {"hook","Xposed","log","setField","getField","invoke"};
-        addNames(Names);
+        addNames(Names)
         /*
         new AsyncTask<String, String, String[]>(){
             @Override
@@ -111,408 +142,398 @@ public class LuaEditor extends FreeScrollingTextField {
         }.execute();*/
     }
 
-    @Override
-    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         // TODO: Implement this method
-        super.onLayout(changed, left, top, right, bottom);
+        super.onLayout(changed, left, top, right, bottom)
         if (_index != 0 && right > 0) {
-            moveCaret(_index);
-            _index = 0;
+            moveCaret(_index)
+            _index = 0
         }
     }
 
-    public void setDark(boolean isDark) {
-        if (isDark)
-            setColorScheme(new ColorSchemeDark());
-        else
-            setColorScheme(new ColorSchemeLight());
+    fun setDark(isDark: Boolean) {
+        if (isDark) colorScheme = ColorSchemeDark()
+        else colorScheme =ColorSchemeLight()
     }
 
-    public void addNames(String[] names) {
-        LanguageLua lang = (LanguageLua) Lexer.Companion.getLanguage();
-        String[] old = lang.getNames();
-        String[] news = new String[old.length + names.length];
-        System.arraycopy(old, 0, news, 0, old.length);
-        System.arraycopy(names, 0, news, old.length, names.length);
-        lang.setNames(news);
-        Lexer.Companion.setLanguage(lang);
-        respan();
-        invalidate();
-
+    fun addNames(names: Array<String?>) {
+        val lang = language as LanguageLua
+        val old = lang.names
+        val news = arrayOfNulls<String>(old!!.size + names.size)
+        System.arraycopy(old, 0, news, 0, old.size)
+        System.arraycopy(names, 0, news, old.size, names.size)
+        lang.names = news
+        language = lang
+        respan()
+        invalidate()
     }
 
-    public void addPackage(String pkg, String[] names) {
-        LanguageLua lang = (LanguageLua) Lexer.Companion.getLanguage();
-        lang.addBasePackage(pkg, names);
-        Lexer.Companion.setLanguage(lang);
-        respan();
-        invalidate();
+    fun addPackage(pkg: String?, names: Array<String?>?) {
+        val lang = language as LanguageLua
+        lang.addBasePackage(pkg, names)
+        language = lang
+        respan()
+        invalidate()
     }
 
-    public void removePackage(String pkg) {
-        LanguageLua lang = (LanguageLua) Lexer.Companion.getLanguage();
-        lang.removeBasePackage(pkg);
-        Lexer.Companion.setLanguage(lang);
-        respan();
-        invalidate();
+    fun removePackage(pkg: String?) {
+        val lang = language as LanguageLua
+        lang.removeBasePackage(pkg)
+        language = lang
+        respan()
+        invalidate()
     }
 
-    public void setPanelBackgroundColor(int color) {
+    fun setPanelBackgroundColor(color: Int) {
         // TODO: Implement this method
-        _autoCompletePanel.setBackgroundColor(color);
+        _autoCompletePanel?.setBackgroundColor(color)
     }
 
-    public void setPanelTextColor(int color) {
+    fun setPanelTextColor(color: Int) {
         // TODO: Implement this method
-        _autoCompletePanel.setTextColor(color);
+        _autoCompletePanel?.setTextColor(color)
     }
 
-    public void setKeywordColor(int color) {
-        getColorScheme().setColor(ColorScheme.Colorable.KEYWORD, color);
+    fun setKeywordColor(color: Int) {
+        colorScheme.setColor(ColorScheme.Colorable.KEYWORD, color)
     }
 
-    public void setUserwordColor(int color) {
-        getColorScheme().setColor(ColorScheme.Colorable.LITERAL, color);
+    fun setUserwordColor(color: Int) {
+        colorScheme.setColor(ColorScheme.Colorable.LITERAL, color)
     }
 
-    public void setBasewordColor(int color) {
-        getColorScheme().setColor(ColorScheme.Colorable.NAME, color);
+    fun setBasewordColor(color: Int) {
+        colorScheme.setColor(ColorScheme.Colorable.NAME, color)
     }
 
-    public void setStringColor(int color) {
-        getColorScheme().setColor(ColorScheme.Colorable.STRING, color);
+    fun setStringColor(color: Int) {
+        colorScheme.setColor(ColorScheme.Colorable.STRING, color)
     }
 
-    public void setCommentColor(int color) {
-        getColorScheme().setColor(ColorScheme.Colorable.COMMENT, color);
+    fun setCommentColor(color: Int) {
+        colorScheme.setColor(ColorScheme.Colorable.COMMENT, color)
     }
 
-    public void setBackgoudColor(int color) {
-        getColorScheme().setColor(ColorScheme.Colorable.BACKGROUND, color);
+    fun setBackgoudColor(color: Int) {
+        colorScheme.setColor(ColorScheme.Colorable.BACKGROUND, color)
     }
 
-    public void setTextColor(int color) {
-        getColorScheme().setColor(ColorScheme.Colorable.FOREGROUND, color);
+    fun setTextColor(color: Int) {
+        colorScheme.setColor(ColorScheme.Colorable.FOREGROUND, color)
     }
 
-    public void setTextHighlightColor(int color) {
-        getColorScheme().setColor(ColorScheme.Colorable.SELECTION_BACKGROUND, color);
+    fun setTextHighlightColor(color: Int) {
+        colorScheme.setColor(ColorScheme.Colorable.SELECTION_BACKGROUND, color)
     }
 
-    public String getSelectedText() {
-        // TODO: Implement this method
-        return _hDoc.subSequence(getSelectionStart(), getSelectionEnd() - getSelectionStart()).toString();
-    }
+    val selectedText: String
+        get() =// TODO: Implement this method
+            _hDoc.subSequence(selectionStart, selectionEnd - selectionStart)
+                .toString()
 
-    @Override
-    public boolean onKeyShortcut(int keyCode, KeyEvent event) {
-        final int filteredMetaState = event.getMetaState() & ~KeyEvent.META_CTRL_MASK;
+    override fun onKeyShortcut(keyCode: Int, event: KeyEvent): Boolean {
+        val filteredMetaState = event.getMetaState() and KeyEvent.META_CTRL_MASK.inv()
         if (KeyEvent.metaStateHasNoModifiers(filteredMetaState)) {
-            switch (keyCode) {
-                case KeyEvent.KEYCODE_A:
-                    selectAll();
-                    return true;
-                case KeyEvent.KEYCODE_X:
-                    cut();
-                    return true;
-                case KeyEvent.KEYCODE_C:
-                    copy();
-                    return true;
-                case KeyEvent.KEYCODE_V:
-                    paste();
-                    return true;
-                case KeyEvent.KEYCODE_L:
-                    format();
-                    return true;
-                case KeyEvent.KEYCODE_S:
-                    search();
-                    return true;
-                case KeyEvent.KEYCODE_G:
-                    gotoLine();
-                    return true;
+            when (keyCode) {
+                KeyEvent.KEYCODE_A -> {
+                    selectAll()
+                    return true
+                }
+
+                KeyEvent.KEYCODE_X -> {
+                    cut()
+                    return true
+                }
+
+                KeyEvent.KEYCODE_C -> {
+                    copy()
+                    return true
+                }
+
+                KeyEvent.KEYCODE_V -> {
+                    paste()
+                    return true
+                }
+
+                KeyEvent.KEYCODE_L -> {
+                    format()
+                    return true
+                }
+
+                KeyEvent.KEYCODE_S -> {
+                    search()
+                    return true
+                }
+
+                KeyEvent.KEYCODE_G -> {
+                    gotoLine()
+                    return true
+                }
             }
         }
-        return super.onKeyShortcut(keyCode, event);
+        return super.onKeyShortcut(keyCode, event)
     }
 
-    public void gotoLine() {
+    fun gotoLine() {
         // TODO: Implement this method
-        startGotoMode();
+        startGotoMode()
     }
 
-    public void search() {
+    fun search() {
         // TODO: Implement this method
-        startFindMode();
+        startFindMode()
     }
 
-    public void startGotoMode() {
+    fun startGotoMode() {
         // TODO: Implement this method
-        startActionMode(new ActionMode.Callback() {
+        startActionMode(object : ActionMode.Callback {
+            private var idx = 0
 
-            private int idx;
+            private var edit: EditText? = null
 
-            private EditText edit;
-
-            @Override
-            public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+            override fun onCreateActionMode(mode: ActionMode, menu: Menu): Boolean {
 //                mode.setType(ActionMode.TYPE_FLOATING);
                 // TODO: Implement this method
-                mode.setTitle("转到");
-                mode.setSubtitle(null);
+                mode.setTitle("转到")
+                mode.setSubtitle(null)
 
-                edit = new androidx.appcompat.widget.AppCompatEditText(mContext) {
-                    @Override
-                    public void onTextChanged(CharSequence s, int start, int before, int count) {
-                        if (s.length() > 0) {
-                            idx = 0;
-                            _gotoLine();
+                edit = object : AppCompatEditText(mContext!!) {
+                    public override fun onTextChanged(
+                        s: CharSequence,
+                        start: Int,
+                        before: Int,
+                        count: Int
+                    ) {
+                        if (s.length > 0) {
+                            idx = 0
+                            _gotoLine()
                         }
                     }
+                }
 
-                };
-
-                edit.setSingleLine(true);
-                edit.setInputType(2);
-                edit.setImeOptions(2);
-                edit.setOnEditorActionListener(new OnEditorActionListener() {
-
-                    @Override
-                    public boolean onEditorAction(TextView p1, int p2, KeyEvent p3) {
+                edit!!.setSingleLine(true)
+                edit!!.setInputType(2)
+                edit!!.setImeOptions(2)
+                edit!!.setOnEditorActionListener(object : OnEditorActionListener {
+                    override fun onEditorAction(p1: TextView?, p2: Int, p3: KeyEvent?): Boolean {
                         // TODO: Implement this method
-                        _gotoLine();
-                        return true;
+                        _gotoLine()
+                        return true
                     }
-                });
-                edit.setLayoutParams(new LayoutParams(getWidth() / 3, -1));
-                menu.add(0, 1, 0, "").setActionView(edit);
-                menu.add(0, 2, 0, mContext.getString(android.R.string.ok));
-                edit.requestFocus();
-                return true;
+                })
+                edit!!.setLayoutParams(RadioGroup.LayoutParams(getWidth() / 3, -1))
+                menu.add(0, 1, 0, "").setActionView(edit)
+                menu.add(0, 2, 0, mContext!!.getString(android.R.string.ok))
+                edit!!.requestFocus()
+                return true
             }
 
-            private void _gotoLine() {
-                String s = edit.getText().toString();
-                if (s.isEmpty())
-                    return;
+            fun _gotoLine() {
+                val s = edit!!.getText().toString()
+                if (s.isEmpty()) return
 
-                int l = Integer.valueOf(s);
-                if (l > _hDoc.getRowCount()) {
-                    l = _hDoc.getRowCount();
+                var l = s.toInt()
+                if (l > _hDoc.rowCount) {
+                    l = _hDoc.rowCount
                 }
-                gotoLine(l);
+                gotoLine(l)
                 // TODO: Implement this method
             }
 
-            @Override
-            public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+            override fun onPrepareActionMode(mode: ActionMode?, menu: Menu?): Boolean {
                 // TODO: Implement this method
-                return false;
+                return false
             }
 
-            @Override
-            public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+            override fun onActionItemClicked(mode: ActionMode?, item: MenuItem): Boolean {
                 // TODO: Implement this method
-                switch (item.getItemId()) {
-                    case 1:
-                        break;
-                    case 2:
-                        _gotoLine();
-                        break;
-
+                when (item.getItemId()) {
+                    1 -> {}
+                    2 -> _gotoLine()
                 }
-                return false;
+                return false
             }
 
-            @Override
-            public void onDestroyActionMode(ActionMode p1) {
+            override fun onDestroyActionMode(p1: ActionMode?) {
                 // TODO: Implement this method
             }
-        });
-
+        })
     }
 
-    public void startFindMode() {
+    fun startFindMode() {
         // TODO: Implement this method
-        startActionMode(new ActionMode.Callback() {
+        startActionMode(object : ActionMode.Callback {
+            private var finder: LinearSearchStrategy? = null
 
-            private LinearSearchStrategy finder;
+            private var idx = 0
 
-            private int idx;
+            private var edit: EditText? = null
 
-            private EditText edit;
-
-            @Override
-            public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-                mode.setType(ActionMode.TYPE_FLOATING);
+            override fun onCreateActionMode(mode: ActionMode, menu: Menu): Boolean {
+                mode.setType(ActionMode.TYPE_FLOATING)
                 // TODO: Implement this method
-                mode.setTitle("搜索");
-                mode.setSubtitle(null);
+                mode.setTitle("搜索")
+                mode.setSubtitle(null)
 
-                edit = new androidx.appcompat.widget.AppCompatEditText(mContext) {
-                    @Override
-                    public void onTextChanged(CharSequence s, int start, int before, int count) {
-                        if (s.length() > 0) {
-                            idx = 0;
-                            findNext();
+                edit = object : AppCompatEditText(mContext!!) {
+                    public override fun onTextChanged(
+                        s: CharSequence,
+                        start: Int,
+                        before: Int,
+                        count: Int
+                    ) {
+                        if (s.length > 0) {
+                            idx = 0
+                            findNext()
                         }
                     }
-                };
-                edit.setSingleLine(true);
-                edit.setImeOptions(3);
-                edit.setOnEditorActionListener(new OnEditorActionListener() {
-
-                    @Override
-                    public boolean onEditorAction(TextView p1, int p2, KeyEvent p3) {
-                        // TODO: Implement this method
-                        findNext();
-                        return true;
-                    }
-                });
-                edit.setLayoutParams(new LayoutParams(getWidth() / 3, -1));
-                menu.add(0, 1, 0, "").setActionView(edit);
-                menu.add(0, 2, 0, mContext.getString(android.R.string.search_go));
-                edit.requestFocus();
-                return true;
-            }
-
-            @Override
-            public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-                // TODO: Implement this method
-                return false;
-            }
-
-            @Override
-            public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-                // TODO: Implement this method
-                switch (item.getItemId()) {
-                    case 1:
-                        break;
-                    case 2:
-                        findNext();
-                        break;
-
                 }
-                return false;
+                edit!!.setSingleLine(true)
+                edit!!.setImeOptions(3)
+                edit!!.setOnEditorActionListener(object : OnEditorActionListener {
+                    override fun onEditorAction(p1: TextView?, p2: Int, p3: KeyEvent?): Boolean {
+                        // TODO: Implement this method
+                        findNext()
+                        return true
+                    }
+                })
+                edit!!.setLayoutParams(RadioGroup.LayoutParams(getWidth() / 3, -1))
+                menu.add(0, 1, 0, "").setActionView(edit)
+                menu.add(0, 2, 0, mContext!!.getString(android.R.string.search_go))
+                edit!!.requestFocus()
+                return true
             }
 
-            private void findNext() {
+            override fun onPrepareActionMode(mode: ActionMode?, menu: Menu?): Boolean {
                 // TODO: Implement this method
-                finder = new LinearSearchStrategy();
-                String kw = edit.getText().toString();
+                return false
+            }
+
+            override fun onActionItemClicked(mode: ActionMode?, item: MenuItem): Boolean {
+                // TODO: Implement this method
+                when (item.getItemId()) {
+                    1 -> {}
+                    2 -> findNext()
+                }
+                return false
+            }
+
+            fun findNext() {
+                // TODO: Implement this method
+                finder = LinearSearchStrategy()
+                val kw = edit!!.getText().toString()
                 if (kw.isEmpty()) {
-                    selectText(false);
-                    return;
+                    selectText(false)
+                    return
                 }
-                idx = finder.find(getText(), kw, idx, getText().length(), false, false);
+                idx = finder!!.find(text, kw, idx, text.length, false, false)
                 if (idx == -1) {
-                    selectText(false);
-                    Toast.makeText(mContext, "未找到", Toast.LENGTH_SHORT).show();
-                    idx = 0;
-                    return;
+                    selectText(false)
+                    Toast.makeText(mContext, "未找到", Toast.LENGTH_SHORT).show()
+                    idx = 0
+                    return
                 }
-                setSelection(idx, edit.getText().length());
-                idx += edit.getText().length();
-                moveCaret(idx);
+                setSelection(idx, edit!!.getText().length)
+                idx += edit!!.getText().length
+                moveCaret(idx)
             }
 
-            @Override
-            public void onDestroyActionMode(ActionMode p1) {
+            override fun onDestroyActionMode(p1: ActionMode?) {
                 // TODO: Implement this method
             }
-        });
-
+        })
     }
 
-    @Override
-    public void setWordWrap(boolean enable) {
-        // TODO: Implement this method
-        _isWordWrap = enable;
-        super.setWordWrap(enable);
-    }
+//    override fun setWordWrap(enable: Boolean) {
+//        // TODO: Implement this method
+//        _isWordWrap = enable
+//        super.setWordWrap(enable)
+//    }
 
-    public DocumentProvider getText() {
-        return createDocumentProvider();
-    }
 
-    public void setText(CharSequence c) {
+    fun setText(c: CharSequence?) {
         //TextBuffer text=new TextBuffer();
-        Document doc = new Document(this);
-        doc.setWordWrap(_isWordWrap);
-        doc.setText(c);
-        setDocumentProvider(new DocumentProvider(doc));
+        val doc = Document(this)
+        doc.isWordWrap = _isWordWrap
+        doc.setText(c!!)
+        setDocumentProvider(DocumentProvider(doc))
         //doc.analyzeWordWrap();
     }
+    var text: DocumentProvider
+        get() = createDocumentProvider()
+        set(c) {
+            //TextBuffer text=new TextBuffer();
+            val doc =
+                Document(this)
+            doc.isWordWrap = _isWordWrap
+            doc.setText(c)
+            setDocumentProvider(DocumentProvider(doc))
+            //doc.analyzeWordWrap();
+        }
 
-    public void insert(int idx, String text) {
-        selectText(false);
-        moveCaret(idx);
-        paste(text);
+    fun insert(idx: Int, text: String?) {
+        selectText(false)
+        moveCaret(idx)
+        paste(text)
         //_hDoc.insert(idx,text);
     }
 
-    public void setText(CharSequence c, boolean isRep) {
-        replaceText(0, getLength() - 1, c.toString());
+    fun setText(c: CharSequence, isRep: Boolean) {
+        replaceText(0, length - 1, c.toString())
     }
 
-    public void setSelection(int index) {
-        selectText(false);
-        if (!hasLayout())
-            moveCaret(index);
-        else
-            _index = index;
+    fun setSelection(index: Int) {
+        selectText(false)
+        if (!hasLayout()) moveCaret(index)
+        else _index = index
     }
 
-    public void gotoLine(int line) {
-        if (line > _hDoc.getRowCount()) {
-            line = _hDoc.getRowCount();
+    fun gotoLine(line: Int) {
+        var line = line
+        if (line > _hDoc.rowCount) {
+            line = _hDoc.rowCount
         }
-        int i = getText().getLineOffset(line - 1);
-        setSelection(i);
+        val i = this.text.getLineOffset(line - 1)
+        setSelection(i)
     }
 
-    public void undo() {
-        DocumentProvider doc = createDocumentProvider();
-        int newPosition = doc.undo();
+    fun undo() {
+        val doc = createDocumentProvider()
+        val newPosition = doc.undo()
 
         if (newPosition >= 0) {
-            setEdited(true);
-            respan();
-            selectText(false);
-            moveCaret(newPosition);
-            invalidate();
+            isEdited=true
+            respan()
+            selectText(false)
+            moveCaret(newPosition)
+            invalidate()
         }
-
     }
 
-    public void redo() {
-        DocumentProvider doc = createDocumentProvider();
-        int newPosition = doc.redo();
+    fun redo() {
+        val doc = createDocumentProvider()
+        val newPosition = doc.redo()
 
         if (newPosition >= 0) {
-            setEdited(true);
+            isEdited =true
 
-            respan();
-            selectText(false);
-            moveCaret(newPosition);
-            invalidate();
+            respan()
+            selectText(false)
+            moveCaret(newPosition)
+            invalidate()
         }
-    }
-
-    public String getFilePath(){
-        return _lastSelectedFile;
     }
 
     @SuppressLint("SuspiciousIndentation")
-    public void open(String filename) throws IOException {
-        _lastSelectedFile = filename;
-        BufferedReader reader = new BufferedReader(new FileReader(filename));
-        StringBuilder buf = new StringBuilder();
-        String line;
-        while ((line = reader.readLine()) != null)
-            buf.append(line).append("\n");
-        if(buf.length()>1)
-        buf.setLength(buf.length() - 1);
-        setText(buf);
+    @Throws(IOException::class)
+    fun open(filename: String?) {
+        this.filePath = filename
+        val reader = BufferedReader(FileReader(filename))
+        val buf = StringBuilder()
+        var line: String?
+        while ((reader.readLine().also { line = it }) != null) buf.append(line).append("\n")
+        if (buf.length > 1) buf.setLength(buf.length - 1)
+        this.setText(buf)
         /*
         File inputFile = new File(filename);
         _inputtingDoc = new Document(this);
@@ -521,50 +542,46 @@ public class LuaEditor extends FreeScrollingTextField {
         _taskRead.start();*/
     }
 
-    public boolean save() throws IOException {
-        return save(_lastSelectedFile);
-    }
-
-    public boolean save(String filename) throws IOException {
-        if(filename==null)
-            return true;
-        File outputFile = new File(filename);
+    @JvmOverloads
+    @Throws(IOException::class)
+    fun save(filename: String? = this.filePath): Boolean {
+        if (filename == null) return true
+        val outputFile = File(filename)
 
         if (outputFile.exists()) {
             if (!outputFile.canWrite()) {
-                return false;
+                return false
             }
         }
 
-        BufferedWriter writer = new BufferedWriter(new FileWriter(filename));
-        writer.write(getText().toString());
-        writer.close();
-        return true;
+        val writer = BufferedWriter(FileWriter(filename))
+        writer.write(this.text.toString())
+        writer.close()
+        return true
     }
 
-    public boolean findNext(String keyword) {
-        if (!keyword.equals(mKeyword)) {
-            mKeyword = keyword;
-            idx = 0;
+    fun findNext(keyword: String): Boolean {
+        if (keyword != mKeyword) {
+            mKeyword = keyword
+            idx = 0
         }
         // TODO: Implement this method
-        finder = new LinearSearchStrategy();
-        String kw = mKeyword;
+        finder = LinearSearchStrategy()
+        val kw = mKeyword!!
         if (kw.isEmpty()) {
-            selectText(false);
-            return false;
+            selectText(false)
+            return false
         }
-        idx = finder.find(getText(), kw, idx, getText().length(), false, false);
+        idx = finder!!.find(this.text, kw, idx, this.text.length, false, false)
         if (idx == -1) {
-            selectText(false);
-            Toast.makeText(mContext, "未找到", Toast.LENGTH_SHORT).show();
-            idx = 0;
-            return false;
+            selectText(false)
+            Toast.makeText(mContext, "未找到", Toast.LENGTH_SHORT).show()
+            idx = 0
+            return false
         }
-        setSelection(idx, mKeyword.length());
-        idx += mKeyword.length();
-        moveCaret(idx);
-        return true;
+        setSelection(idx, mKeyword!!.length)
+        idx += mKeyword!!.length
+        moveCaret(idx)
+        return true
     }
-
 }

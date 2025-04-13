@@ -49,7 +49,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="未激活"
+                        android:text="@string/Xposed_status_no"
                         android:id="@+id/status"
                         android:textColor="?attr/colorOnError"
                         android:textSize="16sp" />
@@ -57,7 +57,6 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="1.0.1 (1000)"
                         android:id="@+id/version"
                         android:textColor="?attr/colorOnError"
                         android:textSize="15sp" />
@@ -106,14 +105,14 @@
                         style="@style/TextAppearance.Material3.TitleSmall"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="全局脚本"
+                        android:text="@string/Global_scripts"
                         android:textColor="?attr/colorOnBackground"
                         android:textSize="16sp" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="适用于所有app的全局脚本"
+                        android:text="@string/Global_script_description"
                         android:textColor="?attr/colorOnBackground"
                         android:textSize="15sp" />
 

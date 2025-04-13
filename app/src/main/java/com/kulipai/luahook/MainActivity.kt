@@ -94,13 +94,13 @@ class MainActivity : AppCompatActivity() {
 
         val menu: Menu = bottomBar.getMenu()
 
-        menu.add(Menu.NONE, 0, 0, "主页")
+        menu.add(Menu.NONE, 0, 0, resources.getString(R.string.home))
             .setIcon(R.drawable.home_24px)
 
-        menu.add(Menu.NONE, 1, 1, "应用")
+        menu.add(Menu.NONE, 1, 1, resources.getString(R.string.apps))
             .setIcon(R.drawable.apps_24px)
 
-        menu.add(Menu.NONE, 2, 2, "手册")
+        menu.add(Menu.NONE, 2, 2, resources.getString(R.string.manual))
             .setIcon(R.drawable.book_24px)
 
 
@@ -108,7 +108,6 @@ class MainActivity : AppCompatActivity() {
             HomeFragment(),
             AppsFragment(),
             ManualFragment(),
-
             )
 
         // 创建 FragmentStateAdapter
@@ -135,6 +134,7 @@ class MainActivity : AppCompatActivity() {
                     menu.get(0).setIcon(R.drawable.home_fill_24px)
 
                 } else if (position == 2) {
+
                     menu.get(2).setIcon(R.drawable.book_fill_24px)
 
                 }

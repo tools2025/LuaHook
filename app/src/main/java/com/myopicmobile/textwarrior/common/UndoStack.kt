@@ -6,9 +6,9 @@
  *
  * This software is provided "as is". Use at your own risk.
  */
-package com.myopicmobile.textwarrior.common;
+package com.myopicmobile.textwarrior.common
 
-import java.util.LinkedList;
+import java.util.LinkedList
 
 /**
  * Implements undo/redo for insertion and deletion events of TextBuffer
@@ -20,13 +20,13 @@ import java.util.LinkedList;
  * When text is inserted/deleted...
  * 1. Before text is inserted/deleted, TextBuffer calls captureInsert()/captureDelete()
  * 2. If the insertion/deletion is a continuation of the previous edit,
- *    the incoming edit is merged with the top entry of the undo stack.
- *    For 2 edits to be considered continuous, they must be the same type,
- *    (insert or delete), occur within a pre-defined time interval of MERGE_TIME,
- *    and the later edit must start off where the caret would have been after
- *    the earlier edit.
+ * the incoming edit is merged with the top entry of the undo stack.
+ * For 2 edits to be considered continuous, they must be the same type,
+ * (insert or delete), occur within a pre-defined time interval of MERGE_TIME,
+ * and the later edit must start off where the caret would have been after
+ * the earlier edit.
  * 3. If the incoming edit is not continuous with the previous one, a new entry
- *    for it is pushed on the stack
+ * for it is pushed on the stack
  *
  * Batch mode:
  * A client application can specify consecutive insert/delete operations to
@@ -48,330 +48,317 @@ import java.util.LinkedList;
  * For undo/redo of the topmost entry, only the gap boundaries of TextBuffer
  * need to be moved.
  */
-public class UndoStack {
-	private TextBuffer _buf;
-	private LinkedList<Command> _stack = new LinkedList<Command>();
-	private boolean _isBatchEdit = false;
-	/** for grouping batch operations */
-	private int _groupId = 0;
-	/** where new entries should go */
-	private int _top = 0;
-	/** timestamp for the previous edit operation */
-	long _lastEditTime = -1;
+class UndoStack(private val _buf: TextBuffer) {
+    private val _stack = LinkedList<Command>()
+    var isBatchEdit: Boolean = false
+        private set
 
-	public UndoStack(TextBuffer buf){
-		_buf = buf;
-	}
+    /** for grouping batch operations  */
+    private var _groupId = 0
 
-	/**
-	 * Undo the previous insert/delete operation
-	 *
-	 * @return The suggested position of the caret after the undo, or -1 if
-	 *			there is nothing to undo
-	 */
-	public int undo(){
-		if(canUndo()){
-			Command lastUndone = _stack.get(_top-1);
-			int group = lastUndone._group;
-			do{
-				Command c = _stack.get(_top-1);
-				if(c._group != group){
-					break;
-				}
+    /** where new entries should go  */
+    private var _top = 0
 
-				lastUndone = c;
-				c.undo();
-				--_top;
-			}
-			while(canUndo());
+    /** timestamp for the previous edit operation  */
+    var _lastEditTime: Long = -1
 
-			return lastUndone.findUndoPosition();
-		}
+    /**
+     * Undo the previous insert/delete operation
+     *
+     * @return The suggested position of the caret after the undo, or -1 if
+     * there is nothing to undo
+     */
+    fun undo(): Int {
+        if (canUndo()) {
+            var lastUndone = _stack.get(_top - 1)
+            val group = lastUndone._group
+            do {
+                val c = _stack.get(_top - 1)
+                if (c._group != group) {
+                    break
+                }
 
-		return -1;
-	}
+                lastUndone = c
+                c.undo()
+                --_top
+            } while (canUndo())
 
-	/**
-	 * Redo the previous insert/delete operation
-	 *
-	 * @return The suggested position of the caret after the redo, or -1 if
-	 *			there is nothing to redo
-	 */
-	public int redo(){
-		if(canRedo()){
-			Command lastRedone = _stack.get(_top);
-			int group = lastRedone._group;
-			do{
-				Command c = _stack.get(_top);
-				if(c._group != group){
-					break;
-				}
+            return lastUndone.findUndoPosition()
+        }
 
-				lastRedone = c;
-				c.redo();
-				++_top;
-			}
-			while(canRedo());
+        return -1
+    }
 
-			return lastRedone.findRedoPosition();
-		}
+    /**
+     * Redo the previous insert/delete operation
+     *
+     * @return The suggested position of the caret after the redo, or -1 if
+     * there is nothing to redo
+     */
+    fun redo(): Int {
+        if (canRedo()) {
+            var lastRedone = _stack.get(_top)
+            val group = lastRedone._group
+            do {
+                val c = _stack.get(_top)
+                if (c._group != group) {
+                    break
+                }
 
-		return -1;
-	}
+                lastRedone = c
+                c.redo()
+                ++_top
+            } while (canRedo())
 
-	//TODO extract common parts of captureInsert and captureDelete
-	/**
-	 * Records an insert operation. Should be called before the insertion is
-	 * actually done.
-	 */
-	public void captureInsert(int start, int length, long time){
-		boolean mergeSuccess = false;
+            return lastRedone.findRedoPosition()
+        }
 
-		if(canUndo()){
-			Command c = _stack.get(_top - 1);
+        return -1
+    }
 
-			if(c instanceof InsertCommand
-					&& c.merge(start, length, time)){
-				mergeSuccess = true;
-			}
-			else{
-				c.recordData();
-			}
-		}
+    //TODO extract common parts of captureInsert and captureDelete
+    /**
+     * Records an insert operation. Should be called before the insertion is
+     * actually done.
+     */
+    fun captureInsert(start: Int, length: Int, time: Long) {
+        var mergeSuccess = false
 
-		if(!mergeSuccess){
-			push(new InsertCommand(start, length, _groupId));
+        if (canUndo()) {
+            val c = _stack.get(_top - 1)
 
-			if(!_isBatchEdit){
-				_groupId++;
-			}
-		}
+            if (c is InsertCommand
+                && c.merge(start, length, time)
+            ) {
+                mergeSuccess = true
+            } else {
+                c.recordData()
+            }
+        }
 
-		_lastEditTime = time;
-	}
+        if (!mergeSuccess) {
+            push(InsertCommand(start, length, _groupId))
 
-	/**
-	 * Records a delete operation. Should be called before the deletion is
-	 * actually done.
-	 */
-	public void captureDelete(int start, int length, long time){
-		boolean mergeSuccess = false;
+            if (!this.isBatchEdit) {
+                _groupId++
+            }
+        }
 
-		if(canUndo()){
-			Command c = _stack.get(_top - 1);
+        _lastEditTime = time
+    }
 
-			if(c instanceof DeleteCommand
-					&& c.merge(start, length, time)){
-				mergeSuccess = true;
-			}
-			else{
-				c.recordData();
-			}
-		}
+    /**
+     * Records a delete operation. Should be called before the deletion is
+     * actually done.
+     */
+    fun captureDelete(start: Int, length: Int, time: Long) {
+        var mergeSuccess = false
 
-		if(!mergeSuccess){
-			push(new DeleteCommand(start, length, _groupId));
+        if (canUndo()) {
+            val c = _stack.get(_top - 1)
 
-			if(!_isBatchEdit){
-				_groupId++;
-			}
-		}
+            if (c is DeleteCommand
+                && c.merge(start, length, time)
+            ) {
+                mergeSuccess = true
+            } else {
+                c.recordData()
+            }
+        }
 
-		_lastEditTime = time;
-	}
+        if (!mergeSuccess) {
+            push(DeleteCommand(start, length, _groupId))
 
-	private void push(Command c){
-		trimStack();
-		++_top;
-		_stack.add(c);
-	}
+            if (!this.isBatchEdit) {
+                _groupId++
+            }
+        }
 
-	private void trimStack(){
-		while(_stack.size() > _top){
-			_stack.removeLast();
-		}
-	}
+        _lastEditTime = time
+    }
 
-	public final boolean canUndo(){
-		return _top > 0;
-	}
+    private fun push(c: Command?) {
+        trimStack()
+        ++_top
+        _stack.add(c!!)
+    }
 
-	public final boolean canRedo(){
-		return _top < _stack.size();
-	}
+    private fun trimStack() {
+        while (_stack.size > _top) {
+            _stack.removeLast()
+        }
+    }
 
-	public boolean isBatchEdit(){
-		return _isBatchEdit;
-	}
+    fun canUndo(): Boolean {
+        return _top > 0
+    }
 
-	public void beginBatchEdit(){
-		_isBatchEdit = true;
-	}
+    fun canRedo(): Boolean {
+        return _top < _stack.size
+    }
 
-	public void endBatchEdit(){
-		_isBatchEdit = false;
-		_groupId++;
-	}
+    fun beginBatchEdit() {
+        this.isBatchEdit = true
+    }
+
+    fun endBatchEdit() {
+        this.isBatchEdit = false
+        _groupId++
+    }
 
 
+    private abstract inner class Command {
+        /** Start position of the edit  */
+        var _start: Int = 0
 
-	private abstract class Command{
-		public final static long MERGE_TIME = 1000000000; //750ms in nanoseconds
-		/** Start position of the edit */
-		public int _start;
-		/** Length of the affected segment */
-		public int _length;
-		/** Contents of the affected segment */
-		public String _data;
-		/** Group ID. Commands of the same group are undone/redone as a unit */
-		public int _group;
+        /** Length of the affected segment  */
+        var _length: Int = 0
 
-		public abstract void undo();
-		public abstract void redo();
-		/** Populates _data with the affected text */
-		public abstract void recordData();
-		public abstract int findUndoPosition();
-		public abstract int findRedoPosition();
+        /** Contents of the affected segment  */
+        var _data: String? = null
 
-		/**
-		 * Attempts to merge in an edit. This will only be successful if the new
-		 * edit is continuous. See {@link UndoStack} for the requirements
-		 * of a continuous edit.
-		 *
-		 * @param start Start position of the new edit
-		 * @param length Length of the newly edited segment
-		 * @param time Timestamp when the new edit was made. There are no
-		 * restrictions  on the units used, as long as it is consistently used
-		 * in the whole program
-		 *
-		 * @return Whether the merge was successful
-		 */
-		public abstract boolean merge(int start, int length, long time);
-	}
+        /** Group ID. Commands of the same group are undone/redone as a unit  */
+        var _group: Int = 0
 
-	private class InsertCommand extends Command{
-		/**
-		 * Corresponds to an insertion of text of size length just before
-		 * start position.
-		 */
-		public InsertCommand(int start, int length, int groupNumber){
-			_start = start;
-			_length = length;
-			_group = groupNumber;
-		}
+        abstract fun undo()
+        abstract fun redo()
 
-		@Override
-		public boolean merge(int newStart, int length, long time) {
-			if(_lastEditTime < 0){
-				return false;
-			}
+        /** Populates _data with the affected text  */
+        abstract fun recordData()
+        abstract fun findUndoPosition(): Int
+        abstract fun findRedoPosition(): Int
 
-			if((time - _lastEditTime) < MERGE_TIME
-					&& newStart == _start + _length){
-				_length += length;
-				trimStack();
-				return true;
-			}
-
-			return false;
-		}
-
-		@Override
-		public void recordData() {
-			//TODO handle memory allocation failure
-			_data = _buf.subSequence(_start, _length).toString();
-		}
-
-		@Override
-		public void undo() {
-			if(_data == null){
-				recordData();
-				_buf.shiftGapStart(-_length);
-			}
-			else{
-				//dummy timestamp of 0
-				_buf.delete(_start, _length, 0 ,false);
-			}
-		}
-
-		@Override
-		public void redo() {
-			//dummy timestamp of 0
-			_buf.insert(_data.toCharArray(), _start, 0, false);
-		}
-
-		@Override
-		public int findRedoPosition() {
-			return _start + _length;
-		}
-
-		@Override
-		public int findUndoPosition() {
-			return _start;
-		}
-	}
+        /**
+         * Attempts to merge in an edit. This will only be successful if the new
+         * edit is continuous. See [UndoStack] for the requirements
+         * of a continuous edit.
+         *
+         * @param start Start position of the new edit
+         * @param length Length of the newly edited segment
+         * @param time Timestamp when the new edit was made. There are no
+         * restrictions  on the units used, as long as it is consistently used
+         * in the whole program
+         *
+         * @return Whether the merge was successful
+         */
+        abstract fun merge(start: Int, length: Int, time: Long): Boolean
 
 
-	private class DeleteCommand extends Command{
-		/**
-		 * Corresponds to an deletion of text of size length starting from
-		 * start position, inclusive.
-		 */
-		public DeleteCommand(int start, int length, int seqNumber){
-			_start = start;
-			_length = length;
-			_group = seqNumber;
-		}
+        val MERGE_TIME: Long = 1000000000 //750ms in nanoseconds
 
-		@Override
-		public boolean merge(int newStart, int length, long time) {
-			if(_lastEditTime < 0){
-				return false;
-			}
+    }
 
-			if((time - _lastEditTime) < MERGE_TIME
-					&& newStart == _start - _length - length + 1){
-				_start = newStart;
-				_length += length;
-				trimStack();
-				return true;
-			}
+    private inner class InsertCommand(start: Int, length: Int, groupNumber: Int) : Command() {
+        /**
+         * Corresponds to an insertion of text of size length just before
+         * start position.
+         */
+        init {
+            _start = start
+            _length = length
+            _group = groupNumber
+        }
 
-			return false;
-		}
+        override fun merge(newStart: Int, length: Int, time: Long): Boolean {
+            if (_lastEditTime < 0) {
+                return false
+            }
 
-		@Override
-		public void recordData() {
-			//TODO handle memory allocation failure
-			_data = new String(_buf.gapSubSequence(_length));
-		}
+            if ((time - _lastEditTime) < MERGE_TIME
+                && newStart == _start + _length
+            ) {
+                _length += length
+                trimStack()
+                return true
+            }
 
-		@Override
-		public void undo() {
-			if(_data == null){
-				recordData();
-				_buf.shiftGapStart(_length);
-			}
-			else{
-				//dummy timestamp of 0
-				_buf.insert(_data.toCharArray(), _start, 0, false);
-			}
-		}
+            return false
+        }
 
-		@Override
-		public void redo() {
-			//dummy timestamp of 0
-			_buf.delete(_start, _length, 0, false);
-		}
+        override fun recordData() {
+            //TODO handle memory allocation failure
+            _data = _buf.subSequence(_start, _length).toString()
+        }
 
-		@Override
-		public int findRedoPosition() {
-			return _start;
-		}
+        override fun undo() {
+            if (_data == null) {
+                recordData()
+                _buf.shiftGapStart(-_length)
+            } else {
+                //dummy timestamp of 0
+                _buf.delete(_start, _length, 0, false)
+            }
+        }
 
-		@Override
-		public int findUndoPosition() {
-			return _start + _length;
-		}
-	}// end inner class
+        override fun redo() {
+            //dummy timestamp of 0
+            _buf.insert(_data!!.toCharArray(), _start, 0, false)
+        }
+
+        override fun findRedoPosition(): Int {
+            return _start + _length
+        }
+
+        override fun findUndoPosition(): Int {
+            return _start
+        }
+    }
+
+
+    private inner class DeleteCommand(start: Int, length: Int, seqNumber: Int) : Command() {
+        /**
+         * Corresponds to an deletion of text of size length starting from
+         * start position, inclusive.
+         */
+        init {
+            _start = start
+            _length = length
+            _group = seqNumber
+        }
+
+        override fun merge(newStart: Int, length: Int, time: Long): Boolean {
+            if (_lastEditTime < 0) {
+                return false
+            }
+
+            if ((time - _lastEditTime) < MERGE_TIME
+                && newStart == _start - _length - length + 1
+            ) {
+                _start = newStart
+                _length += length
+                trimStack()
+                return true
+            }
+
+            return false
+        }
+
+        override fun recordData() {
+            //TODO handle memory allocation failure
+            _data = String(_buf.gapSubSequence(_length))
+        }
+
+        override fun undo() {
+            if (_data == null) {
+                recordData()
+                _buf.shiftGapStart(_length)
+            } else {
+                //dummy timestamp of 0
+                _buf.insert(_data!!.toCharArray(), _start, 0, false)
+            }
+        }
+
+        override fun redo() {
+            //dummy timestamp of 0
+            _buf.delete(_start, _length, 0, false)
+        }
+
+        override fun findRedoPosition(): Int {
+            return _start
+        }
+
+        override fun findUndoPosition(): Int {
+            return _start + _length
+        }
+    } // end inner class
 }

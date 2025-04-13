@@ -6,84 +6,66 @@
  *
  * This software is provided "as is". Use at your own risk.
  */
-package com.myopicmobile.textwarrior.common;
+package com.myopicmobile.textwarrior.common
 
-import java.util.List;
-import java.util.Vector;
-
+import com.myopicmobile.textwarrior.common.TextWarriorException.Companion.assertVerbose
+import java.util.Vector
 
 //TODO Have all methods work with charOffsets and move all gap handling to logicalToRealIndex()
-public class TextBuffer implements java.lang.CharSequence
-{
+open class TextBuffer : CharSequence {
+    override val length: Int
+        get() = this.textLength - 1
 
-    @Override
-    public int length()
-    {
-        // TODO: Implement this method
-        return getTextLength()-1;
+    override fun get(index: Int): Char {
+        return _contents[logicalToRealIndex(index)]
     }
 
-    // gap size must be > 0 to insert into full buffers successfully
-    protected final static int MIN_GAP_SIZE = 50;
-    protected char[] _contents;
-    protected int _gapStartIndex;
-    /** One past end of gap */
-    protected int _gapEndIndex;
-    protected int _lineCount;
-    /** The number of times memory is allocated for the buffer */
-    private int _allocMultiplier;
-    private TextBufferCache _cache;
-    private UndoStack _undoStack;
+    protected var _contents: CharArray
+    protected var _gapStartIndex: Int
 
-    /** Continuous seq of chars that have the same format (color, font, etc.) */
-    protected List<Pair> _spans;
+    /** One past end of gap  */
+    protected var _gapEndIndex: Int
+
+    @get:Synchronized
+    var lineCount: Int
+        protected set
+
+    /** The number of times memory is allocated for the buffer  */
+    private var _allocMultiplier: Int
+    private val _cache: TextBufferCache
+    private val _undoStack: UndoStack
+
+    /** Continuous seq of chars that have the same format (color, font, etc.)  */
+    protected var _spans: MutableList<Pair>? = null
 
 
-    public TextBuffer(){
-        _contents = new char[MIN_GAP_SIZE + 1]; // extra char for EOF
-        _contents[MIN_GAP_SIZE] = Language.EOF;
-        _allocMultiplier = 1;
-        _gapStartIndex = 0;
-        _gapEndIndex = MIN_GAP_SIZE;
-        _lineCount = 1;
-        _cache = new TextBufferCache();
-        _undoStack = new UndoStack(this);
+    init {
+        _contents = CharArray(MIN_GAP_SIZE + 1) // extra char for EOF
+        _contents[MIN_GAP_SIZE] = Language.EOF
+        _allocMultiplier = 1
+        _gapStartIndex = 0
+        _gapEndIndex = MIN_GAP_SIZE
+        this.lineCount = 1
+        _cache = TextBufferCache()
+        _undoStack = UndoStack(this)
     }
 
-    /**
-     * Calculate the implementation size of the char array needed to store
-     * textSize number of characters.
-     * The implementation size may be greater than textSize because of buffer
-     * space, cached characters and so on.
-     *
-     * @param textSize
-     * @return The size, measured in number of chars, required by the
-     * 		implementation to store textSize characters, or -1 if the request
-     * 		cannot be satisfied
-     */
-    public static int memoryNeeded(int textSize){
-        long bufferSize = textSize + MIN_GAP_SIZE + 1; // extra char for EOF
-        if(bufferSize < Integer.MAX_VALUE){
-            return (int) bufferSize;
+    @Synchronized
+    fun setBuffer(newBuffer: CharArray, textSize: Int, lineCount: Int) {
+        _contents = newBuffer
+        initGap(textSize)
+        this.lineCount = lineCount
+        _allocMultiplier = 1
+    }
+
+    @Synchronized
+    fun setBuffer(newBuffer: CharArray) {
+        var lineCount = 1
+        val len = newBuffer.size
+        for (i in 0..<len) {
+            if (newBuffer[i] == '\n') lineCount++
         }
-        return -1;
-    }
-
-    synchronized public void setBuffer(char[] newBuffer, int textSize, int lineCount){
-        _contents = newBuffer;
-        initGap(textSize);
-        _lineCount = lineCount;
-        _allocMultiplier = 1;
-    }
-
-    synchronized public void setBuffer(char[] newBuffer){
-        int lineCount=1;
-        int len=newBuffer.length;
-        for(int i=0;i<len;i++){
-            if(newBuffer[i]=='\n')
-                lineCount++;
-        }
-        setBuffer(newBuffer,len,lineCount);
+        setBuffer(newBuffer, len, lineCount)
     }
 
 
@@ -93,15 +75,16 @@ public class TextBuffer implements java.lang.CharSequence
      * @param lineNumber The index of the line of interest
      * @return The text on lineNumber, or an empty string if the line does not exist
      */
-    synchronized public String getLine(int lineNumber){
-        int startIndex = getLineOffset(lineNumber);
+    @Synchronized
+    fun getLine(lineNumber: Int): String {
+        val startIndex = getLineOffset(lineNumber)
 
-        if(startIndex < 0){
-            return new String();
+        if (startIndex < 0) {
+            return ""
         }
-        int lineSize = getLineSize(lineNumber);
+        val lineSize = getLineSize(lineNumber)
 
-        return subSequence(startIndex, lineSize).toString();
+        return subSequence(startIndex, lineSize).toString()
     }
 
     /**
@@ -111,102 +94,105 @@ public class TextBuffer implements java.lang.CharSequence
      * @param lineNumber The index of the line of interest
      * @return The character offset of lineNumber, or -1 if the line does not exist
      */
-    synchronized public int getLineOffset(int lineNumber){
-        if(lineNumber < 0){
-            return -1;
+    @Synchronized
+    fun getLineOffset(lineNumber: Int): Int {
+        if (lineNumber < 0) {
+            return -1
         }
 
         // start search from nearest known lineIndex~charOffset pair
-        Pair cachedEntry = _cache.getNearestLine(lineNumber);
-        int cachedLine = cachedEntry.getFirst();
-        int cachedOffset = cachedEntry.getSecond();
+        val cachedEntry = _cache.getNearestLine(lineNumber)
+        val cachedLine = cachedEntry!!.first
+        val cachedOffset = cachedEntry.second
 
-        int offset;
-        if (lineNumber > cachedLine){
-            offset = findCharOffset(lineNumber, cachedLine, cachedOffset);
-        }
-        else if (lineNumber < cachedLine){
-            offset = findCharOffsetBackward(lineNumber, cachedLine, cachedOffset);
-        }
-        else{
-            offset = cachedOffset;
+        val offset: Int
+        if (lineNumber > cachedLine) {
+            offset = findCharOffset(lineNumber, cachedLine, cachedOffset)
+        } else if (lineNumber < cachedLine) {
+            offset = findCharOffsetBackward(lineNumber, cachedLine, cachedOffset)
+        } else {
+            offset = cachedOffset
         }
 
-        if (offset >= 0){
+        if (offset >= 0) {
             // seek successful
-            _cache.updateEntry(lineNumber, offset);
+            _cache.updateEntry(lineNumber, offset)
         }
 
-        return offset;
+        return offset
     }
 
     /*
      * Precondition: startOffset is the offset of startLine
      */
-    private int findCharOffset(int targetLine, int startLine, int startOffset){
-        int workingLine = startLine;
-        int offset = logicalToRealIndex(startOffset);
+    private fun findCharOffset(targetLine: Int, startLine: Int, startOffset: Int): Int {
+        var workingLine = startLine
+        var offset = logicalToRealIndex(startOffset)
 
-        TextWarriorException.assertVerbose(isValid(startOffset),
-                "findCharOffsetBackward: Invalid startingOffset given");
+        assertVerbose(
+            isValid(startOffset),
+            "findCharOffsetBackward: Invalid startingOffset given"
+        )
 
-        while((workingLine < targetLine) && (offset < _contents.length)){
-            if (_contents[offset] == Language.NEWLINE){
-                ++workingLine;
+        while ((workingLine < targetLine) && (offset < _contents.size)) {
+            if (_contents[offset] == Language.NEWLINE) {
+                ++workingLine
             }
-            ++offset;
+            ++offset
 
             // skip the gap
-            if(offset == _gapStartIndex){
-                offset = _gapEndIndex;
+            if (offset == _gapStartIndex) {
+                offset = _gapEndIndex
             }
         }
 
-        if (workingLine != targetLine){
-            return -1;
+        if (workingLine != targetLine) {
+            return -1
         }
-        return realToLogicalIndex(offset);
+        return realToLogicalIndex(offset)
     }
 
     /*
      * Precondition: startOffset is the offset of startLine
      */
-    private int findCharOffsetBackward(int targetLine, int startLine, int startOffset){
-        if (targetLine == 0){
-            return 0;
+    private fun findCharOffsetBackward(targetLine: Int, startLine: Int, startOffset: Int): Int {
+        if (targetLine == 0) {
+            return 0
         }
 
-        TextWarriorException.assertVerbose(isValid(startOffset),
-                "findCharOffsetBackward: Invalid startOffset given");
+        assertVerbose(
+            isValid(startOffset),
+            "findCharOffsetBackward: Invalid startOffset given"
+        )
 
-        int workingLine = startLine;
-        int offset = logicalToRealIndex(startOffset);
-        while(workingLine > (targetLine-1) && offset >= 0){
+        var workingLine = startLine
+        var offset = logicalToRealIndex(startOffset)
+        while (workingLine > (targetLine - 1) && offset >= 0) {
             // skip behind the gap
-            if(offset == _gapEndIndex){
-                offset = _gapStartIndex;
+            if (offset == _gapEndIndex) {
+                offset = _gapStartIndex
             }
-            --offset;
+            --offset
 
-            if (_contents[offset] == Language.NEWLINE){
-                --workingLine;
+            if (_contents[offset] == Language.NEWLINE) {
+                --workingLine
             }
-
         }
 
-        int charOffset;
-        if (offset >= 0){
+        var charOffset: Int
+        if (offset >= 0) {
             // now at the '\n' of the line before targetLine
-            charOffset = realToLogicalIndex(offset);
-            ++charOffset;
-        }
-        else{
-            TextWarriorException.assertVerbose(false,
-                    "findCharOffsetBackward: Invalid cache entry or line arguments");
-            charOffset = -1;
+            charOffset = realToLogicalIndex(offset)
+            ++charOffset
+        } else {
+            assertVerbose(
+                false,
+                "findCharOffsetBackward: Invalid cache entry or line arguments"
+            )
+            charOffset = -1
         }
 
-        return charOffset;
+        return charOffset
     }
 
     /**
@@ -214,61 +200,60 @@ public class TextBuffer implements java.lang.CharSequence
      *
      * @return The line number that charOffset is on, or -1 if charOffset is invalid
      */
-    synchronized public int findLineNumber(int charOffset){
-        if(!isValid(charOffset)){
-            return -1;
+    @Synchronized
+    fun findLineNumber(charOffset: Int): Int {
+        if (!isValid(charOffset)) {
+            return -1
         }
 
-        Pair cachedEntry = _cache.getNearestCharOffset(charOffset);
-        int line = cachedEntry.getFirst();
-        int offset = logicalToRealIndex(cachedEntry.getSecond());
-        int targetOffset = logicalToRealIndex(charOffset);
-        int lastKnownLine = -1;
-        int lastKnownCharOffset = -1;
+        val cachedEntry = _cache.getNearestCharOffset(charOffset)
+        var line = cachedEntry!!.first
+        var offset = logicalToRealIndex(cachedEntry.second)
+        val targetOffset = logicalToRealIndex(charOffset)
+        var lastKnownLine = -1
+        var lastKnownCharOffset = -1
 
-        if (targetOffset > offset){
+        if (targetOffset > offset) {
             // search forward
-            while((offset < targetOffset) && (offset < _contents.length)){
-                if (_contents[offset] == Language.NEWLINE){
-                    ++line;
-                    lastKnownLine = line;
-                    lastKnownCharOffset = realToLogicalIndex(offset) + 1;
+            while ((offset < targetOffset) && (offset < _contents.size)) {
+                if (_contents[offset] == Language.NEWLINE) {
+                    ++line
+                    lastKnownLine = line
+                    lastKnownCharOffset = realToLogicalIndex(offset) + 1
                 }
 
-                ++offset;
+                ++offset
                 // skip the gap
-                if(offset == _gapStartIndex){
-                    offset = _gapEndIndex;
+                if (offset == _gapStartIndex) {
+                    offset = _gapEndIndex
                 }
             }
-        }
-        else if (targetOffset < offset){
+        } else if (targetOffset < offset) {
             // search backward
-            while((offset > targetOffset) && (offset > 0)){
+            while ((offset > targetOffset) && (offset > 0)) {
                 // skip behind the gap
-                if(offset == _gapEndIndex){
-                    offset = _gapStartIndex;
+                if (offset == _gapEndIndex) {
+                    offset = _gapStartIndex
                 }
-                --offset;
+                --offset
 
-                if (_contents[offset] == Language.NEWLINE){
-                    lastKnownLine = line;
-                    lastKnownCharOffset = realToLogicalIndex(offset) + 1;
-                    --line;
+                if (_contents[offset] == Language.NEWLINE) {
+                    lastKnownLine = line
+                    lastKnownCharOffset = realToLogicalIndex(offset) + 1
+                    --line
                 }
             }
         }
 
 
-        if (offset == targetOffset){
-            if(lastKnownLine != -1){
+        if (offset == targetOffset) {
+            if (lastKnownLine != -1) {
                 // cache the lookup entry
-                _cache.updateEntry(lastKnownLine, lastKnownCharOffset);
+                _cache.updateEntry(lastKnownLine, lastKnownCharOffset)
             }
-            return line;
-        }
-        else{
-            return -1;
+            return line
+        } else {
+            return -1
         }
     }
 
@@ -280,27 +265,29 @@ public class TextBuffer implements java.lang.CharSequence
      *
      * @return The number of chars in lineNumber, or 0 if the line does not exist.
      */
-    synchronized public int getLineSize(int lineNumber){
-        int lineLength = 0;
-        int pos = getLineOffset(lineNumber);
+    @Synchronized
+    fun getLineSize(lineNumber: Int): Int {
+        var lineLength = 0
+        var pos = getLineOffset(lineNumber)
 
-        if (pos != -1){
-            pos = logicalToRealIndex(pos);
+        if (pos != -1) {
+            pos = logicalToRealIndex(pos)
             //TODO consider adding check for (pos < _contents.length) in case EOF is not properly set
-            while(_contents[pos] != Language.NEWLINE &&
-                    _contents[pos] != Language.EOF){
-                ++lineLength;
-                ++pos;
+            while (_contents[pos] != Language.NEWLINE &&
+                _contents[pos] != Language.EOF
+            ) {
+                ++lineLength
+                ++pos
 
                 // skip the gap
-                if(pos == _gapStartIndex){
-                    pos = _gapEndIndex;
+                if (pos == _gapStartIndex) {
+                    pos = _gapEndIndex
                 }
             }
-            ++lineLength; // account for the line terminator char
+            ++lineLength // account for the line terminator char
         }
 
-        return lineLength;
+        return lineLength
     }
 
     /**
@@ -308,40 +295,38 @@ public class TextBuffer implements java.lang.CharSequence
      * Does not do bounds-checking.
      *
      * @return The char at charOffset. If charOffset is invalid, the result
-     * 		is undefined.
+     * is undefined.
      */
-    synchronized public char charAt(int charOffset){
-        return _contents[logicalToRealIndex(charOffset)];
-    }
 
     /**
      * Gets up to maxChars number of chars starting at charOffset
      *
      * @return The chars starting from charOffset, up to a maximum of maxChars.
-     * 		An empty array is returned if charOffset is invalid or maxChars is
-     *		non-positive.
+     * An empty array is returned if charOffset is invalid or maxChars is
+     * non-positive.
      */
-    synchronized public CharSequence subSequence(int charOffset, int maxChars){
-        if(!isValid(charOffset) || maxChars <= 0){
-            return new String();
+    @Synchronized
+    override fun subSequence(charOffset: Int, maxChars: Int): CharSequence {
+        if (!isValid(charOffset) || maxChars <= 0) {
+            return ""
         }
-        int totalChars = maxChars;
-        if((charOffset + totalChars) > getTextLength()){
-            totalChars = getTextLength() - charOffset;
+        var totalChars = maxChars
+        if ((charOffset + totalChars) > this.textLength) {
+            totalChars = this.textLength - charOffset
         }
-        int realIndex = logicalToRealIndex(charOffset);
-        char[] chars = new char[totalChars];
+        var realIndex = logicalToRealIndex(charOffset)
+        val chars = CharArray(totalChars)
 
-        for (int i = 0; i < totalChars; ++i){
-            chars[i] = _contents[realIndex];
-            ++realIndex;
+        for (i in 0..<totalChars) {
+            chars[i] = _contents[realIndex]
+            ++realIndex
             // skip the gap
-            if(realIndex == _gapStartIndex){
-                realIndex = _gapEndIndex;
+            if (realIndex == _gapStartIndex) {
+                realIndex = _gapEndIndex
             }
         }
 
-        return new String(chars);
+        return String(chars)
     }
 
     /**
@@ -349,14 +334,14 @@ public class TextBuffer implements java.lang.CharSequence
      *
      * Only UndoStack should use this method. No error checking is done.
      */
-    char[] gapSubSequence(int charCount){
-        char[] chars = new char[charCount];
+    fun gapSubSequence(charCount: Int): CharArray {
+        val chars = CharArray(charCount)
 
-        for (int i = 0; i < charCount; ++i){
-            chars[i] = _contents[_gapStartIndex + i];
+        for (i in 0..<charCount) {
+            chars[i] = _contents[_gapStartIndex + i]
         }
 
-        return chars;
+        return chars
     }
 
     /**
@@ -364,39 +349,41 @@ public class TextBuffer implements java.lang.CharSequence
      *
      * No error checking is done
      */
-    public synchronized void insert(char[] c, int charOffset, long timestamp,
-                                    boolean undoable){
-        if(undoable){
-            _undoStack.captureInsert(charOffset, c.length, timestamp);
+    @Synchronized
+    open fun insert(
+        c: CharArray, charOffset: Int, timestamp: Long,
+        undoable: Boolean
+    ) {
+        if (undoable) {
+            _undoStack.captureInsert(charOffset, c.size, timestamp)
         }
 
-        int insertIndex = logicalToRealIndex(charOffset);
+        val insertIndex = logicalToRealIndex(charOffset)
 
         // shift gap to insertion point
-        if (insertIndex != _gapEndIndex){
-            if (isBeforeGap(insertIndex)){
-                shiftGapLeft(insertIndex);
-            }
-            else{
-                shiftGapRight(insertIndex);
+        if (insertIndex != _gapEndIndex) {
+            if (isBeforeGap(insertIndex)) {
+                shiftGapLeft(insertIndex)
+            } else {
+                shiftGapRight(insertIndex)
             }
         }
 
-        if(c.length >= gapSize()){
-            growBufferBy(c.length - gapSize());
+        if (c.size >= gapSize()) {
+            growBufferBy(c.size - gapSize())
         }
 
-        for (int i = 0; i < c.length; ++i){
-            if(c[i] == Language.NEWLINE){
-                ++_lineCount;
+        for (i in c.indices) {
+            if (c[i] == Language.NEWLINE) {
+                ++this.lineCount
             }
-            _contents[_gapStartIndex] = c[i];
-            ++_gapStartIndex;
+            _contents[_gapStartIndex] = c[i]
+            ++_gapStartIndex
         }
 
-        _cache.invalidateCache(charOffset);
+        _cache.invalidateCache(charOffset)
 
-        onAdd(charOffset,c.length);
+        onAdd(charOffset, c.size)
     }
 
     /**
@@ -405,112 +392,107 @@ public class TextBuffer implements java.lang.CharSequence
      *
      * No error checking is done
      */
-    public synchronized void delete(int charOffset, int totalChars, long timestamp,
-                                    boolean undoable){
-        if(undoable){
-            _undoStack.captureDelete(charOffset, totalChars, timestamp);
+    @Synchronized
+    open fun delete(
+        charOffset: Int, totalChars: Int, timestamp: Long,
+        undoable: Boolean
+    ) {
+        if (undoable) {
+            _undoStack.captureDelete(charOffset, totalChars, timestamp)
         }
 
-        int newGapStart = charOffset + totalChars;
+        val newGapStart = charOffset + totalChars
 
         // shift gap to deletion point
-        if (newGapStart != _gapStartIndex){
-            if (isBeforeGap(newGapStart)){
-                shiftGapLeft(newGapStart);
-            }
-            else{
-                shiftGapRight(newGapStart + gapSize());
+        if (newGapStart != _gapStartIndex) {
+            if (isBeforeGap(newGapStart)) {
+                shiftGapLeft(newGapStart)
+            } else {
+                shiftGapRight(newGapStart + gapSize())
             }
         }
 
         // increase gap size
-        for(int i = 0; i < totalChars; ++i){
-            --_gapStartIndex;
-            if(_contents[_gapStartIndex] == Language.NEWLINE){
-                --_lineCount;
+        for (i in 0..<totalChars) {
+            --_gapStartIndex
+            if (_contents[_gapStartIndex] == Language.NEWLINE) {
+                --this.lineCount
             }
         }
 
-        _cache.invalidateCache(charOffset);
-        onDel(charOffset,totalChars);
+        _cache.invalidateCache(charOffset)
+        onDel(charOffset, totalChars)
     }
 
-    private void onAdd(int charOffset,int totalChars){
-        Pair s = findSpan(charOffset);
-        Pair p=_spans.get(s.getFirst());
-        p.setFirst(p.getFirst()+totalChars);
+    private fun onAdd(charOffset: Int, totalChars: Int) {
+        val s = findSpan(charOffset)
+        val p = _spans!!.get(s.first)
+        p.first = p.first + totalChars
     }
 
-    private void onDel(int charOffset,int totalChars){
-        int len = length();
-        if (len==0){
-            clearSpans();
-            return;
+    private fun onDel(charOffset: Int, totalChars: Int) {
+        var totalChars = totalChars
+        val len = length
+        if (len == 0) {
+            clearSpans()
+            return
         }
 
-        Pair s = findSpan2(charOffset);
-        if(totalChars==1){
-            Pair p=_spans.get(s.getFirst());
-            if(p.getFirst()>1){
-                p.setFirst(p.getFirst()-1);
+        val s = findSpan2(charOffset)
+        if (totalChars == 1) {
+            val p = _spans!!.get(s.first)
+            if (p.first > 1) {
+                p.first = p.first - 1
+            } else {
+                _spans!!.removeAt(s.first)
             }
-            else{
-                _spans.remove(s.getFirst());
+        } else {
+            val o = s.second
+            var l = charOffset - o
+            val p = _spans!!.get(s.first)
+            if (p.first > l) {
+                p.first = p.first - l
+            } else {
+                _spans!!.removeAt(s.first)
             }
-        }
-        else{
-            int o=s.getSecond();
-            int l=charOffset-o;
-            Pair p=_spans.get(s.getFirst());
-            if(p.getFirst()>l){
-                p.setFirst(p.getFirst()-l);
-            }
-            else{
-                _spans.remove(s.getFirst());
-            }
-            totalChars-=l;
-            if(totalChars>0){
-                for(int i=s.getFirst();i>=0;i--){
-                    Pair p1=_spans.get(i);
-                    l=p1.getFirst();
-                    if(totalChars>l){
-                        totalChars-=l;
-                        _spans.remove(i);
-                    }
-                    else{
-                        p1.setFirst(p1.getFirst()-totalChars);
-                        break;
+            totalChars -= l
+            if (totalChars > 0) {
+                for (i in s.first downTo 0) {
+                    val p1 = _spans!!.get(i)
+                    l = p1.first
+                    if (totalChars > l) {
+                        totalChars -= l
+                        _spans!!.removeAt(i)
+                    } else {
+                        p1.first = p1.first - totalChars
+                        break
                     }
                 }
             }
-
         }
     }
 
-    private Pair findSpan(int index){
-        int n=_spans.size();
-        int cur=0;
-        for (int i=0;i<n;i++){
-            int l=_spans.get(i).getFirst();
-            cur+=l;
-            if(cur>=index)
-                return new Pair(i,cur-l);
+    private fun findSpan(index: Int): Pair {
+        val n = _spans!!.size
+        var cur = 0
+        for (i in 0..<n) {
+            val l = _spans!!.get(i).first
+            cur += l
+            if (cur >= index) return Pair(i, cur - l)
         }
-        return new Pair(0,0);
+        return Pair(0, 0)
     }
 
-    private Pair findSpan2(int index){
-        int n=_spans.size();
-        int cur=0;
-        for (int i=0;i<n;i++){
-            int l=_spans.get(i).getFirst();
-            cur+=l;
-            if(cur>index)
-                return new Pair(i,cur-l);
+    private fun findSpan2(index: Int): Pair {
+        val n = _spans!!.size
+        var cur = 0
+        for (i in 0..<n) {
+            val l = _spans!!.get(i).first
+            cur += l
+            if (cur > index) return Pair(i, cur - l)
         }
-        return new Pair(0,0);
+        return Pair(0, 0)
     }
-
 
 
     /**
@@ -520,51 +502,51 @@ public class TextBuffer implements java.lang.CharSequence
      * Only UndoStack should use this method to carry out a simple undo/redo
      * of insertions/deletions. No error checking is done.
      */
-    synchronized void shiftGapStart(int displacement){
-        if(displacement >= 0){
-            onAdd(_gapStartIndex, displacement);
-            _lineCount += countNewlines(_gapStartIndex, displacement);
-        }
-        else{
-            onDel(_gapStartIndex, 0-displacement);
-            _lineCount -= countNewlines(_gapStartIndex + displacement, -displacement);
+    @Synchronized
+    open fun shiftGapStart(displacement: Int) {
+        if (displacement >= 0) {
+            onAdd(_gapStartIndex, displacement)
+            this.lineCount += countNewlines(_gapStartIndex, displacement)
+        } else {
+            onDel(_gapStartIndex, 0 - displacement)
+            this.lineCount -= countNewlines(_gapStartIndex + displacement, -displacement)
         }
 
-        _gapStartIndex += displacement;
-        _cache.invalidateCache(realToLogicalIndex(_gapStartIndex - 1) + 1);
+        _gapStartIndex += displacement
+        _cache.invalidateCache(realToLogicalIndex(_gapStartIndex - 1) + 1)
     }
 
     //does NOT skip the gap when examining consecutive positions
-    private int countNewlines(int start, int totalChars){
-        int newlines = 0;
-        for(int i = start; i < (start + totalChars); ++i){
-            if(_contents[i] == Language.NEWLINE){
-                ++newlines;
+    private fun countNewlines(start: Int, totalChars: Int): Int {
+        var newlines = 0
+        for (i in start..<(start + totalChars)) {
+            if (_contents[i] == Language.NEWLINE) {
+                ++newlines
             }
         }
 
-        return newlines;
+        return newlines
     }
 
     /**
      * Adjusts gap so that _gapStartIndex is at newGapStart
      */
-    final protected void shiftGapLeft(int newGapStart){
-        while(_gapStartIndex > newGapStart){
-            --_gapEndIndex;
-            --_gapStartIndex;
-            _contents[_gapEndIndex] = _contents[_gapStartIndex];
+    protected fun shiftGapLeft(newGapStart: Int) {
+        while (_gapStartIndex > newGapStart) {
+            --_gapEndIndex
+            --_gapStartIndex
+            _contents[_gapEndIndex] = _contents[_gapStartIndex]
         }
     }
 
     /**
      * Adjusts gap so that _gapEndIndex is at newGapEnd
      */
-    final protected void shiftGapRight(int newGapEnd){
-        while(_gapEndIndex < newGapEnd){
-            _contents[_gapStartIndex] = _contents[_gapEndIndex];
-            ++_gapStartIndex;
-            ++_gapEndIndex;
+    protected fun shiftGapRight(newGapEnd: Int) {
+        while (_gapEndIndex < newGapEnd) {
+            _contents[_gapStartIndex] = _contents[_gapEndIndex]
+            ++_gapStartIndex
+            ++_gapEndIndex
         }
     }
 
@@ -572,161 +554,173 @@ public class TextBuffer implements java.lang.CharSequence
      * Create a gap at the start of _contents[] and tack a EOF at the end.
      * Precondition: real contents are from _contents[0] to _contents[contentsLength-1]
      */
-    protected void initGap(int contentsLength){
-        int toPosition = _contents.length - 1;
-        _contents[toPosition--] = Language.EOF; // mark end of file
-        int fromPosition = contentsLength - 1;
-        while(fromPosition >= 0){
-            _contents[toPosition--] = _contents[fromPosition--];
+    protected fun initGap(contentsLength: Int) {
+        var toPosition = _contents.size - 1
+        _contents[toPosition--] = Language.EOF // mark end of file
+        var fromPosition = contentsLength - 1
+        while (fromPosition >= 0) {
+            _contents[toPosition--] = _contents[fromPosition--]
         }
-        _gapStartIndex = 0;
-        _gapEndIndex = toPosition + 1; // went one-past in the while loop
+        _gapStartIndex = 0
+        _gapEndIndex = toPosition + 1 // went one-past in the while loop
     }
 
     /**
      * Copies _contents into a buffer that is larger by
-     * 		minIncrement + INITIAL_GAP_SIZE * _allocCount bytes.
+     * minIncrement + INITIAL_GAP_SIZE * _allocCount bytes.
      *
      * _allocMultiplier doubles on every call to this method, to avoid the
      * overhead of repeated allocations.
      */
-    protected void growBufferBy(int minIncrement){
+    protected fun growBufferBy(minIncrement: Int) {
         //TODO handle new size > MAX_INT or allocation failure
-        int increasedSize = minIncrement + MIN_GAP_SIZE * _allocMultiplier;
-        char[] temp = new char[_contents.length + increasedSize];
-        int i = 0;
-        while(i < _gapStartIndex){
-            temp[i] = _contents[i];
-            ++i;
+        val increasedSize: Int = minIncrement + MIN_GAP_SIZE * _allocMultiplier
+        val temp = CharArray(_contents.size + increasedSize)
+        var i = 0
+        while (i < _gapStartIndex) {
+            temp[i] = _contents[i]
+            ++i
         }
 
-        i = _gapEndIndex;
-        while(i < _contents.length){
-            temp[i + increasedSize] = _contents[i];
-            ++i;
+        i = _gapEndIndex
+        while (i < _contents.size) {
+            temp[i + increasedSize] = _contents[i]
+            ++i
         }
 
-        _gapEndIndex += increasedSize;
-        _contents = temp;
-        _allocMultiplier <<= 1;
+        _gapEndIndex += increasedSize
+        _contents = temp
+        _allocMultiplier = _allocMultiplier shl 1
     }
 
-    /**
-     * Returns the total number of characters in the text, including the
-     * EOF sentinel char
-     */
-    final synchronized public int getTextLength(){
-        return _contents.length - gapSize();
+    @get:Synchronized
+    val textLength: Int
+        /**
+         * Returns the total number of characters in the text, including the
+         * EOF sentinel char
+         */
+        get() = _contents.size - gapSize()
+
+    @Synchronized
+    fun isValid(charOffset: Int): Boolean {
+        return (charOffset >= 0 && charOffset < this.textLength)
     }
 
-    synchronized public int getLineCount(){
-        return _lineCount;
+    protected fun gapSize(): Int {
+        return _gapEndIndex - _gapStartIndex
     }
 
-    final synchronized public boolean isValid(int charOffset){
-        return (charOffset >= 0 && charOffset < getTextLength());
-    }
-
-    final protected int gapSize(){
-        return _gapEndIndex - _gapStartIndex;
-    }
-
-    final protected int logicalToRealIndex(int i){
-        if (isBeforeGap(i)){
-            return i;
-        }
-        else{
-            return i + gapSize();
+    protected fun logicalToRealIndex(i: Int): Int {
+        if (isBeforeGap(i)) {
+            return i
+        } else {
+            return i + gapSize()
         }
     }
 
-    final protected int realToLogicalIndex(int i){
-        if (isBeforeGap(i)){
-            return i;
+    protected fun realToLogicalIndex(i: Int): Int {
+        if (isBeforeGap(i)) {
+            return i
+        } else {
+            return i - gapSize()
         }
-        else{
-            return i - gapSize();
+    }
+
+    protected fun isBeforeGap(i: Int): Boolean {
+        return i < _gapStartIndex
+    }
+
+    fun clearSpans() {
+        _spans = Vector<Pair>()
+        _spans!!.add(Pair(length, Lexer.NORMAL))
+    }
+
+    var spans: MutableList<Pair>
+        get() = _spans!!
+        /**
+         * Sets the spans to use in the document.
+         * Spans are continuous sequences of characters that have the same format
+         * like color, font, etc.
+         *
+         * @param spans A collection of Pairs, where Pair.first is the start
+         * position of the token, and Pair.second is the type of the token.
+         */
+        set(spans) {
+            _spans = spans
         }
-    }
 
-    final protected boolean isBeforeGap(int i){
-        return i < _gapStartIndex;
-    }
-
-    public void clearSpans(){
-        _spans = new Vector<Pair>();
-        _spans.add(new Pair(length(), Lexer.NORMAL));
-    }
-
-    public List<Pair> getSpans(){
-        return _spans;
-    }
-
-    /**
-     * Sets the spans to use in the document.
-     * Spans are continuous sequences of characters that have the same format
-     * like color, font, etc.
-     *
-     * @param spans A collection of Pairs, where Pair.first is the start
-     * 		position of the token, and Pair.second is the type of the token.
-     */
-    public void setSpans(List<Pair> spans){
-        _spans = spans;
-    }
-
-    /**
-     * Returns true if in batch edit mode
-     */
-    public boolean isBatchEdit(){
-        return _undoStack.isBatchEdit();
-    }
+    val isBatchEdit: Boolean
+        /**
+         * Returns true if in batch edit mode
+         */
+        get() = _undoStack.isBatchEdit
 
     /**
      * Signals the beginning of a series of insert/delete operations that can be
      * undone/redone as a single unit
      */
-    public void beginBatchEdit() {
-        _undoStack.beginBatchEdit();
+    fun beginBatchEdit() {
+        _undoStack.beginBatchEdit()
     }
 
     /**
      * Signals the end of a series of insert/delete operations that can be
      * undone/redone as a single unit
      */
-    public void endBatchEdit() {
-        _undoStack.endBatchEdit();
+    fun endBatchEdit() {
+        _undoStack.endBatchEdit()
     }
 
-    public boolean canUndo() {
-        return _undoStack.canUndo();
+    fun canUndo(): Boolean {
+        return _undoStack.canUndo()
     }
 
-    public boolean canRedo() {
-        return _undoStack.canRedo();
+    fun canRedo(): Boolean {
+        return _undoStack.canRedo()
     }
 
-    public int undo(){
-        return _undoStack.undo();
+    fun undo(): Int {
+        return _undoStack.undo()
     }
 
-    public int redo(){
-        return _undoStack.redo();
+    fun redo(): Int {
+        return _undoStack.redo()
     }
 
-    @Override
-    public String toString()
-    {
+    override fun toString(): String {
         // TODO: Implement this method
-        int len=getTextLength();
-        StringBuffer buf=new StringBuffer();
-        for (int i=0;i < len;i++){
-            char c=charAt(i);
-            if (c==Language.EOF)
-                break;
-            buf.append(c);
+        val len = this.textLength
+        val buf = StringBuffer()
+        for (i in 0..<len) {
+            val c = get(i)
+            if (c == Language.EOF) break
+            buf.append(c)
         }
-        return new String(buf);
+        return String(buf)
     }
 
 
+    companion object {
+        // gap size must be > 0 to insert into full buffers successfully
+        protected const val MIN_GAP_SIZE: Int = 50
+
+        /**
+         * Calculate the implementation size of the char array needed to store
+         * textSize number of characters.
+         * The implementation size may be greater than textSize because of buffer
+         * space, cached characters and so on.
+         *
+         * @param textSize
+         * @return The size, measured in number of chars, required by the
+         * implementation to store textSize characters, or -1 if the request
+         * cannot be satisfied
+         */
+        fun memoryNeeded(textSize: Int): Int {
+            val bufferSize = (textSize + MIN_GAP_SIZE + 1).toLong() // extra char for EOF
+            if (bufferSize < Int.Companion.MAX_VALUE) {
+                return bufferSize.toInt()
+            }
+            return -1
+        }
+    }
 }

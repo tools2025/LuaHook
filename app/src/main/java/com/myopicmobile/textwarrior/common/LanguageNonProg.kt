@@ -6,69 +6,63 @@
  *
  * This software is provided "as is". Use at your own risk.
  */
-package com.myopicmobile.textwarrior.common;
+package com.myopicmobile.textwarrior.common
 
 /**
  * Singleton class that represents a non-programming language without keywords,
  * operators etc.
  */
-public class LanguageNonProg extends Language{
-	private static Language _theOne = null;
+class LanguageNonProg private constructor() : Language() {
+    init {
+        super.keywords = Companion.keywords
+        super.setOperators(operators)
+    }
 
-	private final static String[] keywords = {};
+    override val isProgLang: Boolean
+        get() = false
 
-	private final static char[] operators = {};
+    public override fun isEscapeChar(c: Char): Boolean {
+        return false
+    }
+
+    public override fun isDelimiterA(c: Char): Boolean {
+        return false
+    }
+
+    public override fun isDelimiterB(c: Char): Boolean {
+        return false
+    }
+
+    public override fun isLineAStart(c: Char): Boolean {
+        return false
+    }
+
+    public override fun isLineStart(c0: Char, c1: Char): Boolean {
+        return false
+    }
+
+    public override fun isMultilineStartDelimiter(c0: Char, c1: Char): Boolean {
+        return false
+    }
+
+    public override fun isMultilineEndDelimiter(c0: Char, c1: Char): Boolean {
+        return false
+    }
+
+    companion object {
+        private var _theOne: Language? = null
+
+        private val keywords = arrayOf<String?>()
+
+        private val operators = charArrayOf()
 
 
-	public static Language getInstance(){
-		if(_theOne == null){
-			_theOne = new LanguageNonProg();
-		}
-		return _theOne;
-	}
-
-	private LanguageNonProg(){
-		super.setKeywords(keywords);
-		super.setOperators(operators);
-	}
-
-	@Override
-	public boolean isProgLang(){
-		return false;
-	}
-
-	@Override
-	public boolean isEscapeChar(char c){
-		return false;
-	}
-
-	@Override
-	public boolean isDelimiterA(char c){
-		return false;
-	}
-
-	@Override
-	public boolean isDelimiterB(char c){
-		return false;
-	}
-
-	@Override
-	public boolean isLineAStart(char c){
-		return false;
-	}
-
-	@Override
-	public boolean isLineStart(char c0, char c1){
-		return false;
-	}
-
-	@Override
-	public boolean isMultilineStartDelimiter(char c0, char c1){
-		return false;
-	}
-
-	@Override
-	public boolean isMultilineEndDelimiter(char c0, char c1){
-		return false;
-	}
+        val instance: Language
+            get() {
+                if (_theOne == null) {
+                    _theOne = LanguageNonProg()
+                }
+                return _theOne!!
+            }
+    }
 }

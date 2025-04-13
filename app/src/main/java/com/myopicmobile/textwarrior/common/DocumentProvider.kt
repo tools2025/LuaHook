@@ -6,9 +6,10 @@
  *
  * This software is provided "as is". Use at your own risk.
  */
-package com.myopicmobile.textwarrior.common;
+package com.myopicmobile.textwarrior.common
 
-import java.util.List;
+import com.myopicmobile.textwarrior.common.Document.TextFieldMetrics
+import kotlin.math.min
 
 /**
  * Iterator class to access characters of the underlying text buffer.
@@ -22,302 +23,287 @@ import java.util.List;
  * changes made by one DocumentProvider will not cause other DocumentProviders
  * to be notified. Implement a publish/subscribe interface if required.
  */
-public class DocumentProvider implements java.lang.CharSequence
-{
+class DocumentProvider : CharSequence {
 
-	@Override
-	public int length()
-	{
-		// TODO: Implement this method
-		return _theText.length();
-	}
+    override val length: Int
+        get() =  _theText.length
 
-	/** Current position in the text. Range [ 0, _theText.getTextLength() ) */
-	private int _currIndex;
-	private final Document _theText;
+    override fun get(charOffset: Int): Char {
+        if (_theText.isValid(charOffset)) {
+            return _theText.get(charOffset)
+        } else {
+            return Language.NULL_CHAR
+        }
+    }
 
-	public DocumentProvider(Document.TextFieldMetrics metrics){
-		_currIndex = 0;
-		_theText = new Document(metrics);
-	}
+    /** Current position in the text. Range [ 0, _theText.getTextLength() )  */
+    private var _currIndex: Int
+    private val _theText: Document
 
-	public DocumentProvider(Document doc){
-		_currIndex = 0;
-		_theText = doc;
-	}
+    constructor(metrics: TextFieldMetrics) {
+        _currIndex = 0
+        _theText = Document(metrics)
+    }
 
-	public DocumentProvider(DocumentProvider rhs){
-		_currIndex = 0;
-		_theText = rhs._theText;
-	}
+    constructor(doc: Document) {
+        _currIndex = 0
+        _theText = doc
+    }
 
-	/**
-	 * Get a substring of up to maxChars length, starting from charOffset
-	 */
-	public CharSequence subSequence(int charOffset, int maxChars){
-		return _theText.subSequence(charOffset, maxChars);
-	}
+    constructor(rhs: DocumentProvider) {
+        _currIndex = 0
+        _theText = rhs._theText
+    }
 
-	public char charAt(int charOffset){
-		if(_theText.isValid(charOffset)){
-			return _theText.charAt(charOffset);
-		}
-		else{
-			return Language.NULL_CHAR;
-		}
-	}
-
-	public String getRow(int rowNumber){
-		return _theText.getRow(rowNumber);
-	}
-
-	/**
-	 * Get the row number that charOffset is on
-	 */
-	public int findRowNumber(int charOffset){
-		return _theText.findRowNumber(charOffset);
-	}
-
-	/**
-	 * Get the line number that charOffset is on. The difference between a line
-	 * and a row is that a line can be word-wrapped into many rows.
-	 */
-	public int findLineNumber(int charOffset){
-		return _theText.findLineNumber(charOffset);
-	}
-
-	/**
-	 * Get the offset of the first character on rowNumber
-	 */
-	public int getRowOffset(int rowNumber){
-		return _theText.getRowOffset(rowNumber);
-	}
+    /**
+     * Get a substring of up to maxChars length, starting from charOffset
+     */
+    override fun subSequence(charOffset: Int, maxChars: Int): CharSequence {
+        return _theText.subSequence(charOffset, maxChars)
+    }
 
 
-	/**
-	 * Get the offset of the first character on lineNumber. The difference
-	 * between a line and a row is that a line can be word-wrapped into many rows.
-	 */
-	public int getLineOffset(int lineNumber){
-		return _theText.getLineOffset(lineNumber);
-	}
+    fun getRow(rowNumber: Int): String {
+        return _theText.getRow(rowNumber)
+    }
 
-	/**
-	 * Sets the iterator to point at startingChar.
-	 *
-	 * If startingChar is invalid, hasNext() will return false, and _currIndex
-	 * will be set to -1.
-	 *
-	 * @return startingChar, or -1 if startingChar does not exist
-	 */
-	public int seekChar(int startingChar){
-		if(_theText.isValid(startingChar)){
-			_currIndex = startingChar;
-		}
-		else{
-			_currIndex = -1;
-		}
-		return _currIndex;
-	}
+    /**
+     * Get the row number that charOffset is on
+     */
+    fun findRowNumber(charOffset: Int): Int {
+        return _theText.findRowNumber(charOffset)
+    }
 
-	public boolean hasNext(){
-		return (_currIndex >= 0 &&
-				_currIndex < _theText.getTextLength());
-	}
+    /**
+     * Get the line number that charOffset is on. The difference between a line
+     * and a row is that a line can be word-wrapped into many rows.
+     */
+    fun findLineNumber(charOffset: Int): Int {
+        return _theText.findLineNumber(charOffset)
+    }
 
-	/**
-	 * Returns the next character and moves the iterator forward.
-	 *
-	 * Does not do bounds-checking. It is the responsibility of the caller
-	 * to check hasNext() first.
-	 *
-	 * @return Next character
-	 */
-	public char next(){
-		char nextChar = _theText.charAt(_currIndex);
-		++_currIndex;
-		return nextChar;
-	}
-
-	/**
-	 * Inserts c into the document, shifting existing characters from
-	 * insertionPoint (inclusive) to the right
-	 *
-	 * If insertionPoint is invalid, nothing happens.
-	 */
-	public void insertBefore(char c, int insertionPoint, long timestamp){
-		if(!_theText.isValid(insertionPoint)){
-			return;
-		}
-
-		char[] a = new char[1];
-		a[0] = c;
-		_theText.insert(a, insertionPoint, timestamp, true);
-	}
-
-	/**
-	 * Inserts characters of cArray into the document, shifting existing
-	 * characters from insertionPoint (inclusive) to the right
-	 *
-	 * If insertionPoint is invalid, nothing happens.
-	 */
-	public void insertBefore(char[] cArray, int insertionPoint, long timestamp){
-		if(!_theText.isValid(insertionPoint) || cArray.length == 0){
-			return;
-		}
-
-		_theText.insert(cArray, insertionPoint, timestamp, true);
-	}
-
-	public void insert(int i, CharSequence s)
-	{
-		_theText.insert(new char[]{s.charAt(0)},i,System.nanoTime(),true);
-	}
-	/**
-	 * Deletes the character at deletionPoint index.
-	 * If deletionPoint is invalid, nothing happens.
-	 */
-	public void deleteAt(int deletionPoint, long timestamp){
-		if(!_theText.isValid(deletionPoint)){
-			return;
-		}
-		_theText.delete(deletionPoint, 1, timestamp, true);
-	}
+    /**
+     * Get the offset of the first character on rowNumber
+     */
+    fun getRowOffset(rowNumber: Int): Int {
+        return _theText.getRowOffset(rowNumber)
+    }
 
 
-	/**
-	 * Deletes up to maxChars number of characters starting from deletionPoint
-	 * If deletionPoint is invalid, or maxChars is not positive, nothing happens.
-	 */
-	public void deleteAt(int deletionPoint, int maxChars, long time){
-		if(!_theText.isValid(deletionPoint) || maxChars <= 0){
-			return;
-		}
-		int totalChars = Math.min(maxChars, _theText.getTextLength() - deletionPoint);
-		_theText.delete(deletionPoint, totalChars, time, true);
-	}
+    /**
+     * Get the offset of the first character on lineNumber. The difference
+     * between a line and a row is that a line can be word-wrapped into many rows.
+     */
+    fun getLineOffset(lineNumber: Int): Int {
+        return _theText.getLineOffset(lineNumber)
+    }
 
-	/**
-	 * Returns true if the underlying text buffer is in batch edit mode
-	 */
-	public boolean isBatchEdit(){
-		return _theText.isBatchEdit();
-	}
+    /**
+     * Sets the iterator to point at startingChar.
+     *
+     * If startingChar is invalid, hasNext() will return false, and _currIndex
+     * will be set to -1.
+     *
+     * @return startingChar, or -1 if startingChar does not exist
+     */
+    fun seekChar(startingChar: Int): Int {
+        if (_theText.isValid(startingChar)) {
+            _currIndex = startingChar
+        } else {
+            _currIndex = -1
+        }
+        return _currIndex
+    }
 
-	/**
-	 * Signals the beginning of a series of insert/delete operations that can be
-	 * undone/redone as a single unit
-	 */
-	public void beginBatchEdit(){
-		_theText.beginBatchEdit();
-	}
+    fun hasNext(): Boolean {
+        return (_currIndex >= 0 &&
+                _currIndex < _theText.textLength)
+    }
 
-	/**
-	 * Signals the end of a series of insert/delete operations that can be
-	 * undone/redone as a single unit
-	 */
-	public void endBatchEdit(){
-		_theText.endBatchEdit();
-	}
+    /**
+     * Returns the next character and moves the iterator forward.
+     *
+     * Does not do bounds-checking. It is the responsibility of the caller
+     * to check hasNext() first.
+     *
+     * @return Next character
+     */
+    fun next(): Char {
+        val nextChar = _theText.get(_currIndex)
+        ++_currIndex
+        return nextChar
+    }
 
-	/**
-	 * Returns the number of rows in the document
-	 */
-	public int getRowCount(){
-		return _theText.getRowCount();
-	}
+    /**
+     * Inserts c into the document, shifting existing characters from
+     * insertionPoint (inclusive) to the right
+     *
+     * If insertionPoint is invalid, nothing happens.
+     */
+    fun insertBefore(c: Char, insertionPoint: Int, timestamp: Long) {
+        if (!_theText.isValid(insertionPoint)) {
+            return
+        }
 
-	/**
-	 * Returns the number of characters in the row specified by rowNumber
-	 */
-	public int getRowSize(int rowNumber){
-		return _theText.getRowSize(rowNumber);
-	}
+        val a = CharArray(1)
+        a[0] = c
+        _theText.insert(a, insertionPoint, timestamp, true)
+    }
 
-	/**
-	 * Returns the number of characters in the document, including the terminal
-	 * End-Of-File character
-	 */
-	public int docLength(){
-		return _theText.getTextLength();
-	}
+    /**
+     * Inserts characters of cArray into the document, shifting existing
+     * characters from insertionPoint (inclusive) to the right
+     *
+     * If insertionPoint is invalid, nothing happens.
+     */
+    fun insertBefore(cArray: CharArray?, insertionPoint: Int, timestamp: Long) {
+        if (!_theText.isValid(insertionPoint) || cArray?.size == 0) {
+            return
+        }
 
-	//TODO make thread-safe
-	/**
-	 * Removes spans from the document.
-	 * Beware: Not thread-safe! Another thread may be modifying the same spans
-	 * returned from getSpans()
-	 */
-	public void clearSpans(){
-		_theText.clearSpans();
-	}
+        _theText.insert(cArray!!, insertionPoint, timestamp, true)
+    }
 
-	/**
-	 * Beware: Not thread-safe!
-	 */
-	public List<Pair> getSpans(){
-		return _theText.getSpans();
-	}
+    fun insert(i: Int, s: CharSequence) {
+        _theText.insert(charArrayOf(s.get(0)), i, System.nanoTime(), true)
+    }
 
-	/**
-	 * Sets the spans to use in the document.
-	 * Spans are continuous sequences of characters that have the same format
-	 * like color, font, etc.
-	 *
-	 * @param spans A collection of Pairs, where Pair.first is the start
-	 * 		position of the token, and Pair.second is the type of the token.
-	 */
-	public void setSpans(List<Pair> spans){
-		_theText.setSpans(spans);
-	}
-
-	public void setMetrics(Document.TextFieldMetrics metrics){
-		_theText.setMetrics(metrics);
-	}
-
-	/**
-	 * Enable/disable word wrap for the document. If enabled, the document is
-	 * immediately analyzed for word wrap breakpoints, which might take an
-	 * arbitrarily long time.
-	 */
-	public void setWordWrap(boolean enable){
-		_theText.setWordWrap(enable);
-	}
-
-	public boolean isWordWrap(){
-		return _theText.isWordWrap();
-	}
-
-	/**
-	 * Analyze the document for word wrap break points. Does nothing if word
-	 * wrap is disabled for the document.
-	 */
-	public void analyzeWordWrap(){
-		_theText.analyzeWordWrap();
-	}
-
-	public boolean canUndo() {
-		return _theText.canUndo();
-	}
-
-	public boolean canRedo() {
-		return _theText.canRedo();
-	}
-
-	public int undo() {
-		return _theText.undo();
-	}
-
-	public int redo() {
-		return _theText.redo();
-	}
-
-	@Override
-	public String toString()
-	{
-		// TODO: Implement this method
-		return _theText.toString();
-	}
+    /**
+     * Deletes the character at deletionPoint index.
+     * If deletionPoint is invalid, nothing happens.
+     */
+    fun deleteAt(deletionPoint: Int, timestamp: Long) {
+        if (!_theText.isValid(deletionPoint)) {
+            return
+        }
+        _theText.delete(deletionPoint, 1, timestamp, true)
+    }
 
 
+    /**
+     * Deletes up to maxChars number of characters starting from deletionPoint
+     * If deletionPoint is invalid, or maxChars is not positive, nothing happens.
+     */
+    fun deleteAt(deletionPoint: Int, maxChars: Int, time: Long) {
+        if (!_theText.isValid(deletionPoint) || maxChars <= 0) {
+            return
+        }
+        val totalChars =
+            min(maxChars.toDouble(), (_theText.textLength - deletionPoint).toDouble()).toInt()
+        _theText.delete(deletionPoint, totalChars, time, true)
+    }
+
+    val isBatchEdit: Boolean
+        /**
+         * Returns true if the underlying text buffer is in batch edit mode
+         */
+        get() = _theText.isBatchEdit
+
+    /**
+     * Signals the beginning of a series of insert/delete operations that can be
+     * undone/redone as a single unit
+     */
+    fun beginBatchEdit() {
+        _theText.beginBatchEdit()
+    }
+
+    /**
+     * Signals the end of a series of insert/delete operations that can be
+     * undone/redone as a single unit
+     */
+    fun endBatchEdit() {
+        _theText.endBatchEdit()
+    }
+
+    val rowCount: Int
+        /**
+         * Returns the number of rows in the document
+         */
+        get() = _theText.rowCount
+
+    /**
+     * Returns the number of characters in the row specified by rowNumber
+     */
+    fun getRowSize(rowNumber: Int): Int {
+        return _theText.getRowSize(rowNumber)
+    }
+
+    /**
+     * Returns the number of characters in the document, including the terminal
+     * End-Of-File character
+     */
+    fun docLength(): Int {
+        return _theText.textLength
+    }
+
+    //TODO make thread-safe
+    /**
+     * Removes spans from the document.
+     * Beware: Not thread-safe! Another thread may be modifying the same spans
+     * returned from getSpans()
+     */
+    fun clearSpans() {
+        _theText.clearSpans()
+    }
+
+    var spans: MutableList<Pair?>
+        /**
+         * Beware: Not thread-safe!
+         */
+        get() = _theText.spans as MutableList<Pair?>
+        /**
+         * Sets the spans to use in the document.
+         * Spans are continuous sequences of characters that have the same format
+         * like color, font, etc.
+         *
+         * @param spans A collection of Pairs, where Pair.first is the start
+         * position of the token, and Pair.second is the type of the token.
+         */
+        set(spans) {
+            _theText.spans = spans as MutableList<Pair>
+        }
+
+    fun setMetrics(metrics: TextFieldMetrics) {
+        _theText.setMetrics(metrics)
+    }
+
+    var isWordWrap: Boolean
+        get() = _theText.isWordWrap
+        /**
+         * Enable/disable word wrap for the document. If enabled, the document is
+         * immediately analyzed for word wrap breakpoints, which might take an
+         * arbitrarily long time.
+         */
+        set(enable) {
+            _theText.isWordWrap = enable
+        }
+
+    /**
+     * Analyze the document for word wrap break points. Does nothing if word
+     * wrap is disabled for the document.
+     */
+    fun analyzeWordWrap() {
+        _theText.analyzeWordWrap()
+    }
+
+    fun canUndo(): Boolean {
+        return _theText.canUndo()
+    }
+
+    fun canRedo(): Boolean {
+        return _theText.canRedo()
+    }
+
+    fun undo(): Int {
+        return _theText.undo()
+    }
+
+    fun redo(): Int {
+        return _theText.redo()
+    }
+
+    override fun toString(): String {
+        // TODO: Implement this method
+        return _theText.toString()
+    }
 }

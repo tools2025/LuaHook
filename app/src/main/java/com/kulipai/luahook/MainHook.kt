@@ -88,7 +88,6 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
             SelectAppsList = mutableListOf()
         }
 
-        SelectAppsList.toString().d()
         canHook(lpparam)
 
 

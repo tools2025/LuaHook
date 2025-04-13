@@ -1,5 +1,6 @@
 package com.kulipai.luahook
 
+import android.annotation.SuppressLint
 import com.kulipai.luahook.adapter.ToolAdapter
 import android.content.Context
 import android.content.Intent
@@ -78,6 +79,7 @@ class EditActivity : AppCompatActivity() {
     }
 
 
+    @SuppressLint("SetTextI18n")
     private fun showLsposedInfoDialog() {
         val view = LayoutInflater.from(this).inflate(R.layout.dialog_info, null)
 
@@ -88,7 +90,7 @@ class EditActivity : AppCompatActivity() {
 
         // 设置应用信息
         appLogoImageView.setImageResource(R.drawable.logo)
-        appNameTextView.text = packageName
+        appNameTextView.text = "LuaHook"
         appVersionTextView.text = getAppVersionName(this)
 
         // 构建包含可点击链接的 SpannableString (与之前的示例代码相同)
@@ -218,14 +220,13 @@ class EditActivity : AppCompatActivity() {
         menu?.add(0, 2, 0, "Redo")
             ?.setIcon(R.drawable.redo_24px)
             ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM)
-
-        menu?.add(0, 3, 0, "格式化")
+        menu?.add(0, 3, 0,  resources.getString(R.string.format))
             ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
-        menu?.add(0, 4, 0, "日志")  //LogCat
+        menu?.add(0, 4, 0, resources.getString(R.string.log))  //LogCat
             ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
-        menu?.add(0, 5, 0, "手册")
+        menu?.add(0, 5, 0, resources.getString(R.string.manual))
             ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
-        menu?.add(0, 6, 0, "关于")
+        menu?.add(0, 6, 0, resources.getString(R.string.about))
             ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
         return true
     }
@@ -378,7 +379,7 @@ class EditActivity : AppCompatActivity() {
 
         fab.setOnClickListener {
             savePrefs(this@EditActivity, editor.text.toString())
-            Toast.makeText(this, "保存成功", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, resources.getString(R.string.save_ok), Toast.LENGTH_SHORT).show()
             softRestartApp()
         }
 

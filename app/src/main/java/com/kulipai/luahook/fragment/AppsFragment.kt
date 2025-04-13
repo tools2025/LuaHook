@@ -1,20 +1,23 @@
 package com.kulipai.luahook.fragment
 
 import AppListViewModel
-import com.kulipai.luahook.adapter.AppsAdapter
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Rect
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
+import android.widget.ImageView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.edit
+import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
@@ -25,11 +28,13 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.kulipai.luahook.MyApplication
 import com.kulipai.luahook.R
 import com.kulipai.luahook.SelectApps
+import com.kulipai.luahook.adapter.AppsAdapter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
 
 data class AppInfo(
     val appName: String,
@@ -88,6 +93,7 @@ class AppsFragment : Fragment() {
     private val viewModel by activityViewModels<AppListViewModel>()
     private val RESULT_OK = 0
     private lateinit var adapter: AppsAdapter
+    private lateinit var appInfoList: List<AppInfo>
 
 
     // --- **修改点 1：将 launcher 的初始化移到这里，作为成员变量** ---
@@ -95,16 +101,16 @@ class AppsFragment : Fragment() {
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             // 使用 Activity.RESULT_OK 进行比较
 
-                // 在处理 Fragment 视图相关的操作时，使用 viewLifecycleOwner.lifecycleScope 更安全
-                lifecycleScope.launch {
-                    val savedList = getStringList(requireContext(), "selectApps")
-                    if (savedList.isEmpty()) {
-                        // 列表为空的逻辑
-                    } else {
-                        val appInfoList = MyApplication.Companion.instance.getAppInfoList(savedList)
-                        adapter.updateData(appInfoList)
-                    }
+            // 在处理 Fragment 视图相关的操作时，使用 viewLifecycleOwner.lifecycleScope 更安全
+            lifecycleScope.launch {
+                val savedList = getStringList(requireContext(), "selectApps")
+                if (savedList.isEmpty()) {
+                    // 列表为空的逻辑
+                } else {
+                    val appInfoList = MyApplication.Companion.instance.getAppInfoList(savedList)
+                    adapter.updateData(appInfoList)
                 }
+            }
         }
 
 
@@ -114,10 +120,14 @@ class AppsFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+
+        var searchJob: Job? = null
         // 加载 Fragment 的布局
         val view = inflater.inflate(R.layout.apps, container, false)
         val rec: RecyclerView by lazy { view.findViewById(R.id.rec) }
         val fab: FloatingActionButton by lazy { view.findViewById(R.id.fab) }
+        val searchEdit: EditText by lazy { view.findViewById(R.id.search_bar_text_view) }
+        val clearImage: ImageView by lazy { view.findViewById(R.id.clear_text) }
 
         // 设置rec的bottom高度适配
         activity?.findViewById<BottomNavigationView>(R.id.bottomBar)?.let { bottomNavigationView ->
@@ -141,7 +151,7 @@ class AppsFragment : Fragment() {
             if (savedList.isEmpty()) {
                 // 列表为空的逻辑
             } else {
-                val appInfoList = MyApplication.Companion.instance.getAppInfoList(savedList)
+                appInfoList = MyApplication.Companion.instance.getAppInfoList(savedList)
                 adapter.updateData(appInfoList)
             }
 
@@ -149,34 +159,40 @@ class AppsFragment : Fragment() {
         }
 
 
-        //        launcher = requireActivity().registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-//            if (result.resultCode == Activity.RESULT_OK) {
-//                lifecycleScope.launch {
-//                    val savedList = getStringList(requireContext(), "selectApps")
-//                    if (savedList.isEmpty()) {
-//                        // 列表为空的逻辑
-//                    } else {
-//                        val appInfoList = MyApplication.instance.getAppInfoList(savedList)
-//                        adapter.updateData(appInfoList)
-//                    }
-//                }
-//            }
-//        }
-//        viewModel.isLoaded.observe(viewLifecycleOwner) { loaded ->
-//            if (loaded) {
-//                val list = viewModel.appList.value ?: emptyList()
-//                adapter.updateData(list)
-//            }
-//        }
+        //搜索
+        searchEdit.doAfterTextChanged { s ->
+            val input = s.toString()
+            searchJob?.cancel()
+            searchJob = CoroutineScope(Dispatchers.Main).launch {
+                delay(100) // 延迟300ms
+                filterAppList(s.toString().trim(),clearImage)
+            }
+        }
 
+        clearImage.setOnClickListener {
+            searchEdit.setText("")
+            clearImage.visibility = View.INVISIBLE
+        }
+
+
+        rec.addItemDecoration(object : RecyclerView.ItemDecoration() {
+            override fun getItemOffsets(
+                outRect: Rect,
+                view: View,
+                parent: RecyclerView,
+                state: RecyclerView.State
+            ) {
+                if (parent.getChildAdapterPosition(view) == 0) {
+                    outRect.top = (88 * resources.displayMetrics.density).toInt()
+                }
+            }
+        })
 
         //fab添加app
         fab.setOnClickListener {
             val intent = Intent(requireContext(), SelectApps::class.java)
             launcher.launch(intent)
         }
-
-
         return view
     }
 
@@ -197,6 +213,20 @@ class AppsFragment : Fragment() {
         } else {
             mutableListOf()
         }
+    }
+
+    private fun filterAppList(query: String,clearImage: ImageView) {
+        val filteredList = if (query.isEmpty()) {
+            clearImage.visibility = View.INVISIBLE
+            appInfoList // 显示全部
+        } else {
+            clearImage.visibility = View.VISIBLE
+            appInfoList.filter {
+                it.appName.contains(query, ignoreCase = true) ||
+                        it.packageName.contains(query, ignoreCase = true)
+            }
+        }
+        adapter.updateData(filteredList)
     }
 
 

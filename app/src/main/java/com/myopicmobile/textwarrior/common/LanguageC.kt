@@ -13,7 +13,7 @@ package com.myopicmobile.textwarrior.common
  */
 class LanguageC private constructor() : Language() {
     init {
-        super.setKeywords(Companion.keywords)
+        super.keywords = Companion.keywords as Array<String?>?
     }
 
     companion object {

@@ -6,7 +6,6 @@
  *
  * This software is provided "as is". Use at your own risk.
  */
-
 /*
  *****************************************************************************
  *
@@ -38,72 +37,76 @@
  * on screen.
  *
  */
-package com.myopicmobile.textwarrior.android;
+package com.myopicmobile.textwarrior.android
 
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.DialogInterface.OnDismissListener;
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.Rect;
-import android.graphics.Typeface;
-import android.os.Build;
-import android.os.Bundle;
-import android.os.Parcel;
-import android.os.Parcelable;
-import android.text.ClipboardManager;
-import android.text.InputType;
-import android.text.Selection;
-import android.text.SpannableStringBuilder;
-import android.text.method.CharacterPickerDialog;
-import android.util.AttributeSet;
-import android.util.Log;
-import android.util.SparseArray;
-import android.view.InputDevice;
-import android.view.KeyCharacterMap;
-import android.view.KeyEvent;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.accessibility.AccessibilityEvent;
-import android.view.accessibility.AccessibilityManager;
-import android.view.accessibility.AccessibilityNodeInfo;
-import android.view.accessibility.AccessibilityRecord;
-import android.view.animation.AnimationUtils;
-import android.view.inputmethod.BaseInputConnection;
-import android.view.inputmethod.EditorInfo;
-import android.view.inputmethod.InputConnection;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.Scroller;
-
-import com.myopicmobile.textwarrior.common.AutoIndent;
-import com.myopicmobile.textwarrior.common.ColorScheme;
-import com.myopicmobile.textwarrior.common.ColorScheme.Colorable;
-import com.myopicmobile.textwarrior.common.ColorSchemeLight;
-import com.myopicmobile.textwarrior.common.Document;
-import com.myopicmobile.textwarrior.common.DocumentProvider;
-import com.myopicmobile.textwarrior.common.Language;
-import com.myopicmobile.textwarrior.common.LanguageLua;
-import com.myopicmobile.textwarrior.common.Lexer;
-import com.myopicmobile.textwarrior.common.Pair;
-import com.myopicmobile.textwarrior.common.RowListener;
-import com.myopicmobile.textwarrior.common.TextWarriorException;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static android.view.accessibility.AccessibilityNodeInfo.ACTION_NEXT_AT_MOVEMENT_GRANULARITY;
-import static android.view.accessibility.AccessibilityNodeInfo.ACTION_PREVIOUS_AT_MOVEMENT_GRANULARITY;
-import static com.myopicmobile.textwarrior.common.Lexer.NORMAL;
+import android.R
+import android.content.Context
+import android.content.DialogInterface
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Rect
+import android.graphics.Typeface
+import android.os.Build
+import android.os.Bundle
+import android.os.Parcel
+import android.os.Parcelable
+import android.text.ClipboardManager
+import android.text.InputType
+import android.text.Selection
+import android.text.SpannableStringBuilder
+import android.text.method.CharacterPickerDialog
+import android.util.AttributeSet
+import android.util.Log
+import android.util.SparseArray
+import android.view.InputDevice
+import android.view.KeyCharacterMap
+import android.view.KeyEvent
+import android.view.MotionEvent
+import android.view.View
+import android.view.accessibility.AccessibilityEvent
+import android.view.accessibility.AccessibilityManager
+import android.view.accessibility.AccessibilityNodeInfo
+import android.view.accessibility.AccessibilityRecord
+import android.view.animation.AnimationUtils
+import android.view.inputmethod.BaseInputConnection
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputConnection
+import android.view.inputmethod.InputMethodManager
+import android.widget.Scroller
+import com.myopicmobile.textwarrior.android.KeysInterpreter.isNavigationKey
+import com.myopicmobile.textwarrior.android.KeysInterpreter.keyEventToPrintableChar
+import com.myopicmobile.textwarrior.common.AutoIndent.createAutoIndent
+import com.myopicmobile.textwarrior.common.AutoIndent.format
+import com.myopicmobile.textwarrior.common.ColorScheme
+import com.myopicmobile.textwarrior.common.ColorScheme.Colorable
+import com.myopicmobile.textwarrior.common.ColorSchemeLight
+import com.myopicmobile.textwarrior.common.Document.TextFieldMetrics
+import com.myopicmobile.textwarrior.common.DocumentProvider
+import com.myopicmobile.textwarrior.common.Language
+import com.myopicmobile.textwarrior.common.LanguageLua.Companion.instance
+import com.myopicmobile.textwarrior.common.Lexer
+import com.myopicmobile.textwarrior.common.Lexer.Companion.language
+import com.myopicmobile.textwarrior.common.Lexer.Companion.lines
+import com.myopicmobile.textwarrior.common.Lexer.LexCallback
+import com.myopicmobile.textwarrior.common.Pair
+import com.myopicmobile.textwarrior.common.RowListener
+import com.myopicmobile.textwarrior.common.TextWarriorException.Companion.assertVerbose
+import com.myopicmobile.textwarrior.common.TextWarriorException.Companion.fail
+import kotlin.math.ceil
+import kotlin.math.max
+import kotlin.math.min
 
 /**
  * A custom text view that uses a solid shaded caret (aka cursor) instead of a
  * blinking caret and allows a variety of navigation methods to be easily
  * integrated.
- * <p>
+ *
+ *
  * It also has a built-in syntax highlighting feature. The global programming
  * language syntax to use is specified with Lexer.setLanguage(Language).
  * To disable syntax highlighting, simply pass LanguageNonProg to that function.
- * <p>
+ *
+ *
  * Responsibilities
  * 1. Display text
  * 2. Display padding
@@ -113,7 +116,8 @@ import static com.myopicmobile.textwarrior.common.Lexer.NORMAL;
  * 6. Interpret non-touch input events and shortcut keystrokes, triggering
  * the appropriate inner class controller actions
  * 7. Reset view, set cursor position and selection range
- * <p>
+ *
+ *
  * Inner class controller responsibilities
  * 1. Caret movement
  * 2. Activate/deactivate selection mode
@@ -122,409 +126,289 @@ import static com.myopicmobile.textwarrior.common.Lexer.NORMAL;
  * 5. Directs scrolling if caret movements or edits causes the caret to be off-screen
  * 6. Notify rowListeners when caret row changes
  * 7. Provide helper methods for InputConnection to setComposingText from the IME
- * <p>
+ *
+ *
  * This class is aware that the underlying text buffer uses an extra char (EOF)
  * to mark the end of the text. The text size reported by the text buffer includes
  * this extra char. Some bounds manipulation is done so that this implementation
  * detail is hidden from client classes.
  */
-public class FreeScrollingTextField extends View
-        implements Document.TextFieldMetrics {
+open class FreeScrollingTextField : View, TextFieldMetrics {
+    private val _scroller: Scroller
 
     //---------------------------------------------------------------------
-    //--------------------------  Caret Scroll  ---------------------------
-    public final static int SCROLL_UP = 0;
-    public final static int SCROLL_DOWN = 1;
-    public final static int SCROLL_LEFT = 2;
-    public final static int SCROLL_RIGHT = 3;
-    /**
-     * Scale factor for the width of a caret when on a NEWLINE or EOF char.
-     * A factor of 1.0 is equals to the width of a space character
-     */
-    protected static float EMPTY_CARET_WIDTH_SCALE = 0.75f;
-    /**
-     * When in selection mode, the caret height is scaled by this factor
-     */
-    protected static float SEL_CARET_HEIGHT_SCALE = 0.5f;
-    protected static int DEFAULT_TAB_LENGTH_SPACES = 4;
-    protected static int BASE_TEXT_SIZE_PIXELS = 16;
-    protected static long SCROLL_PERIOD = 250; //in milliseconds
-    /*
-     * Hash map for determining which characters to let the user choose from when
-	 * a hardware key is long-pressed. For example, long-pressing "e" displays
-	 * choices of "é, è, ê, ë" and so on.
-	 * This is biased towards European locales, but is standard Android behavior
-	 * for TextView.
-	 *
-	 * Copied from android.text.method.QwertyKeyListener, dated 2006
-	 */
-    private static SparseArray<String> PICKER_SETS =
-            new SparseArray<String>();
+    //-------------------------- Paint methods ----------------------------
+    // this used to be isDirty(), but was renamed to avoid conflicts with Android API 11
+    var isEdited: Boolean = false // whether the text field is dirtied
+    protected var _navMethod: TouchNavigationMethod
+    protected var _hDoc: DocumentProvider // the model in MVC
+    var caretPosition: Int = 0
+        protected set
+    protected var _selectionAnchor: Int = -1 // inclusive
+    protected var _selectionEdge: Int = -1 // exclusive
+    protected var _tabLength: Int = DEFAULT_TAB_LENGTH_SPACES
+    protected var _colorScheme: ColorScheme = ColorSchemeLight()
+    protected var _isHighlightRow: Boolean = false
+    protected var _showNonPrinting: Boolean = false
+    protected var _isAutoIndent: Boolean = true
+    var autoIndentWidth: Int = 4
+    protected var _isLongPressCaps: Boolean = false
+    protected var _autoCompletePanel: AutoCompletePanel? = null
+    protected var _isAutoComplete: Boolean = true
+    private var _fieldController: TextFieldController? = null // the controller in MVC
+    private var _inputConnection: TextFieldInputConnection? = null
+    private var _rowLis: RowListener? = null
+    private var _selModeLis: OnSelectionChangedListener? = null
+    var caretRow: Int = 0 // can be calculated, but stored for efficiency purposes
+        private set
+    private var _brush: Paint? = null
+    protected var _isEdited: Boolean = false // whether the text field is dirtied
 
-    static {
-        PICKER_SETS.put('A', "\u00C0\u00C1\u00C2\u00C4\u00C6\u00C3\u00C5\u0104\u0100");
-        PICKER_SETS.put('C', "\u00C7\u0106\u010C");
-        PICKER_SETS.put('D', "\u010E");
-        PICKER_SETS.put('E', "\u00C8\u00C9\u00CA\u00CB\u0118\u011A\u0112");
-        PICKER_SETS.put('G', "\u011E");
-        PICKER_SETS.put('L', "\u0141");
-        PICKER_SETS.put('I', "\u00CC\u00CD\u00CE\u00CF\u012A\u0130");
-        PICKER_SETS.put('N', "\u00D1\u0143\u0147");
-        PICKER_SETS.put('O', "\u00D8\u0152\u00D5\u00D2\u00D3\u00D4\u00D6\u014C");
-        PICKER_SETS.put('R', "\u0158");
-        PICKER_SETS.put('S', "\u015A\u0160\u015E");
-        PICKER_SETS.put('T', "\u0164");
-        PICKER_SETS.put('U', "\u00D9\u00DA\u00DB\u00DC\u016E\u016A");
-        PICKER_SETS.put('Y', "\u00DD\u0178");
-        PICKER_SETS.put('Z', "\u0179\u017B\u017D");
-        PICKER_SETS.put('a', "\u00E0\u00E1\u00E2\u00E4\u00E6\u00E3\u00E5\u0105\u0101");
-        PICKER_SETS.put('c', "\u00E7\u0107\u010D");
-        PICKER_SETS.put('d', "\u010F");
-        PICKER_SETS.put('e', "\u00E8\u00E9\u00EA\u00EB\u0119\u011B\u0113");
-        PICKER_SETS.put('g', "\u011F");
-        PICKER_SETS.put('i', "\u00EC\u00ED\u00EE\u00EF\u012B\u0131");
-        PICKER_SETS.put('l', "\u0142");
-        PICKER_SETS.put('n', "\u00F1\u0144\u0148");
-        PICKER_SETS.put('o', "\u00F8\u0153\u00F5\u00F2\u00F3\u00F4\u00F6\u014D");
-        PICKER_SETS.put('r', "\u0159");
-        PICKER_SETS.put('s', "\u00A7\u00DF\u015B\u0161\u015F");
-        PICKER_SETS.put('t', "\u0165");
-        PICKER_SETS.put('u', "\u00F9\u00FA\u00FB\u00FC\u016F\u016B");
-        PICKER_SETS.put('y', "\u00FD\u00FF");
-        PICKER_SETS.put('z', "\u017A\u017C\u017E");
-        PICKER_SETS.put(KeyCharacterMap.PICKER_DIALOG_INPUT,
-                "\u2026\u00A5\u2022\u00AE\u00A9\u00B1[]{}\\|");
-        PICKER_SETS.put('/', "\\");
-
-        // From packages/inputmethods/LatinIME/res/xml/kbd_symbols.xml
-
-        PICKER_SETS.put('1', "\u00b9\u00bd\u2153\u00bc\u215b");
-        PICKER_SETS.put('2', "\u00b2\u2154");
-        PICKER_SETS.put('3', "\u00b3\u00be\u215c");
-        PICKER_SETS.put('4', "\u2074");
-        PICKER_SETS.put('5', "\u215d");
-        PICKER_SETS.put('7', "\u215e");
-        PICKER_SETS.put('0', "\u207f\u2205");
-        PICKER_SETS.put('$', "\u00a2\u00a3\u20ac\u00a5\u20a3\u20a4\u20b1");
-        PICKER_SETS.put('%', "\u2030");
-        PICKER_SETS.put('*', "\u2020\u2021");
-        PICKER_SETS.put('-', "\u2013\u2014");
-        PICKER_SETS.put('+', "\u00b1");
-        PICKER_SETS.put('(', "[{<");
-        PICKER_SETS.put(')', "]}>");
-        PICKER_SETS.put('!', "\u00a1");
-        PICKER_SETS.put('"', "\u201c\u201d\u00ab\u00bb\u02dd");
-        PICKER_SETS.put('?', "\u00bf");
-        PICKER_SETS.put(',', "\u201a\u201e");
-
-        // From packages/inputmethods/LatinIME/res/xml/kbd_symbols_shift.xml
-
-        PICKER_SETS.put('=', "\u2260\u2248\u221e");
-        PICKER_SETS.put('<', "\u2264\u00ab\u2039");
-        PICKER_SETS.put('>', "\u2265\u00bb\u203a");
-    }
-
-    private final Scroller _scroller;
-    protected boolean _isEdited = false; // whether the text field is dirtied
-    protected TouchNavigationMethod _navMethod;
-    protected DocumentProvider _hDoc; // the model in MVC
-    protected int _caretPosition = 0;
-    protected int _selectionAnchor = -1; // inclusive
-    protected int _selectionEdge = -1; // exclusive
-    protected int _tabLength = DEFAULT_TAB_LENGTH_SPACES;
-    protected ColorScheme _colorScheme = new ColorSchemeLight();
-    protected boolean _isHighlightRow = false;
-    protected boolean _showNonPrinting = false;
-    protected boolean _isAutoIndent = true;
-    protected int _autoIndentWidth = 4;
-    protected boolean _isLongPressCaps = false;
-    protected AutoCompletePanel _autoCompletePanel;
-    protected boolean _isAutoComplete = true;
-    private TextFieldController _fieldController; // the controller in MVC
-    private TextFieldInputConnection _inputConnection;
-    private RowListener _rowLis;
-    private OnSelectionChangedListener _selModeLis;
-    private int _caretRow = 0; // can be calculated, but stored for efficiency purposes
-    private Paint _brush;
     /**
      * Max amount that can be scrolled horizontally based on the longest line
      * displayed on screen so far
      */
-    private int _xExtent = 0;
-    private int _leftOffset = 0;
-    private boolean _showLineNumbers = false;
-    private ClipboardPanel _clipboardPanel;
-    private ClipboardManager _clipboardManager;
-    private float _zoomFactor = 1;
-    private int _caretX;
-    private int _caretY;
-    private TextChangeListener _textLis;
-    private int _topOffset;
-    private Typeface _defTypeface = Typeface.DEFAULT;
-    private Typeface _boldTypeface = Typeface.DEFAULT_BOLD;
-    private Typeface _italicTypeface = Typeface.create(Typeface.DEFAULT, Typeface.ITALIC);
-    private char _emoji;
-    private boolean _isLayout;
-    private Paint _brushLine;
-    private int _alphaWidth;
-    private final Runnable _scrollCaretDownTask = new Runnable() {
-        @Override
-        public void run() {
-            _fieldController.moveCaretDown();
+    private var _xExtent = 0
+    var leftOffset: Int = 0
+        private set
+    var isShowLineNumbers: Boolean = false
+    private var _clipboardPanel: ClipboardPanel? = null
+    private var _clipboardManager: ClipboardManager? = null
+    private var _zoomFactor = 1f
+    var caretX: Int = 0
+        private set
+    var caretY: Int = 0
+        private set
+    private var _textLis: TextChangeListener? = null
+    var topOffset: Int = 0
+        private set
+    private var _defTypeface: Typeface? = Typeface.DEFAULT
+    private var _boldTypeface: Typeface? = Typeface.DEFAULT_BOLD
+    private var _italicTypeface: Typeface? = Typeface.create(Typeface.DEFAULT, Typeface.ITALIC)
+    private var _emoji = 0.toChar()
+    private var _isLayout = false
+    private var _brushLine: Paint? = null
+    private var _alphaWidth = 0
+    private val _scrollCaretDownTask: Runnable = object : Runnable {
+        override fun run() {
+            _fieldController!!.moveCaretDown()
             if (!caretOnLastRowOfFile()) {
-                postDelayed(_scrollCaretDownTask, SCROLL_PERIOD);
+                postDelayed(_scrollCaretDownTask, SCROLL_PERIOD)
             }
         }
-    };
-    private final Runnable _scrollCaretUpTask = new Runnable() {
-        @Override
-        public void run() {
-            _fieldController.moveCaretUp();
+    }
+    private val _scrollCaretUpTask: Runnable = object : Runnable {
+        override fun run() {
+            _fieldController!!.moveCaretUp()
             if (!caretOnFirstRowOfFile()) {
-                postDelayed(_scrollCaretUpTask, SCROLL_PERIOD);
+                postDelayed(_scrollCaretUpTask, SCROLL_PERIOD)
             }
         }
-    };
-    private final Runnable _scrollCaretLeftTask = new Runnable() {
-        @Override
-        public void run() {
-            _fieldController.moveCaretLeft(false);
-            if (_caretPosition > 0 &&
-                    _caretRow == _hDoc.findRowNumber(_caretPosition - 1)) {
-                postDelayed(_scrollCaretLeftTask, SCROLL_PERIOD);
+    }
+    private val _scrollCaretLeftTask: Runnable = object : Runnable {
+        override fun run() {
+            _fieldController!!.moveCaretLeft(false)
+            if (caretPosition > 0 &&
+                caretRow == _hDoc.findRowNumber(caretPosition - 1)
+            ) {
+                postDelayed(_scrollCaretLeftTask, SCROLL_PERIOD)
             }
         }
-    };
-    private final Runnable _scrollCaretRightTask = new Runnable() {
-        @Override
-        public void run() {
-            _fieldController.moveCaretRight(false);
+    }
+    private val _scrollCaretRightTask: Runnable = object : Runnable {
+        override fun run() {
+            _fieldController!!.moveCaretRight(false)
             if (!caretOnEOF() &&
-                    _caretRow == _hDoc.findRowNumber(_caretPosition + 1)) {
-                postDelayed(_scrollCaretRightTask, SCROLL_PERIOD);
+                caretRow == _hDoc.findRowNumber(caretPosition + 1)
+            ) {
+                postDelayed(_scrollCaretRightTask, SCROLL_PERIOD)
             }
         }
-    };
-    private int _spaceWidth;
+    }
+    private var _spaceWidth = 0
+
     /**
-     * Like {@link View#scrollBy}, but scroll smoothly instead of immediately.
+     * Like [View.scrollBy], but scroll smoothly instead of immediately.
      *
      * @param dx the number of pixels to scroll by on the X axis
      * @param dy the number of pixels to scroll by on the Y axis
      */
-    private long mLastScroll;
-    private boolean isAccessibilityEnabled = false;
+    private var mLastScroll: Long = 0
+    var isAccessibilityEnabled: Boolean = false
+        private set
 
-    public FreeScrollingTextField(Context context) {
-        super(context);
-        _hDoc = new DocumentProvider(this);
-        _navMethod = new TouchNavigationMethod(this);
-        _scroller = new Scroller(context);
-        initView();
+    constructor(context: Context?) : super(context) {
+        _hDoc = DocumentProvider(this)
+        _navMethod = TouchNavigationMethod(this)
+        _scroller = Scroller(context)
+        initView()
     }
 
-    public FreeScrollingTextField(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        _hDoc = new DocumentProvider(this);
-        _navMethod = new TouchNavigationMethod(this);
-        _scroller = new Scroller(context);
-        initView();
+    constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs) {
+        _hDoc = DocumentProvider(this)
+        _navMethod = TouchNavigationMethod(this)
+        _scroller = Scroller(context)
+        initView()
     }
 
-    public FreeScrollingTextField(Context context, AttributeSet attrs, int defStyle) {
-        super(context, attrs, defStyle);
-        _hDoc = new DocumentProvider(this);
-        _navMethod = new TouchNavigationMethod(this);
-        _scroller = new Scroller(context);
-        initView();
+    constructor(context: Context?, attrs: AttributeSet?, defStyle: Int) : super(
+        context,
+        attrs,
+        defStyle
+    ) {
+        _hDoc = DocumentProvider(this)
+        _navMethod = TouchNavigationMethod(this)
+        _scroller = Scroller(context)
+        initView()
     }
 
-    public int getTopOffset() {
-        return _topOffset;
-    }
+    val textSize: Float
+        get() = _brush!!.getTextSize()
 
-    public int getAutoIndentWidth() {
-        return _autoIndentWidth;
-    }
-
-    public void setAutoIndentWidth(int autoIndentWidth) {
-        _autoIndentWidth = autoIndentWidth;
-    }
-
-    public int getCaretY() {
-        return _caretY;
-    }
-
-    public int getCaretX() {
-        return _caretX;
-    }
-
-    public boolean isShowLineNumbers() {
-        return _showLineNumbers;
-    }
-
-    public void setShowLineNumbers(boolean showLineNumbers) {
-        _showLineNumbers = showLineNumbers;
-    }
-
-    public int getLeftOffset() {
-        return _leftOffset;
-    }
-
-    public float getTextSize() {
-        return _brush.getTextSize();
-    }
-
-    public void setTextSize(int pix) {
-        if (pix <= 8 || pix >= 80 || pix == _brush.getTextSize()) {
-            return;
+    fun setTextSize(pix: Int) {
+        if (pix <= 8 || pix >= 80 || pix.toFloat() == _brush!!.getTextSize()) {
+            return
         }
-        double oldHeight = rowHeight();
-        double oldWidth = getAdvance('a');
-        _zoomFactor = pix / BASE_TEXT_SIZE_PIXELS;
-        _brush.setTextSize(pix);
-        _brushLine.setTextSize(pix);
-        if (_hDoc.isWordWrap())
-            _hDoc.analyzeWordWrap();
-        _fieldController.updateCaretRow();
-        double x = getScrollX() * ((double) getAdvance('a') / oldWidth);
-        double y = getScrollY() * ((double) rowHeight() / oldHeight);
-        scrollTo((int) x, (int) y);
-        _alphaWidth = (int) _brush.measureText("a");
-        _spaceWidth = (int) _brush.measureText(" ");
+        val oldHeight = rowHeight().toDouble()
+        val oldWidth = getAdvance('a').toDouble()
+        _zoomFactor = (pix / BASE_TEXT_SIZE_PIXELS).toFloat()
+        _brush!!.setTextSize(pix.toFloat())
+        _brushLine!!.setTextSize(pix.toFloat())
+        if (_hDoc.isWordWrap) _hDoc.analyzeWordWrap()
+        _fieldController!!.updateCaretRow()
+        val x = getScrollX() * (getAdvance('a').toDouble() / oldWidth)
+        val y = getScrollY() * (rowHeight().toDouble() / oldHeight)
+        scrollTo(x.toInt(), y.toInt())
+        _alphaWidth = _brush!!.measureText("a").toInt()
+        _spaceWidth = _brush!!.measureText(" ").toInt()
         //int idx=coordToCharIndex(getScrollX(), getScrollY());
         //if (!makeCharVisible(idx))
-        {
-            invalidate();
+        run {
+            invalidate()
         }
     }
 
-    public void replaceText(int from, int charCount, String text) {
-        _hDoc.beginBatchEdit();
-        _fieldController.replaceText(from, charCount, text);
-        _fieldController.stopTextComposing();
-        _hDoc.endBatchEdit();
+    fun replaceText(from: Int, charCount: Int, text: String?) {
+        _hDoc.beginBatchEdit()
+        _fieldController!!.replaceText(from, charCount, text)
+        _fieldController!!.stopTextComposing()
+        _hDoc.endBatchEdit()
     }
 
-    public void format() {
-        selectText(false);
-        CharSequence text = AutoIndent.format(new DocumentProvider(_hDoc), _autoIndentWidth);
-        _hDoc.beginBatchEdit();
-        _hDoc.deleteAt(0, _hDoc.docLength() - 1, System.nanoTime());
-        _hDoc.insertBefore(text.toString().toCharArray(), 0, System.nanoTime());
-        _hDoc.endBatchEdit();
-        _hDoc.clearSpans();
-        respan();
-        invalidate();
+    fun format() {
+        selectText(false)
+        val text = format(
+            DocumentProvider(_hDoc),
+            this.autoIndentWidth
+        )
+        _hDoc.beginBatchEdit()
+        _hDoc.deleteAt(0, _hDoc.docLength() - 1, System.nanoTime())
+        _hDoc.insertBefore(text.toString().toCharArray(), 0, System.nanoTime())
+        _hDoc.endBatchEdit()
+        _hDoc.clearSpans()
+        respan()
+        invalidate()
     }
 
-    public int getLength() {
-        return _hDoc.docLength();
-    }
+    val length: Int
+        get() = _hDoc.docLength()
 
-    private void initView() {
-        AccessibilityManager accessibilityManager =
-                (AccessibilityManager) getContext().getSystemService(Context.ACCESSIBILITY_SERVICE);
-        isAccessibilityEnabled = accessibilityManager.isTouchExplorationEnabled();
-        _fieldController = this.new TextFieldController();
-        _clipboardManager = (ClipboardManager) getContext().getSystemService(Context.CLIPBOARD_SERVICE);
-        _brush = new Paint();
-        _brush.setAntiAlias(true);
-        _brush.setTextSize(BASE_TEXT_SIZE_PIXELS);
-        _brushLine = new Paint();
-        _brushLine.setAntiAlias(true);
-        _brushLine.setTextSize(BASE_TEXT_SIZE_PIXELS);
+    private fun initView() {
+        val accessibilityManager =
+            getContext().getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
+        isAccessibilityEnabled = accessibilityManager.isTouchExplorationEnabled()
+        _fieldController = this.TextFieldController()
+        _clipboardManager =
+            getContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        _brush = Paint()
+        _brush!!.setAntiAlias(true)
+        _brush!!.setTextSize(BASE_TEXT_SIZE_PIXELS.toFloat())
+        _brushLine = Paint()
+        _brushLine!!.setAntiAlias(true)
+        _brushLine!!.setTextSize(BASE_TEXT_SIZE_PIXELS.toFloat())
         //setBackgroundColor(_colorScheme.getColor(Colorable.BACKGROUND));
-        setLongClickable(true);
-        setFocusableInTouchMode(true);
-        setHapticFeedbackEnabled(true);
+        setLongClickable(true)
+        setFocusableInTouchMode(true)
+        setHapticFeedbackEnabled(true)
 
-        _rowLis = new RowListener() {
-            @Override
-            public void onRowChange(int newRowIndex) {
+        _rowLis = object : RowListener {
+            override fun onRowChange(newRowIndex: Int) {
                 // Do nothing
             }
-        };
+        }
 
-        _selModeLis = new OnSelectionChangedListener() {
-
-            @Override
-            public void onSelectionChanged(boolean active, int selStart, int selEnd) {
+        _selModeLis = object : OnSelectionChangedListener {
+            override fun onSelectionChanged(active: Boolean, selStart: Int, selEnd: Int) {
                 // TODO: Implement this method
-                if (active)
-                    _clipboardPanel.show();
-                else
-                    _clipboardPanel.hide();
+                if (active) _clipboardPanel!!.show()
+                else _clipboardPanel!!.hide()
             }
-        };
+        }
 
-        _textLis = new TextChangeListener() {
-
-            @Override
-            public void onNewLine(String c, int _caretPosition, int p2) {
+        _textLis = object : TextChangeListener {
+            override fun onNewLine(c: String?, _caretPosition: Int, p2: Int) {
                 // TODO: Implement this method
                 if (isAccessibilityEnabled) {
-                    AccessibilityEvent event = AccessibilityEvent.obtain(AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED);
-                    event.setFromIndex(_caretPosition - 1);
-                    event.setAddedCount(1);
-                    sendAccessibilityEventUnchecked(event);
+                    val event = AccessibilityEvent.obtain(AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED)
+                    event.setFromIndex(_caretPosition - 1)
+                    event.setAddedCount(1)
+                    sendAccessibilityEventUnchecked(event)
                 }
-                _autoCompletePanel.dismiss();
+                _autoCompletePanel!!.dismiss()
             }
 
 
-            @Override
-            public void onDel(CharSequence text, int caretPosition, int delCount) {
+            override fun onDel(text: CharSequence?, caretPosition: Int, delCount: Int) {
                 if (isAccessibilityEnabled) {
-                    AccessibilityEvent event = AccessibilityEvent.obtain(AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED);
-                    event.setFromIndex(caretPosition - delCount);
-                    event.setRemovedCount(delCount);
-                    event.setBeforeText(_hDoc);
-                    sendAccessibilityEventUnchecked(event);
+                    val event = AccessibilityEvent.obtain(AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED)
+                    event.setFromIndex(caretPosition - delCount)
+                    event.setRemovedCount(delCount)
+                    event.setBeforeText(_hDoc)
+                    sendAccessibilityEventUnchecked(event)
                 }
-                _autoCompletePanel.dismiss();
+                _autoCompletePanel!!.dismiss()
             }
 
-            @Override
-            public void onAdd(CharSequence text, int caretPosition, int addCount) {
+            override fun onAdd(text: CharSequence?, caretPosition: Int, addCount: Int) {
                 if (isAccessibilityEnabled) {
-                    AccessibilityEvent event = AccessibilityEvent.obtain(AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED);
-                    event.setFromIndex(caretPosition - addCount);
-                    event.setAddedCount(addCount);
-                    sendAccessibilityEventUnchecked(event);
+                    val event = AccessibilityEvent.obtain(AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED)
+                    event.setFromIndex(caretPosition - addCount)
+                    event.setAddedCount(addCount)
+                    sendAccessibilityEventUnchecked(event)
                 }
-                if (!_isAutoComplete)
-                    return;
-                int curr = _caretPosition;
-                for (; curr >= 0; curr--) {
-                    char c = _hDoc.charAt(curr - 1);
+                if (!_isAutoComplete) return
+                var curr: Int = caretPosition
+                while (curr >= 0) {
+                    val c = _hDoc.get(curr - 1)
                     if (!(Character.isLetterOrDigit(c) || c == '_' || c == '.')) {
-                        break;
+                        break
                     }
+                    curr--
                 }
-                if (_caretPosition - curr > 0)
-                    _autoCompletePanel.update(_hDoc.subSequence(curr, _caretPosition - curr));
-                else
-                    _autoCompletePanel.dismiss();
+                if (caretPosition - curr > 0) _autoCompletePanel!!.update(
+                    _hDoc.subSequence(
+                        curr,
+                        caretPosition - curr
+                    )
+                )
+                else _autoCompletePanel!!.dismiss()
             }
-        };
-        resetView();
-        _clipboardPanel = new ClipboardPanel(this);
-        _autoCompletePanel = new AutoCompletePanel(this);
-        _autoCompletePanel.setLanguage(LanguageLua.getInstance());
+        }
+        resetView()
+        _clipboardPanel = ClipboardPanel(this)
+        _autoCompletePanel = AutoCompletePanel(this)
+        _autoCompletePanel!!.setLanguage(instance)
         //TODO find out if this function works
         //setScrollContainer(true);
-        invalidate();
+        invalidate()
     }
 
-    @Override
-    public boolean onGenericMotionEvent(MotionEvent event) {
+    override fun onGenericMotionEvent(event: MotionEvent): Boolean {
 //The input source is a pointing device associated with a display.
 //输入源为可显示的指针设备，如：mouse pointing device(鼠标指针),stylus pointing device(尖笔设备)
-        if (0 != (event.getSource() & InputDevice.SOURCE_CLASS_POINTER)) {
-            switch (event.getAction()) {
-                // process the scroll wheel movement...处理滚轮事件
-                case MotionEvent.ACTION_SCROLL:
+        if (0 != (event.getSource() and InputDevice.SOURCE_CLASS_POINTER)) {
+            when (event.getAction()) {
+                MotionEvent.ACTION_SCROLL -> {
                     //获得垂直坐标上的滚动方向,也就是滚轮向下滚
                     /*if( event.getAxisValue(MotionEvent.AXIS_VSCROLL) < 0.0f){
                         //Log.i("fortest::onGenericMotionEvent", "down" );
@@ -533,125 +417,119 @@ public class FreeScrollingTextField extends View
                     else{
                         //Log.i("fortest::onGenericMotionEvent", "up" );
                     }*/
-                    scrollView(0, -event.getAxisValue(MotionEvent.AXIS_VSCROLL) * rowHeight());
-                    return true;
+                    scrollView(0f, -event.getAxisValue(MotionEvent.AXIS_VSCROLL) * rowHeight())
+                    return true
+                }
             }
         }
-        return super.onGenericMotionEvent(event);
+        return super.onGenericMotionEvent(event)
     }
 
-    private void scrollView(float distanceX, float distanceY) {
-        int newX = (int) distanceX + getScrollX();
-        int newY = (int) distanceY + getScrollY();
+    private fun scrollView(distanceX: Float, distanceY: Float) {
+        var newX = distanceX.toInt() + getScrollX()
+        var newY = distanceY.toInt() + getScrollY()
 
         // If scrollX and scrollY are somehow more than the recommended
         // max scroll values, use them as the new maximum
         // Also take into account the size of the caret,
         // which may extend beyond the text boundaries
-        int maxWidth = Math.max(getMaxScrollX(),
-                getScrollX());
+        val maxWidth = max(
+            this.maxScrollX.toDouble(),
+            getScrollX().toDouble()
+        ).toInt()
         if (newX > maxWidth) {
-            newX = maxWidth;
+            newX = maxWidth
         } else if (newX < 0) {
-            newX = 0;
+            newX = 0
         }
 
-        int maxHeight = Math.max(getMaxScrollY(),
-                getScrollY());
+        val maxHeight = max(
+            this.maxScrollY.toDouble(),
+            getScrollY().toDouble()
+        ).toInt()
         if (newY > maxHeight) {
-            newY = maxHeight;
+            newY = maxHeight
         } else if (newY < 0) {
-            newY = 0;
+            newY = 0
         }
         //_textField.scrollTo(newX, newY);
-        smoothScrollTo(newX, newY);
-
+        smoothScrollTo(newX, newY)
     }
 
-    @SuppressWarnings("deprecation")
-    @Override
-    public AccessibilityNodeInfo createAccessibilityNodeInfo() {
-        AccessibilityNodeInfo node = super.createAccessibilityNodeInfo();
+    @Suppress("deprecation")
+    override fun createAccessibilityNodeInfo(): AccessibilityNodeInfo {
+        val node = super.createAccessibilityNodeInfo()
         if (Build.VERSION.SDK_INT > 20) {
-            node.addAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_FORWARD);
-            node.addAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_BACKWARD);
-            node.addAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_NEXT_AT_MOVEMENT_GRANULARITY);
-            node.addAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_PREVIOUS_AT_MOVEMENT_GRANULARITY);
+            node.addAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_FORWARD)
+            node.addAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_BACKWARD)
+            node.addAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_NEXT_AT_MOVEMENT_GRANULARITY)
+            node.addAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_PREVIOUS_AT_MOVEMENT_GRANULARITY)
         } else {
             if (Build.VERSION.SDK_INT > 15) {
-                node.addAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD);
-                node.addAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD);
-                node.addAction(AccessibilityNodeInfo.ACTION_NEXT_AT_MOVEMENT_GRANULARITY);
-                node.addAction(AccessibilityNodeInfo.ACTION_PREVIOUS_AT_MOVEMENT_GRANULARITY);
+                node.addAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD)
+                node.addAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD)
+                node.addAction(AccessibilityNodeInfo.ACTION_NEXT_AT_MOVEMENT_GRANULARITY)
+                node.addAction(AccessibilityNodeInfo.ACTION_PREVIOUS_AT_MOVEMENT_GRANULARITY)
             }
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            node.setTextSelection(getSelectionStart(), getSelectionEnd());
+            node.setTextSelection(this.selectionStart, this.selectionEnd)
         }
-        node.setFocusable(true);
-        if (Build.VERSION.SDK_INT >= 18)
-            node.setEditable(true);
-        if (Build.VERSION.SDK_INT >= 19)
-            node.setMultiLine(true);
-        return node;
+        node.setFocusable(true)
+        if (Build.VERSION.SDK_INT >= 18) node.setEditable(true)
+        if (Build.VERSION.SDK_INT >= 19) node.setMultiLine(true)
+        return node
     }
 
-    @Override
-    public boolean performAccessibilityAction(int action, Bundle arguments) {
-        if (Build.VERSION.SDK_INT < 16)
-            return super.performAccessibilityAction(action, arguments);
+    override fun performAccessibilityAction(action: Int, arguments: Bundle?): Boolean {
+        if (Build.VERSION.SDK_INT < 16) return super.performAccessibilityAction(action, arguments)
 
-        switch (action) {
-            case AccessibilityNodeInfo.ACTION_NEXT_AT_MOVEMENT_GRANULARITY:
-                switch (arguments.getInt(AccessibilityNodeInfo.ACTION_ARGUMENT_MOVEMENT_GRANULARITY_INT)) {
-                    case AccessibilityNodeInfo.MOVEMENT_GRANULARITY_LINE:
-                        moveCaretDown();
-                        break;
-                    case AccessibilityNodeInfo.MOVEMENT_GRANULARITY_CHARACTER:
-                        moveCaretRight();
-                        break;
+        when (action) {
+            AccessibilityNodeInfo.ACTION_NEXT_AT_MOVEMENT_GRANULARITY -> {
+                when (arguments?.getInt(AccessibilityNodeInfo.ACTION_ARGUMENT_MOVEMENT_GRANULARITY_INT)) {
+                    AccessibilityNodeInfo.MOVEMENT_GRANULARITY_LINE -> moveCaretDown()
+                    AccessibilityNodeInfo.MOVEMENT_GRANULARITY_CHARACTER -> moveCaretRight()
                 }
-                return true;
-            case ACTION_PREVIOUS_AT_MOVEMENT_GRANULARITY:
-                switch (arguments.getInt(AccessibilityNodeInfo.ACTION_ARGUMENT_MOVEMENT_GRANULARITY_INT)) {
-                    case AccessibilityNodeInfo.MOVEMENT_GRANULARITY_LINE:
-                        moveCaretUp();
-                        break;
-                    case AccessibilityNodeInfo.MOVEMENT_GRANULARITY_CHARACTER:
-                        moveCaretLeft();
-                        break;
+                return true
+            }
+
+            AccessibilityNodeInfo.ACTION_PREVIOUS_AT_MOVEMENT_GRANULARITY -> {
+                when (arguments?.getInt(AccessibilityNodeInfo.ACTION_ARGUMENT_MOVEMENT_GRANULARITY_INT)) {
+                    AccessibilityNodeInfo.MOVEMENT_GRANULARITY_LINE -> moveCaretUp()
+                    AccessibilityNodeInfo.MOVEMENT_GRANULARITY_CHARACTER -> moveCaretLeft()
                 }
-                return true;
+                return true
+            }
         }
-        return super.performAccessibilityAction(action, arguments);
+        return super.performAccessibilityAction(action, arguments)
     }
 
-    private void resetView() {
-        _caretPosition = 0;
-        _caretRow = 0;
-        _xExtent = 0;
-        _fieldController.setSelectText(false);
-        _fieldController.stopTextComposing();
-        _hDoc.clearSpans();
-        if (getContentWidth() > 0 || !_hDoc.isWordWrap()) {
-            _hDoc.analyzeWordWrap();
+    private fun resetView() {
+        caretPosition = 0
+        caretRow = 0
+        _xExtent = 0
+        _fieldController!!.isSelectText = false
+        _fieldController!!.stopTextComposing()
+        _hDoc.clearSpans()
+        if (this.contentWidth > 0 || !_hDoc.isWordWrap) {
+            _hDoc.analyzeWordWrap()
         }
-        _rowLis.onRowChange(0);
-        scrollTo(0, 0);
+        _rowLis!!.onRowChange(0)
+        scrollTo(0, 0)
     }
 
     /**
      * Sets the text displayed to the document referenced by hDoc. The view
      * state is reset and the view is invalidated as a side-effect.
      */
-    public void setDocumentProvider(DocumentProvider hDoc) {
-        _hDoc = hDoc;
-        resetView();
-        _fieldController.cancelSpanning(); //stop existing lex threads
-        _fieldController.determineSpans();
-        invalidate();
+    fun setDocumentProvider(hDoc: DocumentProvider) {
+        _hDoc = hDoc
+        resetView()
+        _fieldController!!.cancelSpanning() //stop existing lex threads
+        _fieldController!!.determineSpans()
+        invalidate()
         if (isAccessibilityEnabled) {
-            setContentDescription(_hDoc);
+            setContentDescription(_hDoc)
         }
     }
 
@@ -659,282 +537,265 @@ public class FreeScrollingTextField extends View
      * Returns a DocumentProvider that references the same Document used by the
      * FreeScrollingTextField.
      */
-    public DocumentProvider createDocumentProvider() {
-        return new DocumentProvider(_hDoc);
+    fun createDocumentProvider(): DocumentProvider {
+        return DocumentProvider(_hDoc)
     }
 
-    public void setRowListener(RowListener rLis) {
-        _rowLis = rLis;
+    fun setRowListener(rLis: RowListener) {
+        _rowLis = rLis
     }
 
-    public void setOnSelectionChangedListener(OnSelectionChangedListener sLis) {
-        _selModeLis = sLis;
+    fun setOnSelectionChangedListener(sLis: OnSelectionChangedListener) {
+        _selModeLis = sLis
     }
 
     /**
      * Sets the caret navigation method used by this text field
      */
-    public void setNavigationMethod(TouchNavigationMethod navMethod) {
-        _navMethod = navMethod;
+    fun setNavigationMethod(navMethod: TouchNavigationMethod) {
+        _navMethod = navMethod
     }
 
-    public void setChirality(boolean isRightHanded) {
-        _navMethod.onChiralityChanged(isRightHanded);
+    fun setChirality(isRightHanded: Boolean) {
+        _navMethod.onChiralityChanged(isRightHanded)
     }
 
-    // this used to be isDirty(), but was renamed to avoid conflicts with Android API 11
-    public boolean isEdited() {
-        return _isEdited;
-    }
-
-    //---------------------------------------------------------------------
-    //-------------------------- Paint methods ----------------------------
-
-    public void setEdited(boolean set) {
-        _isEdited = set;
-    }
-
-    @Override
-    public InputConnection onCreateInputConnection(EditorInfo outAttrs) {
-        outAttrs.inputType = InputType.TYPE_CLASS_TEXT
-                | InputType.TYPE_TEXT_FLAG_MULTI_LINE;
-        outAttrs.imeOptions = EditorInfo.IME_FLAG_NO_ENTER_ACTION
-                | EditorInfo.IME_ACTION_DONE
-                | EditorInfo.IME_FLAG_NO_EXTRACT_UI;
+    override fun onCreateInputConnection(outAttrs: EditorInfo): InputConnection? {
+        outAttrs.inputType = (InputType.TYPE_CLASS_TEXT
+                or InputType.TYPE_TEXT_FLAG_MULTI_LINE)
+        outAttrs.imeOptions = (EditorInfo.IME_FLAG_NO_ENTER_ACTION
+                or EditorInfo.IME_ACTION_DONE
+                or EditorInfo.IME_FLAG_NO_EXTRACT_UI)
         if (_inputConnection == null) {
-            _inputConnection = this.new TextFieldInputConnection(this);
+            _inputConnection = this.TextFieldInputConnection(this)
         } else {
-            _inputConnection.resetComposingState();
+            _inputConnection!!.resetComposingState()
         }
-        return _inputConnection;
+        return _inputConnection
     }
 
-    @Override
-    public boolean onCheckIsTextEditor() {
-        return true;
+    override fun onCheckIsTextEditor(): Boolean {
+        return true
     }
 
-    @Override
-    public boolean isSaveEnabled() {
-        return true;
+    override fun isSaveEnabled(): Boolean {
+        return true
     }
 
     //---------------------------------------------------------------------
     //------------------------- Layout methods ----------------------------
     //TODO test with height less than 1 complete row
-    @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         //super.onMeasure(widthMeasureSpec,heightMeasureSpec);
-        setMeasuredDimension(useAllDimensions(widthMeasureSpec), useAllDimensions(heightMeasureSpec));
+        setMeasuredDimension(
+            useAllDimensions(widthMeasureSpec),
+            useAllDimensions(heightMeasureSpec)
+        )
     }
 
-    @Override
-    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         // TODO: Implement this method
         if (changed) {
-            Rect rect = new Rect();
-            getWindowVisibleDisplayFrame(rect);
-            _topOffset = rect.top + rect.height() - getHeight();
-            if (!_isLayout)
-                respan();
-            _isLayout = right > 0;
-            invalidate();
-            _autoCompletePanel.setWidth(getWidth() / 2);
+            val rect = Rect()
+            getWindowVisibleDisplayFrame(rect)
+            this.topOffset = rect.top + rect.height() - getHeight()
+            if (!_isLayout) respan()
+            _isLayout = right > 0
+            invalidate()
+            _autoCompletePanel!!.setWidth(getWidth() / 2)
         }
-        super.onLayout(changed, left, top, right, bottom);
+        super.onLayout(changed, left, top, right, bottom)
     }
 
-    @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        super.onSizeChanged(w, h, oldw, oldh);
-        if (_hDoc.isWordWrap() && oldw != w)
-            _hDoc.analyzeWordWrap();
-        _fieldController.updateCaretRow();
-        if (h < oldh)
-            makeCharVisible(_caretPosition);
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        if (_hDoc.isWordWrap && oldw != w) _hDoc.analyzeWordWrap()
+        _fieldController!!.updateCaretRow()
+        if (h < oldh) makeCharVisible(caretPosition)
     }
 
-    private int useAllDimensions(int measureSpec) {
-        int specMode = MeasureSpec.getMode(measureSpec);
-        int result = MeasureSpec.getSize(measureSpec);
+    private fun useAllDimensions(measureSpec: Int): Int {
+        val specMode = MeasureSpec.getMode(measureSpec)
+        var result = MeasureSpec.getSize(measureSpec)
         if (specMode != MeasureSpec.EXACTLY && specMode != MeasureSpec.AT_MOST) {
-            result = Integer.MAX_VALUE;
-            TextWarriorException.fail("MeasureSpec cannot be UNSPECIFIED. Setting dimensions to max.");
+            result = Int.Companion.MAX_VALUE
+            fail("MeasureSpec cannot be UNSPECIFIED. Setting dimensions to max.")
         }
 
-        return result;
+        return result
     }
 
-    protected int getNumVisibleRows() {
-        return (int) Math.ceil((double) getContentHeight() / rowHeight());
+    protected val numVisibleRows: Int
+        get() = ceil(this.contentHeight.toDouble() / rowHeight()).toInt()
+
+    fun rowHeight(): Int {
+        val metrics = _brush!!.getFontMetricsInt()
+        return (metrics.descent - metrics.ascent)
     }
 
-    protected int rowHeight() {
-        Paint.FontMetricsInt metrics = _brush.getFontMetricsInt();
-        return (metrics.descent - metrics.ascent);
-    }
+    val contentHeight: Int
+        /*
+              The only methods that have to worry about padding are invalidate, draw
+              and computeVerticalScrollRange() methods. Other methods can assume that
+              the text completely fills a rectangular viewport given by getContentWidth()
+              and getContentHeight()
+              */
+        get() = getHeight() - getPaddingTop() - getPaddingBottom()
 
-    /*
-     The only methods that have to worry about padding are invalidate, draw
-	 and computeVerticalScrollRange() methods. Other methods can assume that
-	 the text completely fills a rectangular viewport given by getContentWidth()
-	 and getContentHeight()
-	 */
-    protected int getContentHeight() {
-        return getHeight() - getPaddingTop() - getPaddingBottom();
-    }
-
-    protected int getContentWidth() {
-        return getWidth() - getPaddingLeft() - getPaddingRight();
-    }
+    val contentWidth: Int
+        get() = getWidth() - getPaddingLeft() - getPaddingRight()
 
     /**
      * Determines if the View has been layout or is still being constructed
      */
-    public boolean hasLayout() {
-        return (getWidth() == 0); // simplistic implementation, but should work for most cases
+    fun hasLayout(): Boolean {
+        return (getWidth() == 0) // simplistic implementation, but should work for most cases
     }
 
     /**
      * The first row of text to paint, which may be partially visible.
      * Deduced from the clipping rectangle given to onDraw()
      */
-    private int getBeginPaintRow(Canvas canvas) {
-        Rect bounds = canvas.getClipBounds();
-        return bounds.top / rowHeight();
+    private fun getBeginPaintRow(canvas: Canvas): Int {
+        val bounds = canvas.getClipBounds()
+        return bounds.top / rowHeight()
     }
 
     /**
      * The last row of text to paint, which may be partially visible.
      * Deduced from the clipping rectangle given to onDraw()
      */
-    private int getEndPaintRow(Canvas canvas) {
+    private fun getEndPaintRow(canvas: Canvas): Int {
         //clip top and left are inclusive; bottom and right are exclusive
-        Rect bounds = canvas.getClipBounds();
-        return (bounds.bottom - 1) / rowHeight();
+        val bounds = canvas.getClipBounds()
+        return (bounds.bottom - 1) / rowHeight()
     }
 
     /**
      * @return The x-value of the baseline for drawing text on the given row
      */
-    public int getPaintBaseline(int row) {
-        Paint.FontMetricsInt metrics = _brush.getFontMetricsInt();
-        return (row + 1) * rowHeight() - metrics.descent;
+    fun getPaintBaseline(row: Int): Int {
+        val metrics = _brush!!.getFontMetricsInt()
+        return (row + 1) * rowHeight() - metrics.descent
     }
 
-    @Override
-    protected void onDraw(Canvas canvas) {
-        canvas.save();
+    override fun onDraw(canvas: Canvas) {
+        canvas.save()
 
         //translate clipping region to create padding around edges
-        canvas.clipRect(getScrollX() + getPaddingLeft(),
-                getScrollY() + getPaddingTop(),
-                getScrollX() + getWidth() - getPaddingRight(),
-                getScrollY() + getHeight() - getPaddingBottom());
-        canvas.translate(getPaddingLeft(), getPaddingTop());
-        realDraw(canvas);
+        canvas.clipRect(
+            getScrollX() + getPaddingLeft(),
+            getScrollY() + getPaddingTop(),
+            getScrollX() + getWidth() - getPaddingRight(),
+            getScrollY() + getHeight() - getPaddingBottom()
+        )
+        canvas.translate(getPaddingLeft().toFloat(), getPaddingTop().toFloat())
+        realDraw(canvas)
 
-        canvas.restore();
+        canvas.restore()
 
-        _navMethod.onTextDrawComplete(canvas);
+        _navMethod.onTextDrawComplete(canvas)
     }
 
-    private void realDraw(Canvas canvas) {
+    private fun realDraw(canvas: Canvas) {
         //----------------------------------------------
         // initialize and set up boundaries
         //----------------------------------------------
-        int currRowNum = getBeginPaintRow(canvas);
-        int currIndex = _hDoc.getRowOffset(currRowNum);
+        var currRowNum = getBeginPaintRow(canvas)
+        var currIndex = _hDoc.getRowOffset(currRowNum)
         if (currIndex < 0) {
-            return;
+            return
         }
-        int len = _hDoc.length();
-        int currLineNum = isWordWrap() ? _hDoc.findLineNumber(currIndex) + 1 : currRowNum + 1;
-        int lastLineNum = 0;
-        if (_showLineNumbers)
-            _leftOffset = (int) _brushLine.measureText(_hDoc.getRowCount() + " ");
-        int endRowNum = getEndPaintRow(canvas);
-        int paintX = 0;
-        int paintY = getPaintBaseline(currRowNum);
+        val len = _hDoc.length
+        var currLineNum =
+            if (this.isWordWrap) _hDoc.findLineNumber(currIndex) + 1 else currRowNum + 1
+        var lastLineNum = 0
+        if (this.isShowLineNumbers) this.leftOffset =
+            _brushLine!!.measureText(_hDoc.rowCount.toString() + " ").toInt()
+        val endRowNum = getEndPaintRow(canvas)
+        var paintX = 0
+        var paintY = getPaintBaseline(currRowNum)
 
         //----------------------------------------------
         // set up initial span color
         //----------------------------------------------
-        int spanIndex = 0;
-        List<Pair> spans = _hDoc.getSpans();
+        var spanIndex = 0
+        val spans = _hDoc.spans
 
         // There must be at least one span to paint, even for an empty file,
         // where the span contains only the EOF character
-        TextWarriorException.assertVerbose(!spans.isEmpty(),
-                "No spans to paint in TextWarrior.paint()");
-        if (spans.isEmpty())
-            spans.add(new Pair(0, NORMAL));
+        assertVerbose(
+            !spans.isEmpty(),
+            "No spans to paint in TextWarrior.paint()"
+        )
+        if (spans.isEmpty()) spans.add(Pair(0, Lexer.Companion.NORMAL))
 
         //TODO use binary search
-        Pair nextSpan = spans.get(spanIndex++);
+        var nextSpan = spans.get(spanIndex++)
 
-        Pair currSpan;
-        int spanOffset = 0;
-        int spanSize = spans.size();
+        var currSpan: Pair?
+        var spanOffset = 0
+        val spanSize = spans.size
         do {
-            currSpan = nextSpan;
-            spanOffset += currSpan.getFirst();
+            currSpan = nextSpan
+            spanOffset += currSpan!!.first
             if (spanIndex < spanSize) {
-                nextSpan = spans.get(spanIndex++);
+                nextSpan = spans.get(spanIndex++)
             } else {
-                nextSpan = null;
+                nextSpan = null
             }
-        }
-        while (nextSpan != null && spanOffset <= currIndex);
-        int currType = currSpan.getSecond();
-        int lastType = currType;
+        } while (nextSpan != null && spanOffset <= currIndex)
+        var currType = currSpan.second
+        var lastType = currType
 
-        switch (currSpan.getSecond()) {
-            case Lexer.KEYWORD:
-                _brush.setTypeface(_boldTypeface);
-                break;
-            case Lexer.DOUBLE_SYMBOL_LINE:
-                _brush.setTypeface(_italicTypeface);
-                break;
-            default:
-                _brush.setTypeface(_defTypeface);
+        when (currSpan.second) {
+            Lexer.KEYWORD -> _brush!!.setTypeface(_boldTypeface)
+            Lexer.DOUBLE_SYMBOL_LINE -> _brush!!.setTypeface(_italicTypeface)
+            else -> _brush!!.setTypeface(_defTypeface)
         }
-        int spanColor = _colorScheme.getTokenColor(currSpan.getSecond());
-        _brush.setColor(spanColor);
+        var spanColor = _colorScheme.getTokenColor(currSpan.second)
+        _brush!!.setColor(spanColor)
 
         //----------------------------------------------
         // start painting!
         //----------------------------------------------
-        int rowCount = _hDoc.getRowCount();
-        if (_showLineNumbers) {
-            _brushLine.setColor(_colorScheme.getColor(Colorable.NON_PRINTING_GLYPH));
-            canvas.drawLine(_leftOffset - _spaceWidth / 2, getScrollY(), _leftOffset - _spaceWidth / 2, getScrollY() + getHeight(), _brushLine);
-            if (getMaxScrollY() > getHeight()) {
-                int s = getScrollY() + (getHeight() * getScrollY() / getMaxScrollY());
-                int e = getScrollY() + (getHeight() * (getScrollY() + getHeight()) / getMaxScrollY());
-                if (e - s < _alphaWidth / 4)
-                    e = s + _alphaWidth / 4;
+        val rowCount = _hDoc.rowCount
+        if (this.isShowLineNumbers) {
+            _brushLine!!.setColor(_colorScheme.getColor(Colorable.NON_PRINTING_GLYPH))
+            canvas.drawLine(
+                (this.leftOffset - _spaceWidth / 2).toFloat(),
+                getScrollY().toFloat(),
+                (this.leftOffset - _spaceWidth / 2).toFloat(),
+                (getScrollY() + getHeight()).toFloat(),
+                _brushLine!!
+            )
+            if (this.maxScrollY > getHeight()) {
+                val s = getScrollY() + (getHeight() * getScrollY() / this.maxScrollY)
+                var e =
+                    getScrollY() + (getHeight() * (getScrollY() + getHeight()) / this.maxScrollY)
+                if (e - s < _alphaWidth / 4) e = s + _alphaWidth / 4
                 //_brushLine.setColor(_colorScheme.getColor(Colorable.CARET_FOREGROUND));
-                canvas.drawLine(_leftOffset - _spaceWidth / 2 - _alphaWidth / 4, s, _leftOffset - _spaceWidth / 2 - _alphaWidth / 4, e, _brushLine);
+                canvas.drawLine(
+                    (this.leftOffset - _spaceWidth / 2 - _alphaWidth / 4).toFloat(),
+                    s.toFloat(),
+                    (this.leftOffset - _spaceWidth / 2 - _alphaWidth / 4).toFloat(),
+                    e.toFloat(),
+                    _brushLine!!
+                )
             }
         }
 
-        Typeface lastTypeface;
-        switch (currType) {
-            case Lexer.KEYWORD:
-                lastTypeface = _boldTypeface;
-                break;
-            case Lexer.DOUBLE_SYMBOL_LINE:
-                lastTypeface = _italicTypeface;
-                break;
-            default:
-                lastTypeface = _defTypeface;
+        var lastTypeface: Typeface?
+        when (currType) {
+            Lexer.KEYWORD -> lastTypeface = _boldTypeface
+            Lexer.DOUBLE_SYMBOL_LINE -> lastTypeface = _italicTypeface
+            else -> lastTypeface = _defTypeface
         }
 
-        _brush.setTypeface(lastTypeface);
+        _brush!!.setTypeface(lastTypeface)
 
         while (currRowNum <= endRowNum) {
-            int spanLen = spanOffset - currIndex;
+            var spanLen = spanOffset - currIndex
 
             /*String row = _hDoc.getRow(currRowNum);
             boolean charDraw = false;
@@ -948,73 +809,68 @@ public class FreeScrollingTextField extends View
                 charDraw = true;
             }
 */
-            int rowLen = _hDoc.getRowSize(currRowNum);
+            val rowLen = _hDoc.getRowSize(currRowNum)
             if (currRowNum >= rowCount) {
-                break;
+                break
             }
 
-            if (_showLineNumbers && currLineNum != lastLineNum) {
-                lastLineNum = currLineNum;
-                String num = String.valueOf(currLineNum);
-                drawLineNum(canvas, num, 0, paintY);
+            if (this.isShowLineNumbers && currLineNum != lastLineNum) {
+                lastLineNum = currLineNum
+                val num = currLineNum.toString()
+                drawLineNum(canvas, num, 0, paintY)
             }
-            paintX = _leftOffset;
+            paintX = this.leftOffset
 
-            int i = 0;
+            var i = 0
 
             while (i < rowLen) {
                 // check if formatting changes are needed
                 if (nextSpan != null && currIndex >= spanOffset) {
-                    currSpan = nextSpan;
+                    currSpan = nextSpan
 
-                    spanLen = currSpan.getFirst();
-                    spanOffset += spanLen;
-                    lastType = currType;
-                    currType = currSpan.getSecond();
+                    spanLen = currSpan.first
+                    spanOffset += spanLen
+                    lastType = currType
+                    currType = currSpan.second
 
                     if (lastType != currType) {
-                        Typeface currTypeface;
-                        switch (currType) {
-                            case Lexer.KEYWORD:
-                                currTypeface = _boldTypeface;
-                                break;
-                            case Lexer.DOUBLE_SYMBOL_LINE:
-                                currTypeface = _italicTypeface;
-                                break;
-                            default:
-                                currTypeface = _defTypeface;
+                        val currTypeface: Typeface?
+                        when (currType) {
+                            Lexer.KEYWORD -> currTypeface = _boldTypeface
+                            Lexer.DOUBLE_SYMBOL_LINE -> currTypeface = _italicTypeface
+                            else -> currTypeface = _defTypeface
                         }
 
-                        if (lastTypeface != currTypeface) {
-                            _brush.setTypeface(currTypeface);
-                            lastTypeface = currTypeface;
+                        if (lastTypeface !== currTypeface) {
+                            _brush!!.setTypeface(currTypeface)
+                            lastTypeface = currTypeface
                         }
 
-                        spanColor = _colorScheme.getTokenColor(currType);
-                        _brush.setColor(spanColor);
+                        spanColor = _colorScheme.getTokenColor(currType)
+                        _brush!!.setColor(spanColor)
                     }
                     if (spanIndex < spanSize) {
-                        nextSpan = spans.get(spanIndex++);
+                        nextSpan = spans.get(spanIndex++)
                     } else {
-                        nextSpan = null;
+                        nextSpan = null
                     }
                 }
 
                 //if (charDraw) {
-                if (currIndex == _caretPosition) {
-                    drawCaret(canvas, paintX, paintY);
+                if (currIndex == caretPosition) {
+                    drawCaret(canvas, paintX, paintY)
                 }
 
-                char c = _hDoc.charAt(currIndex);
+                val c = _hDoc.get(currIndex)
 
-                if (_fieldController.inSelectionRange(currIndex)) {
-                    paintX += drawSelectedText(canvas, c, paintX, paintY);
+                if (_fieldController!!.inSelectionRange(currIndex)) {
+                    paintX += drawSelectedText(canvas, c, paintX, paintY)
                 } else {
-                    paintX += drawChar(canvas, c, paintX, paintY);
+                    paintX += drawChar(canvas, c, paintX, paintY)
                 }
-                ++currIndex;
-                ++i;
-                spanLen--;
+                ++currIndex
+                ++i
+                spanLen--
                 /*} else {
                     if (i + spanLen > rowLen)
                         spanLen = rowLen - i;
@@ -1025,389 +881,433 @@ public class FreeScrollingTextField extends View
                 }*/
             }
 
-            if (_hDoc.charAt(currIndex - 1) == Language.NEWLINE)
-                ++currLineNum;
+            if (_hDoc.get(currIndex - 1) == Language.NEWLINE) ++currLineNum
 
-            paintY += rowHeight();
+            paintY += rowHeight()
             if (paintX > _xExtent) {
                 // record widest line seen so far
-                _xExtent = paintX;
+                _xExtent = paintX
             }
-            ++currRowNum;
+            ++currRowNum
         } // end while
-        doOptionHighlightRow(canvas);
-        if (!isWordWrap())
-            doBlockLine(canvas);
+
+        doOptionHighlightRow(canvas)
+        if (!this.isWordWrap) doBlockLine(canvas)
     }
 
-    private void doBlockLine(Canvas canvas) {
-        ArrayList<Rect> lines = Lexer.Companion.getLines();
-        if (lines == null || lines.isEmpty())
-            return;
-        Rect bounds = canvas.getClipBounds();
-        int bt = bounds.top;
-        int bb = bounds.bottom;
-        Rect curr=null;
-        for (Rect rect : lines) {
+    private fun doBlockLine(canvas: Canvas) {
+        val lines: ArrayList<Rect> = lines as ArrayList<Rect>
+        if (lines == null || lines.isEmpty()) return
+        val bounds = canvas.getClipBounds()
+        val bt = bounds.top
+        val bb = bounds.bottom
+        var curr: Rect? = null
+        for (rect in lines) {
             /*if(rect.top==_caretRow){
                 doBlockRow(canvas,rect.bottom);
             }else if(rect.bottom==_caretRow){
                 doBlockRow(canvas,rect.top);
             }*/
-            int top = (rect.top + 1) * rowHeight();
-            int bottom = rect.bottom * rowHeight();
-            if (bottom < bt || top > bb)
-                continue;
-            int left = Math.min(getCharExtent(rect.left).getFirst(), getCharExtent(rect.right).getFirst());
-            if(rect.left<_caretPosition&&rect.right>=_caretPosition){
-                if(curr==null||curr.left<rect.left)
-                curr=rect;
+            val top = (rect.top + 1) * rowHeight()
+            val bottom = rect.bottom * rowHeight()
+            if (bottom < bt || top > bb) continue
+            val left = min(
+                getCharExtent(rect.left).first.toDouble(),
+                getCharExtent(rect.right).first.toDouble()
+            ).toInt()
+            if (rect.left < caretPosition && rect.right >= caretPosition) {
+                if (curr == null || curr.left < rect.left) curr = rect
             }
-            canvas.drawLine(left, top, left, bottom, _brushLine);
+            canvas.drawLine(
+                left.toFloat(),
+                top.toFloat(),
+                left.toFloat(),
+                bottom.toFloat(),
+                _brushLine!!
+            )
         }
-        if(curr!=null){
-            int top = (curr.top + 1) * rowHeight();
-            int bottom = curr.bottom * rowHeight();
-            if (bottom < bt || top > bb)
-                return;
-            int left = Math.min(getCharExtent(curr.left).getFirst(), getCharExtent(curr.right).getFirst());
-            _brushLine.setColor(_colorScheme.getColor(Colorable.CARET_FOREGROUND));
-            canvas.drawLine(left, top, left, bottom, _brushLine);
-            _brushLine.setColor(_colorScheme.getColor(Colorable.NON_PRINTING_GLYPH));
+        if (curr != null) {
+            val top = (curr.top + 1) * rowHeight()
+            val bottom = curr.bottom * rowHeight()
+            if (bottom < bt || top > bb) return
+            val left = min(
+                getCharExtent(curr.left).first.toDouble(),
+                getCharExtent(curr.right).first.toDouble()
+            ).toInt()
+            _brushLine!!.setColor(_colorScheme.getColor(Colorable.CARET_FOREGROUND))
+            canvas.drawLine(
+                left.toFloat(),
+                top.toFloat(),
+                left.toFloat(),
+                bottom.toFloat(),
+                _brushLine!!
+            )
+            _brushLine!!.setColor(_colorScheme.getColor(Colorable.NON_PRINTING_GLYPH))
         }
     }
 
-    private void doBlockRow(Canvas canvas, int _caretRow) {
+    private fun doBlockRow(canvas: Canvas, _caretRow: Int) {
         if (_isHighlightRow) {
-            int y = getPaintBaseline(_caretRow);
-            int originalColor = _brush.getColor();
-            _brush.setColor(_colorScheme.getColor(Colorable.LINE_HIGHLIGHT));
+            val y = getPaintBaseline(_caretRow)
+            val originalColor = _brush!!.getColor()
+            _brush!!.setColor(_colorScheme.getColor(Colorable.LINE_HIGHLIGHT))
 
-            int lineLength = Math.max(_xExtent, getContentWidth());
+            val lineLength = max(_xExtent.toDouble(), this.contentWidth.toDouble()).toInt()
             //canvas.drawRect(0, y+1, lineLength, y+2, _brush);
-            drawTextBackground(canvas, 0, y, lineLength);
+            drawTextBackground(canvas, 0, y, lineLength)
             //_brush.setColor(0x88000000);
-            _brush.setColor(originalColor);
+            _brush!!.setColor(originalColor)
         }
     }
 
     /**
      * Underline the caret row if the option for highlighting it is set
      */
-    private void doOptionHighlightRow(Canvas canvas) {
+    private fun doOptionHighlightRow(canvas: Canvas) {
         if (_isHighlightRow) {
-            int y = getPaintBaseline(_caretRow);
-            int originalColor = _brush.getColor();
-            _brush.setColor(_colorScheme.getColor(Colorable.LINE_HIGHLIGHT));
+            val y = getPaintBaseline(caretRow)
+            val originalColor = _brush!!.getColor()
+            _brush!!.setColor(_colorScheme.getColor(Colorable.LINE_HIGHLIGHT))
 
-            int lineLength = Math.max(_xExtent, getContentWidth());
+            val lineLength = max(_xExtent.toDouble(), this.contentWidth.toDouble()).toInt()
             //canvas.drawRect(0, y+1, lineLength, y+2, _brush);
-            drawTextBackground(canvas, 0, y, lineLength);
+            drawTextBackground(canvas, 0, y, lineLength)
             //_brush.setColor(0x88000000);
-            _brush.setColor(originalColor);
+            _brush!!.setColor(originalColor)
         }
     }
 
-    private int drawString(Canvas canvas, String s, int start, int end, int paintX, int paintY) {
-        int len = s.length();
-        if (end >= len)
-            end = len - 1;
-        int charWidth = (int) _brush.measureText(s, start, end);
-        if (paintX > getScrollX() || paintX < (getScrollX() + getContentWidth()))
-            canvas.drawText(s, start, end, paintX, paintY, _brush);
-        return charWidth;
+    private fun drawString(
+        canvas: Canvas,
+        s: String,
+        start: Int,
+        end: Int,
+        paintX: Int,
+        paintY: Int
+    ): Int {
+        var end = end
+        val len = s.length
+        if (end >= len) end = len - 1
+        val charWidth = _brush!!.measureText(s, start, end).toInt()
+        if (paintX > getScrollX() || paintX < (getScrollX() + this.contentWidth)) canvas.drawText(
+            s,
+            start,
+            end,
+            paintX.toFloat(),
+            paintY.toFloat(),
+            _brush!!
+        )
+        return charWidth
     }
 
-    private int drawSelectedString(Canvas canvas, String s, int paintX, int paintY) {
-        int advance = (int) _brush.measureText(s);
-        int oldColor = _brush.getColor();
+    private fun drawSelectedString(canvas: Canvas, s: String, paintX: Int, paintY: Int): Int {
+        val advance = _brush!!.measureText(s).toInt()
+        val oldColor = _brush!!.getColor()
 
-        _brush.setColor(_colorScheme.getColor(Colorable.SELECTION_BACKGROUND));
-        drawTextBackground(canvas, paintX, paintY, advance);
+        _brush!!.setColor(_colorScheme.getColor(Colorable.SELECTION_BACKGROUND))
+        drawTextBackground(canvas, paintX, paintY, advance)
 
-        _brush.setColor(_colorScheme.getColor(Colorable.SELECTION_FOREGROUND));
-        canvas.drawText(s, paintX, paintY, _brush);
+        _brush!!.setColor(_colorScheme.getColor(Colorable.SELECTION_FOREGROUND))
+        canvas.drawText(s, paintX.toFloat(), paintY.toFloat(), _brush!!)
 
-        _brush.setColor(oldColor);
-        return advance;
+        _brush!!.setColor(oldColor)
+        return advance
     }
 
-    private int drawChar(Canvas canvas, char c, int paintX, int paintY) {
-        int originalColor = _brush.getColor();
-        int charWidth = getAdvance(c, paintX);
+    private fun drawChar(canvas: Canvas, c: Char, paintX: Int, paintY: Int): Int {
+        val originalColor = _brush!!.getColor()
+        val charWidth = getAdvance(c, paintX)
 
-        if (paintX > getScrollX() || paintX < (getScrollX() + getContentWidth()))
-            switch (c) {
-                case 0xd83c:
-                case 0xd83d:
-                    _emoji = c;
-                    break;
-                case ' ':
-                    if (_showNonPrinting) {
-                        _brush.setColor(_colorScheme.getColor(Colorable.NON_PRINTING_GLYPH));
-                        canvas.drawText(Language.GLYPH_SPACE, 0, 1, paintX, paintY, _brush);
-                        _brush.setColor(originalColor);
-                    } else {
-                        canvas.drawText(" ", 0, 1, paintX, paintY, _brush);
-                    }
-                    break;
-
-                case Language.EOF: //fall-through
-                case Language.NEWLINE:
-                    if (_showNonPrinting) {
-                        _brush.setColor(_colorScheme.getColor(Colorable.NON_PRINTING_GLYPH));
-                        canvas.drawText(Language.GLYPH_NEWLINE, 0, 1, paintX, paintY, _brush);
-                        _brush.setColor(originalColor);
-                    }
-                    break;
-
-                case Language.TAB:
-                    if (_showNonPrinting) {
-                        _brush.setColor(_colorScheme.getColor(Colorable.NON_PRINTING_GLYPH));
-                        canvas.drawText(Language.GLYPH_TAB, 0, 1, paintX, paintY, _brush);
-                        _brush.setColor(originalColor);
-                    }
-                    break;
-
-                default:
-                    if (_emoji != 0) {
-                        canvas.drawText(new char[]{_emoji, c}, 0, 2, paintX, paintY, _brush);
-                        _emoji = 0;
-                    } else {
-                        char[] ca = {c};
-                        canvas.drawText(ca, 0, 1, paintX, paintY, _brush);
-                    }
-                    break;
+        if (paintX > getScrollX() || paintX < (getScrollX() + this.contentWidth)) when (c) {
+            0xd83c.toChar(), 0xd83d.toChar() -> _emoji = c
+            ' ' -> if (_showNonPrinting) {
+                _brush!!.setColor(_colorScheme.getColor(Colorable.NON_PRINTING_GLYPH))
+                canvas.drawText(
+                    Language.GLYPH_SPACE,
+                    0,
+                    1,
+                    paintX.toFloat(),
+                    paintY.toFloat(),
+                    _brush!!
+                )
+                _brush!!.setColor(originalColor)
+            } else {
+                canvas.drawText(" ", 0, 1, paintX.toFloat(), paintY.toFloat(), _brush!!)
             }
 
-        return charWidth;
+            Language.EOF, Language.NEWLINE -> if (_showNonPrinting) {
+                _brush!!.setColor(_colorScheme.getColor(Colorable.NON_PRINTING_GLYPH))
+                canvas.drawText(
+                    Language.GLYPH_NEWLINE,
+                    0,
+                    1,
+                    paintX.toFloat(),
+                    paintY.toFloat(),
+                    _brush!!
+                )
+                _brush!!.setColor(originalColor)
+            }
+
+            Language.TAB -> if (_showNonPrinting) {
+                _brush!!.setColor(_colorScheme.getColor(Colorable.NON_PRINTING_GLYPH))
+                canvas.drawText(
+                    Language.GLYPH_TAB,
+                    0,
+                    1,
+                    paintX.toFloat(),
+                    paintY.toFloat(),
+                    _brush!!
+                )
+                _brush!!.setColor(originalColor)
+            }
+
+            else -> if (_emoji.code != 0) {
+                canvas.drawText(
+                    charArrayOf(_emoji, c),
+                    0,
+                    2,
+                    paintX.toFloat(),
+                    paintY.toFloat(),
+                    _brush!!
+                )
+                _emoji = 0.toChar()
+            } else {
+                val ca = charArrayOf(c)
+                canvas.drawText(ca, 0, 1, paintX.toFloat(), paintY.toFloat(), _brush!!)
+            }
+        }
+
+        return charWidth
     }
 
     // paintY is the baseline for text, NOT the top extent
-    private void drawTextBackground(Canvas canvas, int paintX, int paintY,
-                                    int advance) {
-        Paint.FontMetricsInt metrics = _brush.getFontMetricsInt();
-        canvas.drawRect(paintX,
-                paintY + metrics.ascent,
-                paintX + advance,
-                paintY + metrics.descent,
-                _brush);
+    private fun drawTextBackground(
+        canvas: Canvas, paintX: Int, paintY: Int,
+        advance: Int
+    ) {
+        val metrics = _brush!!.getFontMetricsInt()
+        canvas.drawRect(
+            paintX.toFloat(),
+            (paintY + metrics.ascent).toFloat(),
+            (paintX + advance).toFloat(),
+            (paintY + metrics.descent).toFloat(),
+            _brush!!
+        )
     }
 
-    private int drawSelectedText(Canvas canvas, char c, int paintX, int paintY) {
-        int oldColor = _brush.getColor();
-        int advance = getAdvance(c);
+    private fun drawSelectedText(canvas: Canvas, c: Char, paintX: Int, paintY: Int): Int {
+        val oldColor = _brush!!.getColor()
+        val advance = getAdvance(c)
 
-        _brush.setColor(_colorScheme.getColor(Colorable.SELECTION_BACKGROUND));
-        drawTextBackground(canvas, paintX, paintY, advance);
+        _brush!!.setColor(_colorScheme.getColor(Colorable.SELECTION_BACKGROUND))
+        drawTextBackground(canvas, paintX, paintY, advance)
 
-        _brush.setColor(_colorScheme.getColor(Colorable.SELECTION_FOREGROUND));
-        drawChar(canvas, c, paintX, paintY);
+        _brush!!.setColor(_colorScheme.getColor(Colorable.SELECTION_FOREGROUND))
+        drawChar(canvas, c, paintX, paintY)
 
-        _brush.setColor(oldColor);
-        return advance;
+        _brush!!.setColor(oldColor)
+        return advance
     }
 
-    private void drawCaret(Canvas canvas, int paintX, int paintY) {
-        int originalColor = _brush.getColor();
-        _caretX = paintX;
-        _caretY = paintY;
+    private fun drawCaret(canvas: Canvas, paintX: Int, paintY: Int) {
+        val originalColor = _brush!!.getColor()
+        this.caretX = paintX
+        this.caretY = paintY
 
-        int caretColor = _colorScheme.getColor(Colorable.CARET_DISABLED);
-        _brush.setColor(caretColor);
+        val caretColor = _colorScheme.getColor(Colorable.CARET_DISABLED)
+        _brush!!.setColor(caretColor)
         // draw full caret
-        drawTextBackground(canvas, paintX - 1, paintY, 2);
-        _brush.setColor(originalColor);
+        drawTextBackground(canvas, paintX - 1, paintY, 2)
+        _brush!!.setColor(originalColor)
     }
 
-    private int drawLineNum(Canvas canvas, String s, int paintX, int paintY) {
+    private fun drawLineNum(canvas: Canvas, s: String, paintX: Int, paintY: Int): Int {
         //int originalColor = _brush.getColor();
         //_brush.setColor(_colorScheme.getColor(Colorable.NON_PRINTING_GLYPH));
-        canvas.drawText(s, paintX, paintY, _brushLine);
+        canvas.drawText(s, paintX.toFloat(), paintY.toFloat(), _brushLine!!)
         //_brush.setColor(originalColor);
-        return 0;
+        return 0
     }
 
-    @Override
-    final public int getRowWidth() {
-        return getContentWidth() - _leftOffset;
-    }
+    override val rowWidth: Int
+        get() = this.contentWidth - this.leftOffset
 
     /**
      * Returns printed width of c.
-     * <p>
+     *
+     *
      * Takes into account user-specified tab width and also handles
      * application-defined widths for NEWLINE and EOF
      *
      * @param c Character to measure
      * @return Advance of character, in pixels
      */
-    @Override
-    public int getAdvance(char c) {
-        int advance;
+    override fun getAdvance(c: Char): Int {
+        val advance: Int
 
-        switch (c) {
-            case 0xd83c:
-            case 0xd83d:
-                advance = 0;
-                break;
-            case ' ':
-                advance = getSpaceAdvance();
-                break;
-            case Language.NEWLINE: // fall-through
-            case Language.EOF:
-                advance = getEOLAdvance();
-                break;
-            case Language.TAB:
-                advance = getTabAdvance();
-                break;
-            default:
-                if (_emoji != 0) {
-                    char[] ca = {_emoji, c};
-                    advance = (int) _brush.measureText(ca, 0, 2);
-                } else {
-                    char[] ca = {c};
-                    advance = (int) _brush.measureText(ca, 0, 1);
-                }
-                break;
+        when (c) {
+            0xd83c.toChar(), 0xd83d.toChar() -> advance = 0
+            ' ' -> advance = this.spaceAdvance
+            Language.NEWLINE, Language.EOF -> advance =
+                this.eOLAdvance
+
+            Language.TAB -> advance = this.tabAdvance
+            else -> if (_emoji.code != 0) {
+                val ca = charArrayOf(_emoji, c)
+                advance = _brush!!.measureText(ca, 0, 2).toInt()
+            } else {
+                val ca = charArrayOf(c)
+                advance = _brush!!.measureText(ca, 0, 1).toInt()
+            }
         }
 
-        return advance;
+        return advance
     }
 
-    public int getAdvance(char c, int x) {
-        int advance;
+    fun getAdvance(c: Char, x: Int): Int {
+        val advance: Int
 
-        switch (c) {
-            case 0xd83c:
-            case 0xd83d:
-                advance = 0;
-                break;
-            case ' ':
-                advance = getSpaceAdvance();
-                break;
-            case Language.NEWLINE: // fall-through
-            case Language.EOF:
-                advance = getEOLAdvance();
-                break;
-            case Language.TAB:
-                advance = getTabAdvance(x);
-                break;
-            default:
-                if (_emoji != 0) {
-                    char[] ca = {_emoji, c};
-                    advance = (int) _brush.measureText(ca, 0, 2);
-                } else {
-                    char[] ca = {c};
-                    advance = (int) _brush.measureText(ca, 0, 1);
-                }
-                break;
+        when (c) {
+            0xd83c.toChar(), 0xd83d.toChar() -> advance = 0
+            ' ' -> advance = this.spaceAdvance
+            Language.NEWLINE, Language.EOF -> advance =
+                this.eOLAdvance
+
+            Language.TAB -> advance = getTabAdvance(x)
+            else -> if (_emoji.code != 0) {
+                val ca = charArrayOf(_emoji, c)
+                advance = _brush!!.measureText(ca, 0, 2).toInt()
+            } else {
+                val ca = charArrayOf(c)
+                advance = _brush!!.measureText(ca, 0, 1).toInt()
+            }
         }
 
-        return advance;
+        return advance
     }
 
-    public int getCharAdvance(char c) {
-        int advance;
-        char[] ca = {c};
-        advance = (int) _brush.measureText(ca, 0, 1);
-        return advance;
+    fun getCharAdvance(c: Char): Int {
+        val advance: Int
+        val ca = charArrayOf(c)
+        advance = _brush!!.measureText(ca, 0, 1).toInt()
+        return advance
     }
 
-    protected int getSpaceAdvance() {
+    protected val spaceAdvance: Int
+        get() {
+            if (_showNonPrinting) {
+                return _brush!!.measureText(
+                    Language.GLYPH_SPACE,
+                    0, Language.GLYPH_SPACE.length
+                ).toInt()
+            } else {
+                return _spaceWidth
+            }
+        }
+
+
+    protected val eOLAdvance: Int
+        //---------------------------------------------------------------------
+        get() {
+            if (_showNonPrinting) {
+                return _brush!!.measureText(
+                    Language.GLYPH_NEWLINE,
+                    0, Language.GLYPH_NEWLINE.length
+                ).toInt()
+            } else {
+                return (EMPTY_CARET_WIDTH_SCALE * _brush!!.measureText(
+                    " ",
+                    0,
+                    1
+                )).toInt()
+            }
+        }
+
+    protected val tabAdvance: Int
+        get() {
+            if (_showNonPrinting) {
+                return _tabLength * _brush!!.measureText(
+                    Language.GLYPH_SPACE,
+                    0, Language.GLYPH_SPACE.length
+                ).toInt()
+            } else {
+                return _tabLength * _spaceWidth
+            }
+        }
+
+    protected fun getTabAdvance(x: Int): Int {
         if (_showNonPrinting) {
-            return (int) _brush.measureText(Language.GLYPH_SPACE,
-                    0, Language.GLYPH_SPACE.length());
+            return _tabLength * _brush!!.measureText(
+                Language.GLYPH_SPACE,
+                0, Language.GLYPH_SPACE.length
+            ).toInt()
         } else {
-            return _spaceWidth;
-        }
-    }
-
-
-    //---------------------------------------------------------------------
-    //------------------- Scrolling and touch -----------------------------
-
-    protected int getEOLAdvance() {
-        if (_showNonPrinting) {
-            return (int) _brush.measureText(Language.GLYPH_NEWLINE,
-                    0, Language.GLYPH_NEWLINE.length());
-        } else {
-            return (int) (EMPTY_CARET_WIDTH_SCALE * _brush.measureText(" ", 0, 1));
-        }
-    }
-
-    protected int getTabAdvance() {
-        if (_showNonPrinting) {
-            return _tabLength * (int) _brush.measureText(Language.GLYPH_SPACE,
-                    0, Language.GLYPH_SPACE.length());
-        } else {
-            return _tabLength * _spaceWidth;
-        }
-    }
-
-    protected int getTabAdvance(int x) {
-        if (_showNonPrinting) {
-            return _tabLength * (int) _brush.measureText(Language.GLYPH_SPACE,
-                    0, Language.GLYPH_SPACE.length());
-        } else {
-            int i = (x - _leftOffset) / _spaceWidth % _tabLength;
-            return (_tabLength - i) * _spaceWidth;
+            val i = (x - this.leftOffset) / _spaceWidth % _tabLength
+            return (_tabLength - i) * _spaceWidth
         }
     }
 
     /**
      * Invalidate rows from startRow (inclusive) to endRow (exclusive)
      */
-    private void invalidateRows(int startRow, int endRow) {
-        TextWarriorException.assertVerbose(startRow <= endRow && startRow >= 0,
-                "Invalid startRow and/or endRow");
+    private fun invalidateRows(startRow: Int, endRow: Int) {
+        assertVerbose(
+            startRow <= endRow && startRow >= 0,
+            "Invalid startRow and/or endRow"
+        )
 
-        Rect caretSpill = _navMethod.getCaretBloat();
+        val caretSpill = _navMethod.getCaretBloat()
         //TODO The ascent of (startRow+1) may jut inside startRow, so part of
         // that rows have to be invalidated as well.
         // This is a problem for Thai, Vietnamese and Indic scripts
-        Paint.FontMetricsInt metrics = _brush.getFontMetricsInt();
-        int top = startRow * rowHeight() + getPaddingTop();
-        top -= Math.max(caretSpill.top, metrics.descent);
-        top = Math.max(0, top);
+        val metrics = _brush!!.getFontMetricsInt()
+        var top = startRow * rowHeight() + getPaddingTop()
+        top = (top - max(caretSpill.top.toDouble(), metrics.descent.toDouble())).toInt()
+        top = max(0.0, top.toDouble()).toInt()
 
-        super.invalidate(0,
-                top,
-                getScrollX() + getWidth(),
-                endRow * rowHeight() + getPaddingTop() + caretSpill.bottom);
+        super.invalidate(
+            0,
+            top,
+            getScrollX() + getWidth(),
+            endRow * rowHeight() + getPaddingTop() + caretSpill.bottom
+        )
     }
 
     /**
      * Invalidate rows from startRow (inclusive) to the end of the field
      */
-    private void invalidateFromRow(int startRow) {
-        TextWarriorException.assertVerbose(startRow >= 0,
-                "Invalid startRow");
+    private fun invalidateFromRow(startRow: Int) {
+        assertVerbose(
+            startRow >= 0,
+            "Invalid startRow"
+        )
 
-        Rect caretSpill = _navMethod.getCaretBloat();
+        val caretSpill = _navMethod.getCaretBloat()
         //TODO The ascent of (startRow+1) may jut inside startRow, so part of
         // that rows have to be invalidated as well.
         // This is a problem for Thai, Vietnamese and Indic scripts
-        Paint.FontMetricsInt metrics = _brush.getFontMetricsInt();
-        int top = startRow * rowHeight() + getPaddingTop();
-        top -= Math.max(caretSpill.top, metrics.descent);
-        top = Math.max(0, top);
+        val metrics = _brush!!.getFontMetricsInt()
+        var top = startRow * rowHeight() + getPaddingTop()
+        top = (top - max(caretSpill.top.toDouble(), metrics.descent.toDouble())).toInt()
+        top = max(0.0, top.toDouble()).toInt()
 
-        super.invalidate(0,
-                top,
-                getScrollX() + getWidth(),
-                getScrollY() + getHeight());
+        super.invalidate(
+            0,
+            top,
+            getScrollX() + getWidth(),
+            getScrollY() + getHeight()
+        )
     }
 
-    private void invalidateCaretRow() {
-        invalidateRows(_caretRow, _caretRow + 1);
+    private fun invalidateCaretRow() {
+        invalidateRows(caretRow, caretRow + 1)
     }
 
-    private void invalidateSelectionRows() {
-        int startRow = _hDoc.findRowNumber(_selectionAnchor);
-        int endRow = _hDoc.findRowNumber(_selectionEdge);
+    private fun invalidateSelectionRows() {
+        val startRow = _hDoc.findRowNumber(_selectionAnchor)
+        val endRow = _hDoc.findRowNumber(_selectionEdge)
 
-        invalidateRows(startRow, endRow + 1);
+        invalidateRows(startRow, endRow + 1)
     }
 
     /**
@@ -1419,18 +1319,19 @@ public class FreeScrollingTextField extends View
      * @return True if the drawing area was scrolled horizontally
      * and/or vertically
      */
-    private boolean makeCharVisible(int charOffset) {
-        TextWarriorException.assertVerbose(
-                charOffset >= 0 && charOffset < _hDoc.docLength(),
-                "Invalid charOffset given");
-        int scrollVerticalBy = makeCharRowVisible(charOffset);
-        int scrollHorizontalBy = makeCharColumnVisible(charOffset);
+    private fun makeCharVisible(charOffset: Int): Boolean {
+        assertVerbose(
+            charOffset >= 0 && charOffset < _hDoc.docLength(),
+            "Invalid charOffset given"
+        )
+        val scrollVerticalBy = makeCharRowVisible(charOffset)
+        val scrollHorizontalBy = makeCharColumnVisible(charOffset)
 
         if (scrollVerticalBy == 0 && scrollHorizontalBy == 0) {
-            return false;
+            return false
         } else {
-            scrollBy(scrollHorizontalBy, scrollVerticalBy);
-            return true;
+            scrollBy(scrollHorizontalBy, scrollVerticalBy)
+            return true
         }
     }
 
@@ -1441,18 +1342,18 @@ public class FreeScrollingTextField extends View
      * @param charOffset The index of the character to make visible
      * @return The amount to scroll vertically
      */
-    private int makeCharRowVisible(int charOffset) {
-        int scrollBy = 0;
-        int charTop = _hDoc.findRowNumber(charOffset) * rowHeight();
-        int charBottom = charTop + rowHeight();
+    private fun makeCharRowVisible(charOffset: Int): Int {
+        var scrollBy = 0
+        val charTop = _hDoc.findRowNumber(charOffset) * rowHeight()
+        val charBottom = charTop + rowHeight()
 
         if (charTop < getScrollY()) {
-            scrollBy = charTop - getScrollY();
-        } else if (charBottom > (getScrollY() + getContentHeight())) {
-            scrollBy = charBottom - getScrollY() - getContentHeight();
+            scrollBy = charTop - getScrollY()
+        } else if (charBottom > (getScrollY() + this.contentHeight)) {
+            scrollBy = charBottom - getScrollY() - this.contentHeight
         }
 
-        return scrollBy;
+        return scrollBy
     }
 
     /**
@@ -1462,22 +1363,22 @@ public class FreeScrollingTextField extends View
      * @param charOffset The index of the character to make visible
      * @return The amount to scroll horizontally
      */
-    private int makeCharColumnVisible(int charOffset) {
-        int scrollBy = 0;
-        Pair visibleRange = getCharExtent(charOffset);
+    private fun makeCharColumnVisible(charOffset: Int): Int {
+        var scrollBy = 0
+        val visibleRange = getCharExtent(charOffset)
 
-        int charLeft = visibleRange.getFirst();
-        int charRight = visibleRange.getSecond();
+        val charLeft = visibleRange.first
+        val charRight = visibleRange.second
 
-        if (charRight > (getScrollX() + getContentWidth())) {
-            scrollBy = charRight - getScrollX() - getContentWidth();
+        if (charRight > (getScrollX() + this.contentWidth)) {
+            scrollBy = charRight - getScrollX() - this.contentWidth
         }
 
         if (charLeft < getScrollX() + _alphaWidth) {
-            scrollBy = charLeft - getScrollX() - _alphaWidth;
+            scrollBy = charLeft - getScrollX() - _alphaWidth
         }
 
-        return scrollBy;
+        return scrollBy
     }
 
     /**
@@ -1486,46 +1387,35 @@ public class FreeScrollingTextField extends View
      * @return The x-values of left and right edges of charOffset. Pair.first
      * contains the left edge and Pair.second contains the right edge
      */
-    protected Pair getCharExtent(int charOffset) {
-        int row = _hDoc.findRowNumber(charOffset);
-        int rowOffset = _hDoc.getRowOffset(row);
-        int left = _leftOffset;
-        int right = _leftOffset;
-        boolean isEmoji = false;
-        String rowText = _hDoc.getRow(row);
-        int i = 0;
+    protected fun getCharExtent(charOffset: Int): Pair {
+        val row = _hDoc.findRowNumber(charOffset)
+        val rowOffset = _hDoc.getRowOffset(row)
+        var left = this.leftOffset
+        var right = this.leftOffset
+        var isEmoji = false
+        val rowText = _hDoc.getRow(row)
+        var i = 0
 
-        int len = rowText.length();
+        val len = rowText.length
         while (rowOffset + i <= charOffset && i < len) {
-            char c = rowText.charAt(i);
-            left = right;
-            switch (c) {
-                case 0xd83c:
-                case 0xd83d:
-                    isEmoji = true;
-                    char[] ca = {c, rowText.charAt(i + 1)};
-                    right += (int) _brush.measureText(ca, 0, 2);
-                    break;
-                case Language.NEWLINE:
-                case Language.EOF:
-                    right += getEOLAdvance();
-                    break;
-                case ' ':
-                    right += getSpaceAdvance();
-                    break;
-                case Language.TAB:
-                    right += getTabAdvance(right);
-                    break;
-                default:
-                    if (isEmoji)
-                        isEmoji = false;
-                    else
-                        right += getCharAdvance(c);
-                    break;
+            val c = rowText.get(i)
+            left = right
+            when (c) {
+                0xd83c.toChar(), 0xd83d.toChar() -> {
+                    isEmoji = true
+                    val ca = charArrayOf(c, rowText.get(i + 1))
+                    right += _brush!!.measureText(ca, 0, 2).toInt()
+                }
+
+                Language.NEWLINE, Language.EOF -> right += this.eOLAdvance
+                ' ' -> right += this.spaceAdvance
+                Language.TAB -> right += getTabAdvance(right)
+                else -> if (isEmoji) isEmoji = false
+                else right += getCharAdvance(c)
             }
-            ++i;
+            ++i
         }
-        return new Pair(left, right);
+        return Pair(left, right)
     }
 
     /**
@@ -1537,37 +1427,36 @@ public class FreeScrollingTextField extends View
      * @return Rect(left, top, right, bottom) of the character bounds,
      * or Rect(-1, -1, -1, -1) if there is no character at that coordinate.
      */
-    Rect getBoundingBox(int charOffset) {
+    fun getBoundingBox(charOffset: Int): Rect {
         if (charOffset < 0 || charOffset >= _hDoc.docLength()) {
-            return new Rect(-1, -1, -1, -1);
+            return Rect(-1, -1, -1, -1)
         }
 
-        int row = _hDoc.findRowNumber(charOffset);
-        int top = row * rowHeight();
-        int bottom = top + rowHeight();
+        val row = _hDoc.findRowNumber(charOffset)
+        val top = row * rowHeight()
+        val bottom = top + rowHeight()
 
-        Pair xExtent = getCharExtent(charOffset);
-        int left = xExtent.getFirst();
-        int right = xExtent.getSecond();
+        val xExtent = getCharExtent(charOffset)
+        val left = xExtent.first
+        val right = xExtent.second
 
-        return new Rect(left, top, right, bottom);
+        return Rect(left, top, right, bottom)
     }
 
-    public ColorScheme getColorScheme() {
-        return _colorScheme;
-    }
-
-    public void setColorScheme(ColorScheme colorScheme) {
-        _colorScheme = colorScheme;
-        _navMethod.onColorSchemeChanged(colorScheme);
-        setBackgroundColor(colorScheme.getColor(Colorable.BACKGROUND));
-    }
+    var colorScheme: ColorScheme
+        get() = _colorScheme
+        set(colorScheme) {
+            _colorScheme = colorScheme
+            _navMethod.onColorSchemeChanged(colorScheme)
+            setBackgroundColor(colorScheme.getColor(Colorable.BACKGROUND))
+        }
 
     /**
      * Maps a coordinate to the character that it is on. If the coordinate is
      * on empty space, the nearest character on the corresponding row is returned.
      * If there is no character on the row, -1 is returned.
-     * <p>
+     *
+     *
      * The coordinates passed in should not have padding applied to them.
      *
      * @param x x-coordinate
@@ -1575,75 +1464,65 @@ public class FreeScrollingTextField extends View
      * @return The index of the closest character, or -1 if there is
      * no character or nearest character at that coordinate
      */
-    int coordToCharIndex(int x, int y) {
-        int row = y / rowHeight();
-        if (row > _hDoc.getRowCount())
-            return _hDoc.docLength() - 1;
+    fun coordToCharIndex(x: Int, y: Int): Int {
+        val row = y / rowHeight()
+        if (row > _hDoc.rowCount) return _hDoc.docLength() - 1
 
-        int charIndex = _hDoc.getRowOffset(row);
+        val charIndex = _hDoc.getRowOffset(row)
         if (charIndex < 0) {
             //non-existent row
-            return -1;
+            return -1
         }
 
         if (x < 0) {
-            return charIndex; // coordinate is outside, to the left of view
+            return charIndex // coordinate is outside, to the left of view
         }
 
-        String rowText = _hDoc.getRow(row);
+        val rowText = _hDoc.getRow(row)
 
-        int extent = _leftOffset;
-        int i = 0;
-        boolean isEmoji = false;
+        var extent = this.leftOffset
+        var i = 0
+        var isEmoji = false
 
         //x-=getAdvance('a')/2;
-        int len = rowText.length();
+        val len = rowText.length
         while (i < len) {
-            char c = rowText.charAt(i);
-            switch (c) {
-                case 0xd83c:
-                case 0xd83d:
-                    isEmoji = true;
-                    char[] ca = {c, rowText.charAt(i + 1)};
-                    extent += (int) _brush.measureText(ca, 0, 2);
-                    break;
-                case Language.NEWLINE:
-                case Language.EOF:
-                    extent += getEOLAdvance();
-                    break;
-                case ' ':
-                    extent += getSpaceAdvance();
-                    break;
-                case Language.TAB:
-                    extent += getTabAdvance(extent);
-                    break;
-                default:
-                    if (isEmoji)
-                        isEmoji = false;
-                    else
-                        extent += getCharAdvance(c);
+            val c = rowText.get(i)
+            when (c) {
+                0xd83c.toChar(), 0xd83d.toChar() -> {
+                    isEmoji = true
+                    val ca = charArrayOf(c, rowText.get(i + 1))
+                    extent += _brush!!.measureText(ca, 0, 2).toInt()
+                }
+
+                Language.NEWLINE, Language.EOF -> extent += this.eOLAdvance
+                ' ' -> extent += this.spaceAdvance
+                Language.TAB -> extent += getTabAdvance(extent)
+                else -> if (isEmoji) isEmoji = false
+                else extent += getCharAdvance(c)
 
             }
 
             if (extent >= x) {
-                break;
+                break
             }
 
-            ++i;
+            ++i
         }
 
 
-        if (i < rowText.length()) {
-            return charIndex + i;
+        if (i < rowText.length) {
+            return charIndex + i
         }
         //nearest char is last char of line
-        return charIndex + i - 1;
+        return charIndex + i - 1
     }
 
     /**
      * Maps a coordinate to the character that it is on.
      * Returns -1 if there is no character on the coordinate.
-     * <p>
+     *
+     *
      * The coordinates passed in should not have padding applied to them.
      *
      * @param x x-coordinate
@@ -1651,163 +1530,150 @@ public class FreeScrollingTextField extends View
      * @return The index of the character that is on the coordinate,
      * or -1 if there is no character at that coordinate.
      */
-    int coordToCharIndexStrict(int x, int y) {
-        int row = y / rowHeight();
-        int charIndex = _hDoc.getRowOffset(row);
+    fun coordToCharIndexStrict(x: Int, y: Int): Int {
+        val row = y / rowHeight()
+        val charIndex = _hDoc.getRowOffset(row)
 
         if (charIndex < 0 || x < 0) {
             //non-existent row
-            return -1;
+            return -1
         }
 
-        String rowText = _hDoc.getRow(row);
+        val rowText = _hDoc.getRow(row)
 
-        int extent = 0;
-        int i = 0;
-        boolean isEmoji = false;
+        var extent = 0
+        var i = 0
+        var isEmoji = false
 
         //x-=getAdvance('a')/2;
-        int len = rowText.length();
+        val len = rowText.length
         while (i < len) {
-            char c = rowText.charAt(i);
-            switch (c) {
-                case 0xd83c:
-                case 0xd83d:
-                    isEmoji = true;
-                    char[] ca = {c, rowText.charAt(i + 1)};
-                    extent += (int) _brush.measureText(ca, 0, 2);
-                    break;
-                case Language.NEWLINE:
-                case Language.EOF:
-                    extent += getEOLAdvance();
-                    break;
-                case ' ':
-                    extent += getSpaceAdvance();
-                    break;
-                case Language.TAB:
-                    extent += getTabAdvance(extent);
-                    break;
-                default:
-                    if (isEmoji)
-                        isEmoji = false;
-                    else
-                        extent += getCharAdvance(c);
+            val c = rowText.get(i)
+            when (c) {
+                0xd83c.toChar(), 0xd83d.toChar() -> {
+                    isEmoji = true
+                    val ca = charArrayOf(c, rowText.get(i + 1))
+                    extent += _brush!!.measureText(ca, 0, 2).toInt()
+                }
+
+                Language.NEWLINE, Language.EOF -> extent += this.eOLAdvance
+                ' ' -> extent += this.spaceAdvance
+                Language.TAB -> extent += getTabAdvance(extent)
+                else -> if (isEmoji) isEmoji = false
+                else extent += getCharAdvance(c)
 
             }
 
             if (extent >= x) {
-                break;
+                break
             }
 
-            ++i;
+            ++i
         }
 
-        if (i < rowText.length()) {
-            return charIndex + i;
+        if (i < rowText.length) {
+            return charIndex + i
         }
 
         //no char enclosing x
-        return -1;
+        return -1
     }
 
-    /**
-     * Not private to allow access by TouchNavigationMethod
-     *
-     * @return The maximum x-value that can be scrolled to for the current rows
-     * of text in the viewport.
-     */
-    int getMaxScrollX() {
-        if (isWordWrap())
-            return _leftOffset;
-        else
-            return Math.max(0,
-                    _xExtent - getContentWidth() + _navMethod.getCaretBloat().right + _alphaWidth);
+    val maxScrollX: Int
+        /**
+         * Not private to allow access by TouchNavigationMethod
+         *
+         * @return The maximum x-value that can be scrolled to for the current rows
+         * of text in the viewport.
+         */
+        get() {
+            if (this.isWordWrap) return this.leftOffset
+            else return max(
+                0.0,
+                (_xExtent - this.contentWidth + _navMethod.getCaretBloat().right + _alphaWidth).toDouble()
+            ).toInt()
+        }
+
+    val maxScrollY: Int
+        /**
+         * Not private to allow access by TouchNavigationMethod
+         *
+         * @return The maximum y-value that can be scrolled to.
+         */
+        get() = max(
+            0.0,
+            (_hDoc.rowCount * rowHeight() - this.contentHeight / 2 + _navMethod.getCaretBloat().bottom).toDouble()
+        ).toInt()
+
+    override fun computeVerticalScrollOffset(): Int {
+        return getScrollY()
     }
 
-    /**
-     * Not private to allow access by TouchNavigationMethod
-     *
-     * @return The maximum y-value that can be scrolled to.
-     */
-    int getMaxScrollY() {
-        return Math.max(0,
-                _hDoc.getRowCount() * rowHeight() - getContentHeight() / 2 + _navMethod.getCaretBloat().bottom);
+    override fun computeVerticalScrollRange(): Int {
+        return _hDoc.rowCount * rowHeight() + getPaddingTop() + getPaddingBottom()
     }
 
-    @Override
-    protected int computeVerticalScrollOffset() {
-        return getScrollY();
-    }
-
-    @Override
-    protected int computeVerticalScrollRange() {
-        return _hDoc.getRowCount() * rowHeight() + getPaddingTop() + getPaddingBottom();
-    }
-
-    @Override
-    public void computeScroll() {
+    override fun computeScroll() {
         if (_scroller.computeScrollOffset()) {
-            scrollTo(_scroller.getCurrX(), _scroller.getCurrY());
-            postInvalidate();
+            scrollTo(_scroller.getCurrX(), _scroller.getCurrY())
+            postInvalidate()
         }
     }
 
-    public final void smoothScrollBy(int dx, int dy) {
+    fun smoothScrollBy(dx: Int, dy: Int) {
         if (getHeight() == 0) {
             // Nothing to do.
-            return;
+            return
         }
-        long duration = AnimationUtils.currentAnimationTimeMillis() - mLastScroll;
+        val duration = AnimationUtils.currentAnimationTimeMillis() - mLastScroll
         if (duration > 250) {
             //final int maxY = getMaxScrollX();
-            final int scrollY = getScrollY();
-            final int scrollX = getScrollX();
+            val scrollY = getScrollY()
+            val scrollX = getScrollX()
 
             //dy = Math.max(0, Math.min(scrollY + dy, maxY)) - scrollY;
-
-            _scroller.startScroll(scrollX, scrollY, dx, dy);
-            postInvalidate();
+            _scroller.startScroll(scrollX, scrollY, dx, dy)
+            postInvalidate()
         } else {
             if (!_scroller.isFinished()) {
-                _scroller.abortAnimation();
+                _scroller.abortAnimation()
             }
-            scrollBy(dx, dy);
+            scrollBy(dx, dy)
         }
-        mLastScroll = AnimationUtils.currentAnimationTimeMillis();
+        mLastScroll = AnimationUtils.currentAnimationTimeMillis()
     }
 
     /**
-     * Like {@link #scrollTo}, but scroll smoothly instead of immediately.
+     * Like [.scrollTo], but scroll smoothly instead of immediately.
      *
      * @param x the position where to scroll on the X axis
      * @param y the position where to scroll on the Y axis
      */
-    public final void smoothScrollTo(int x, int y) {
-        smoothScrollBy(x - getScrollX(), y - getScrollY());
+    fun smoothScrollTo(x: Int, y: Int) {
+        smoothScrollBy(x - getScrollX(), y - getScrollY())
     }
 
     /**
      * Start fling scrolling
      */
-    void flingScroll(int velocityX, int velocityY) {
-
-        _scroller.fling(getScrollX(), getScrollY(), velocityX, velocityY,
-                0, getMaxScrollX(), 0, getMaxScrollY());
+    fun flingScroll(velocityX: Int, velocityY: Int) {
+        _scroller.fling(
+            getScrollX(), getScrollY(), velocityX, velocityY,
+            0, this.maxScrollX, 0, this.maxScrollY
+        )
         // Keep on drawing until the animation has finished.
-        postInvalidate();
+        postInvalidate()
         //postInvalidateOnAnimation();
     }
 
-    public boolean isFlingScrolling() {
-        return !_scroller.isFinished();
-    }
+    val isFlingScrolling: Boolean
+        get() = !_scroller.isFinished()
 
 
     //---------------------------------------------------------------------
     //------------------------- Caret methods -----------------------------
-
-    public void stopFlingScrolling() {
-        _scroller.forceFinished(true);
+    fun stopFlingScrolling() {
+        _scroller.forceFinished(true)
     }
 
     /**
@@ -1816,87 +1682,73 @@ public class FreeScrollingTextField extends View
      *
      * @return True if auto-scrolling started
      */
-    boolean autoScrollCaret(int scrollDir) {
-        boolean scrolled = false;
-        switch (scrollDir) {
-            case SCROLL_UP:
-                removeCallbacks(_scrollCaretUpTask);
+    fun autoScrollCaret(scrollDir: Int): Boolean {
+        var scrolled = false
+        when (scrollDir) {
+            SCROLL_UP -> {
+                removeCallbacks(_scrollCaretUpTask)
                 if ((!caretOnFirstRowOfFile())) {
-                    post(_scrollCaretUpTask);
-                    scrolled = true;
+                    post(_scrollCaretUpTask)
+                    scrolled = true
                 }
-                break;
-            case SCROLL_DOWN:
-                removeCallbacks(_scrollCaretDownTask);
+            }
+
+            SCROLL_DOWN -> {
+                removeCallbacks(_scrollCaretDownTask)
                 if (!caretOnLastRowOfFile()) {
-                    post(_scrollCaretDownTask);
-                    scrolled = true;
+                    post(_scrollCaretDownTask)
+                    scrolled = true
                 }
-                break;
-            case SCROLL_LEFT:
-                removeCallbacks(_scrollCaretLeftTask);
-                if (_caretPosition > 0 &&
-                        _caretRow == _hDoc.findRowNumber(_caretPosition - 1)) {
-                    post(_scrollCaretLeftTask);
-                    scrolled = true;
+            }
+
+            SCROLL_LEFT -> {
+                removeCallbacks(_scrollCaretLeftTask)
+                if (caretPosition > 0 &&
+                    caretRow == _hDoc.findRowNumber(caretPosition - 1)
+                ) {
+                    post(_scrollCaretLeftTask)
+                    scrolled = true
                 }
-                break;
-            case SCROLL_RIGHT:
-                removeCallbacks(_scrollCaretRightTask);
+            }
+
+            SCROLL_RIGHT -> {
+                removeCallbacks(_scrollCaretRightTask)
                 if (!caretOnEOF() &&
-                        _caretRow == _hDoc.findRowNumber(_caretPosition + 1)) {
-                    post(_scrollCaretRightTask);
-                    scrolled = true;
+                    caretRow == _hDoc.findRowNumber(caretPosition + 1)
+                ) {
+                    post(_scrollCaretRightTask)
+                    scrolled = true
                 }
-                break;
-            default:
-                TextWarriorException.fail("Invalid scroll direction");
-                break;
+            }
+
+            else -> fail("Invalid scroll direction")
         }
-        return scrolled;
+        return scrolled
     }
 
     /**
      * Stops automatic scrolling initiated by autoScrollCaret(int).
      * Not private to allow access by TouchNavigationMethod
      */
-    void stopAutoScrollCaret() {
-        removeCallbacks(_scrollCaretDownTask);
-        removeCallbacks(_scrollCaretUpTask);
-        removeCallbacks(_scrollCaretLeftTask);
-        removeCallbacks(_scrollCaretRightTask);
+    fun stopAutoScrollCaret() {
+        removeCallbacks(_scrollCaretDownTask)
+        removeCallbacks(_scrollCaretUpTask)
+        removeCallbacks(_scrollCaretLeftTask)
+        removeCallbacks(_scrollCaretRightTask)
     }
 
     /**
      * Stops automatic scrolling in scrollDir direction.
      * Not private to allow access by TouchNavigationMethod
      */
-    void stopAutoScrollCaret(int scrollDir) {
-        switch (scrollDir) {
-            case SCROLL_UP:
-                removeCallbacks(_scrollCaretUpTask);
-                break;
-            case SCROLL_DOWN:
-                removeCallbacks(_scrollCaretDownTask);
-                break;
-            case SCROLL_LEFT:
-                removeCallbacks(_scrollCaretLeftTask);
-                break;
-            case SCROLL_RIGHT:
-                removeCallbacks(_scrollCaretRightTask);
-                break;
-            default:
-                TextWarriorException.fail("Invalid scroll direction");
-                break;
+    fun stopAutoScrollCaret(scrollDir: Int) {
+        when (scrollDir) {
+            SCROLL_UP -> removeCallbacks(_scrollCaretUpTask)
+            SCROLL_DOWN -> removeCallbacks(_scrollCaretDownTask)
+            SCROLL_LEFT -> removeCallbacks(_scrollCaretLeftTask)
+            SCROLL_RIGHT -> removeCallbacks(_scrollCaretRightTask)
+            else -> fail("Invalid scroll direction")
         }
-    }
-
-    public int getCaretRow() {
-        return _caretRow;
-    }
-
-    public int getCaretPosition() {
-        return _caretPosition;
     }
 
     /**
@@ -1905,91 +1757,94 @@ public class FreeScrollingTextField extends View
      *
      * @param i The character index that the caret should be set to
      */
-    public void moveCaret(int i) {
-        _fieldController.moveCaret(i);
+    fun moveCaret(i: Int) {
+        _fieldController!!.moveCaret(i)
     }
 
     /**
      * Sets the caret one position back, scrolls it on screen, and invalidates
      * the necessary areas for redrawing.
-     * <p>
+     *
+     *
      * If the caret is already on the first character, nothing will happen.
      */
-    public void moveCaretLeft() {
-        _fieldController.moveCaretLeft(false);
+    fun moveCaretLeft() {
+        _fieldController!!.moveCaretLeft(false)
     }
 
     /**
      * Sets the caret one position forward, scrolls it on screen, and
      * invalidates the necessary areas for redrawing.
-     * <p>
+     *
+     *
      * If the caret is already on the last character, nothing will happen.
      */
-    public void moveCaretRight() {
-        _fieldController.moveCaretRight(false);
+    fun moveCaretRight() {
+        _fieldController!!.moveCaretRight(false)
     }
 
     /**
      * Sets the caret one row down, scrolls it on screen, and invalidates the
      * necessary areas for redrawing.
-     * <p>
+     *
+     *
      * If the caret is already on the last row, nothing will happen.
      */
-    public void moveCaretDown() {
-        _fieldController.moveCaretDown();
+    fun moveCaretDown() {
+        _fieldController!!.moveCaretDown()
     }
 
     /**
      * Sets the caret one row up, scrolls it on screen, and invalidates the
      * necessary areas for redrawing.
-     * <p>
+     *
+     *
      * If the caret is already on the first row, nothing will happen.
      */
-    public void moveCaretUp() {
-        _fieldController.moveCaretUp();
+    fun moveCaretUp() {
+        _fieldController!!.moveCaretUp()
     }
 
     /**
      * Scrolls the caret into view if it is not on screen
      */
-    public void focusCaret() {
-        makeCharVisible(_caretPosition);
+    fun focusCaret() {
+        makeCharVisible(caretPosition)
     }
 
 
     //---------------------------------------------------------------------
     //------------------------- Text Selection ----------------------------
-
     /**
      * @return The column number where charOffset appears on
      */
-    protected int getColumn(int charOffset) {
-        int row = _hDoc.findRowNumber(charOffset);
-        TextWarriorException.assertVerbose(row >= 0,
-                "Invalid char offset given to getColumn");
-        int firstCharOfRow = _hDoc.getRowOffset(row);
-        return charOffset - firstCharOfRow;
+    protected fun getColumn(charOffset: Int): Int {
+        val row = _hDoc.findRowNumber(charOffset)
+        assertVerbose(
+            row >= 0,
+            "Invalid char offset given to getColumn"
+        )
+        val firstCharOfRow = _hDoc.getRowOffset(row)
+        return charOffset - firstCharOfRow
     }
 
-    protected boolean caretOnFirstRowOfFile() {
-        return (_caretRow == 0);
+    protected fun caretOnFirstRowOfFile(): Boolean {
+        return (caretRow == 0)
     }
 
-    protected boolean caretOnLastRowOfFile() {
-        return (_caretRow == (_hDoc.getRowCount() - 1));
+    protected fun caretOnLastRowOfFile(): Boolean {
+        return (caretRow == (_hDoc.rowCount - 1))
     }
 
-    protected boolean caretOnEOF() {
-        return (_caretPosition == (_hDoc.docLength() - 1));
+    protected fun caretOnEOF(): Boolean {
+        return (caretPosition == (_hDoc.docLength() - 1))
     }
 
-    public final boolean isSelectText() {
-        return _fieldController.isSelectText();
-    }
+    val isSelectText: Boolean
+        get() = _fieldController!!.isSelectText
 
-    public final boolean isSelectText2() {
-        return _fieldController.isSelectText2();
-    }
+    val isSelectText2: Boolean
+        get() = _fieldController!!.isSelectText2
 
     /**
      * Enter or exit select mode.
@@ -1997,167 +1852,156 @@ public class FreeScrollingTextField extends View
      *
      * @param mode If true, enter select mode; else exit select mode
      */
-    public void selectText(boolean mode) {
-        if (_fieldController.isSelectText() && !mode) {
-            invalidateSelectionRows();
-            _fieldController.setSelectText(false);
-        } else if (!_fieldController.isSelectText() && mode) {
-            invalidateCaretRow();
-            _fieldController.setSelectText(true);
+    fun selectText(mode: Boolean) {
+        if (_fieldController!!.isSelectText && !mode) {
+            invalidateSelectionRows()
+            _fieldController!!.isSelectText = false
+        } else if (!_fieldController!!.isSelectText && mode) {
+            invalidateCaretRow()
+            _fieldController!!.isSelectText = true
         }
     }
 
-    public void selectAll() {
-        _fieldController.setSelectionRange(0, _hDoc.docLength() - 1, false, true);
+    fun selectAll() {
+        _fieldController!!.setSelectionRange(0, _hDoc.docLength() - 1, false, true)
     }
 
-    public void setSelection(int beginPosition, int numChars) {
-        _fieldController.setSelectionRange(beginPosition, numChars, true, false);
+    fun setSelection(beginPosition: Int, numChars: Int) {
+        _fieldController!!.setSelectionRange(beginPosition, numChars, true, false)
     }
 
-    public void setSelectionRange(int beginPosition, int numChars) {
-        _fieldController.setSelectionRange(beginPosition, numChars, true, true);
+    fun setSelectionRange(beginPosition: Int, numChars: Int) {
+        _fieldController!!.setSelectionRange(beginPosition, numChars, true, true)
     }
 
-    public boolean inSelectionRange(int charOffset) {
-        return _fieldController.inSelectionRange(charOffset);
+    fun inSelectionRange(charOffset: Int): Boolean {
+        return _fieldController!!.inSelectionRange(charOffset)
     }
 
-    public int getSelectionStart() {
-        if (_selectionAnchor < 0)
-            return _caretPosition;
-        else
-            return _selectionAnchor;
+    val selectionStart: Int
+        get() {
+            if (_selectionAnchor < 0) return caretPosition
+            else return _selectionAnchor
+        }
+
+    val selectionEnd: Int
+        get() {
+            if (_selectionEdge < 0) return caretPosition
+            else return _selectionEdge
+        }
+
+    fun focusSelectionStart() {
+        _fieldController!!.focusSelection(true)
     }
 
-    public int getSelectionEnd() {
-        if (_selectionEdge < 0)
-            return _caretPosition;
-        else
-            return _selectionEdge;
+    fun focusSelectionEnd() {
+        _fieldController!!.focusSelection(false)
     }
 
-    public void focusSelectionStart() {
-        _fieldController.focusSelection(true);
+    fun cut() {
+        if (_selectionAnchor != _selectionEdge) _fieldController!!.cut(_clipboardManager!!)
     }
 
-    public void focusSelectionEnd() {
-        _fieldController.focusSelection(false);
-    }
-
-    public void cut() {
-        if (_selectionAnchor != _selectionEdge)
-            _fieldController.cut(_clipboardManager);
-    }
-
-    public void copy() {
-        if (_selectionAnchor != _selectionEdge)
-            _fieldController.copy(_clipboardManager);
-        selectText(false);
+    fun copy() {
+        if (_selectionAnchor != _selectionEdge) _fieldController!!.copy(_clipboardManager!!)
+        selectText(false)
     }
 
     //---------------------------------------------------------------------
     //------------------------- Formatting methods ------------------------
-
-    public void paste() {
-        CharSequence text = _clipboardManager.getText();
-        if (text != null)
-            _fieldController.paste(text.toString());
+    fun paste() {
+        val text = _clipboardManager!!.getText()
+        if (text != null) _fieldController!!.paste(text.toString())
     }
 
-    public void cut(ClipboardManager cb) {
-        _fieldController.cut(cb);
+    fun cut(cb: ClipboardManager) {
+        _fieldController!!.cut(cb)
     }
 
-    public void copy(ClipboardManager cb) {
-        _fieldController.copy(cb);
+    fun copy(cb: ClipboardManager) {
+        _fieldController!!.copy(cb)
     }
 
-    public void paste(String text) {
-        _fieldController.paste(text);
+    fun paste(text: String?) {
+        _fieldController!!.paste(text)
     }
 
-    private boolean reachedNextSpan(int charIndex, Pair span) {
-        return span != null && (charIndex == span.getFirst());
+    private fun reachedNextSpan(charIndex: Int, span: Pair?): Boolean {
+        return span != null && (charIndex == span.first)
     }
 
-    public void respan() {
-        _fieldController.determineSpans();
+    fun respan() {
+        _fieldController!!.determineSpans()
     }
 
-    public void cancelSpanning() {
-        _fieldController.cancelSpanning();
+    fun cancelSpanning() {
+        _fieldController!!.cancelSpanning()
     }
 
     /**
      * Sets the text to use the new typeface, scrolls the view to display the
      * caret if needed, and invalidates the entire view
      */
-    public void setTypeface(Typeface typeface) {
-        _defTypeface = typeface;
-        _boldTypeface = Typeface.create(typeface, Typeface.BOLD);
-        _italicTypeface = Typeface.create(typeface, Typeface.ITALIC);
-        _brush.setTypeface(typeface);
-        _brushLine.setTypeface(typeface);
-        if (_hDoc.isWordWrap())
-            _hDoc.analyzeWordWrap();
-        _fieldController.updateCaretRow();
-        if (!makeCharVisible(_caretPosition)) {
-            invalidate();
+    fun setTypeface(typeface: Typeface?) {
+        _defTypeface = typeface
+        _boldTypeface = Typeface.create(typeface, Typeface.BOLD)
+        _italicTypeface = Typeface.create(typeface, Typeface.ITALIC)
+        _brush!!.setTypeface(typeface)
+        _brushLine!!.setTypeface(typeface)
+        if (_hDoc.isWordWrap) _hDoc.analyzeWordWrap()
+        _fieldController!!.updateCaretRow()
+        if (!makeCharVisible(caretPosition)) {
+            invalidate()
         }
     }
 
-    public void setItalicTypeface(Typeface typeface) {
-        _italicTypeface = typeface;
+    fun setItalicTypeface(typeface: Typeface?) {
+        _italicTypeface = typeface
     }
 
-    public void setBoldTypeface(Typeface typeface) {
-        _boldTypeface = typeface;
+    fun setBoldTypeface(typeface: Typeface?) {
+        _boldTypeface = typeface
     }
 
-    public boolean isWordWrap() {
-        return _hDoc.isWordWrap();
-    }
+    open var isWordWrap: Boolean
+        get() = _hDoc.isWordWrap
+        set(enable) {
+            _hDoc.isWordWrap = enable
 
-    public void setWordWrap(boolean enable) {
-        _hDoc.setWordWrap(enable);
+            if (enable) {
+                _xExtent = 0
+                scrollTo(0, 0)
+            }
 
-        if (enable) {
-            _xExtent = 0;
-            scrollTo(0, 0);
+            _fieldController!!.updateCaretRow()
+
+            if (!makeCharVisible(caretPosition)) {
+                invalidate()
+            }
         }
 
-        _fieldController.updateCaretRow();
-
-        if (!makeCharVisible(_caretPosition)) {
-            invalidate();
+    var zoom: Float
+        get() = _zoomFactor
+        /**
+         * Sets the text size to be factor of the base text size, scrolls the view
+         * to display the caret if needed, and invalidates the entire view
+         */
+        set(factor) {
+            if (factor <= 0.5 || factor >= 5 || factor == _zoomFactor) {
+                return
+            }
+            _zoomFactor = factor
+            val newSize =
+                (factor * BASE_TEXT_SIZE_PIXELS).toInt()
+            _brush!!.setTextSize(newSize.toFloat())
+            _brushLine!!.setTextSize(newSize.toFloat())
+            if (_hDoc.isWordWrap) _hDoc.analyzeWordWrap()
+            _fieldController!!.updateCaretRow()
+            _alphaWidth = _brush!!.measureText("a").toInt()
+            //if(!makeCharVisible(_caretPosition)){
+            invalidate()
+            //}
         }
-    }
-
-    public float getZoom() {
-        return _zoomFactor;
-    }
-
-    /**
-     * Sets the text size to be factor of the base text size, scrolls the view
-     * to display the caret if needed, and invalidates the entire view
-     */
-    public void setZoom(float factor) {
-        if (factor <= 0.5 || factor >= 5 || factor == _zoomFactor) {
-            return;
-        }
-        _zoomFactor = factor;
-        int newSize = (int) (factor * BASE_TEXT_SIZE_PIXELS);
-        _brush.setTextSize(newSize);
-        _brushLine.setTextSize(newSize);
-        if (_hDoc.isWordWrap())
-            _hDoc.analyzeWordWrap();
-        _fieldController.updateCaretRow();
-        _alphaWidth = (int) _brush.measureText("a");
-        //if(!makeCharVisible(_caretPosition)){
-        invalidate();
-        //}
-    }
 
     /**
      * Sets the length of a tab character, scrolls the view to display the
@@ -2165,29 +2009,28 @@ public class FreeScrollingTextField extends View
      *
      * @param spaceCount The number of spaces a tab represents
      */
-    public void setTabSpaces(int spaceCount) {
+    fun setTabSpaces(spaceCount: Int) {
         if (spaceCount < 0) {
-            return;
+            return
         }
 
-        _tabLength = spaceCount;
-        if (_hDoc.isWordWrap())
-            _hDoc.analyzeWordWrap();
-        _fieldController.updateCaretRow();
-        if (!makeCharVisible(_caretPosition)) {
-            invalidate();
+        _tabLength = spaceCount
+        if (_hDoc.isWordWrap) _hDoc.analyzeWordWrap()
+        _fieldController!!.updateCaretRow()
+        if (!makeCharVisible(caretPosition)) {
+            invalidate()
         }
     }
 
     /**
      * Enable/disable auto-indent
      */
-    public void setAutoIndent(boolean enable) {
-        _isAutoIndent = enable;
+    fun setAutoIndent(enable: Boolean) {
+        _isAutoIndent = enable
     }
 
-    public void setAutoComplete(boolean enable) {
-        _isAutoComplete = enable;
+    fun setAutoComplete(enable: Boolean) {
+        _isAutoComplete = enable
     }
 
 
@@ -2197,17 +2040,17 @@ public class FreeScrollingTextField extends View
      * When disabled, a long-press on a hardware key bring up the
      * CharacterPickerDialog, if there are alternative characters to choose from.
      */
-    public void setLongPressCaps(boolean enable) {
-        _isLongPressCaps = enable;
+    fun setLongPressCaps(enable: Boolean) {
+        _isLongPressCaps = enable
     }
 
     /**
      * Enable/disable highlighting of the current row. The current row is also
      * invalidated
      */
-    public void setHighlightCurrentRow(boolean enable) {
-        _isHighlightRow = enable;
-        invalidateCaretRow();
+    fun setHighlightCurrentRow(enable: Boolean) {
+        _isHighlightRow = enable
+        invalidateCaretRow()
     }
 
     /**
@@ -2215,22 +2058,20 @@ public class FreeScrollingTextField extends View
      * characters like spaces, tabs and end of lines
      * Invalidates the view if the enable state changes
      */
-    public void setNonPrintingCharVisibility(boolean enable) {
-        if (enable ^ _showNonPrinting) {
-            _showNonPrinting = enable;
-            if (_hDoc.isWordWrap())
-                _hDoc.analyzeWordWrap();
-            _fieldController.updateCaretRow();
-            if (!makeCharVisible(_caretPosition)) {
-                invalidate();
+    fun setNonPrintingCharVisibility(enable: Boolean) {
+        if (enable xor _showNonPrinting) {
+            _showNonPrinting = enable
+            if (_hDoc.isWordWrap) _hDoc.analyzeWordWrap()
+            _fieldController!!.updateCaretRow()
+            if (!makeCharVisible(caretPosition)) {
+                invalidate()
             }
         }
     }
 
     //---------------------------------------------------------------------
     //------------------------- Event handlers ----------------------------
-    @Override
-    public boolean onKeyPreIme(int keyCode, KeyEvent event) {
+    override fun onKeyPreIme(keyCode: Int, event: KeyEvent): Boolean {
         //Intercept multiple key presses of printing characters to implement
         //long-press caps, because the IME may consume them and not pass the
         //event to onKeyDown() for long-press caps logic to work.
@@ -2238,243 +2079,229 @@ public class FreeScrollingTextField extends View
         //but is put here for end-user's convenience. Unfortunately this may
         //cause some IMEs to break. Remove this feature in future.
         if (_isLongPressCaps
-                && event.getRepeatCount() == 1
-                && event.getAction() == KeyEvent.ACTION_DOWN) {
-
-            char c = KeysInterpreter.keyEventToPrintableChar(event);
+            && event.getRepeatCount() == 1 && event.getAction() == KeyEvent.ACTION_DOWN
+        ) {
+            val c = keyEventToPrintableChar(event)
             if (Character.isLowerCase(c)
-                    && c == Character.toLowerCase(_hDoc.charAt(_caretPosition - 1))) {
-                _fieldController.onPrintableChar(Language.BACKSPACE);
-                _fieldController.onPrintableChar(Character.toUpperCase(c));
-                return true;
+                && c == _hDoc.get(caretPosition - 1).lowercaseChar()
+            ) {
+                _fieldController!!.onPrintableChar(Language.BACKSPACE)
+                _fieldController!!.onPrintableChar(c.uppercaseChar())
+                return true
             }
         }
 
-        return super.onKeyPreIme(keyCode, event);
+        return super.onKeyPreIme(keyCode, event)
     }
 
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
+    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
         // Let touch navigation method intercept key event first
         if (_navMethod.onKeyDown(keyCode, event)) {
-            return true;
+            return true
         }
 
         //check if direction or symbol key
-        if (KeysInterpreter.isNavigationKey(event)) {
-            handleNavigationKey(keyCode, event);
-            return true;
+        if (isNavigationKey(event)) {
+            handleNavigationKey(keyCode, event)
+            return true
         } else if (keyCode == KeyEvent.KEYCODE_SYM ||
-                keyCode == KeyCharacterMap.PICKER_DIALOG_INPUT) {
+            keyCode == KeyCharacterMap.PICKER_DIALOG_INPUT.code
+        ) {
             showCharacterPicker(
-                    PICKER_SETS.get(KeyCharacterMap.PICKER_DIALOG_INPUT), false);
-            return true;
+                PICKER_SETS.get(KeyCharacterMap.PICKER_DIALOG_INPUT.code), false
+            )
+            return true
         }
 
         //check if character is printable
-        char c = KeysInterpreter.keyEventToPrintableChar(event);
+        val c = keyEventToPrintableChar(event)
         if (c == Language.NULL_CHAR) {
-            return super.onKeyDown(keyCode, event);
+            return super.onKeyDown(keyCode, event)
         }
 
-        int repeatCount = event.getRepeatCount();
+        val repeatCount = event.getRepeatCount()
         //handle multiple (held) key presses
         if (repeatCount == 1) {
             if (_isLongPressCaps) {
-                handleLongPressCaps(c);
+                handleLongPressCaps(c)
             } else {
-                handleLongPressDialogDisplay(c);
+                handleLongPressDialogDisplay(c)
             }
-        } else if (repeatCount == 0
-                || _isLongPressCaps && !Character.isLowerCase(c)
-                || !_isLongPressCaps && PICKER_SETS.get(c) == null) {
-            _fieldController.onPrintableChar(c);
+        } else if (repeatCount == 0 || _isLongPressCaps && !Character.isLowerCase(c) || !_isLongPressCaps && PICKER_SETS.get(
+                c.code
+            ) == null
+        ) {
+            _fieldController!!.onPrintableChar(c)
         }
 
-        return true;
+        return true
     }
 
-    private void handleNavigationKey(int keyCode, KeyEvent event) {
-        if (event.isShiftPressed() && !isSelectText()) {
-            invalidateCaretRow();
-            _fieldController.setSelectText(true);
-        } else if (!event.isShiftPressed() && isSelectText()) {
-            invalidateSelectionRows();
-            _fieldController.setSelectText(false);
+    private fun handleNavigationKey(keyCode: Int, event: KeyEvent) {
+        if (event.isShiftPressed() && !this.isSelectText) {
+            invalidateCaretRow()
+            _fieldController!!.isSelectText = true
+        } else if (!event.isShiftPressed() && this.isSelectText) {
+            invalidateSelectionRows()
+            _fieldController!!.isSelectText = false
         }
 
-        switch (keyCode) {
-            case KeyEvent.KEYCODE_DPAD_RIGHT:
-                _fieldController.moveCaretRight(false);
-                break;
-            case KeyEvent.KEYCODE_DPAD_LEFT:
-                _fieldController.moveCaretLeft(false);
-                break;
-            case KeyEvent.KEYCODE_DPAD_DOWN:
-                _fieldController.moveCaretDown();
-                break;
-            case KeyEvent.KEYCODE_DPAD_UP:
-                _fieldController.moveCaretUp();
-                break;
-            default:
-                break;
+        when (keyCode) {
+            KeyEvent.KEYCODE_DPAD_RIGHT -> _fieldController!!.moveCaretRight(false)
+            KeyEvent.KEYCODE_DPAD_LEFT -> _fieldController!!.moveCaretLeft(false)
+            KeyEvent.KEYCODE_DPAD_DOWN -> _fieldController!!.moveCaretDown()
+            KeyEvent.KEYCODE_DPAD_UP -> _fieldController!!.moveCaretUp()
+            else -> {}
         }
     }
 
-    private void handleLongPressCaps(char c) {
+    private fun handleLongPressCaps(c: Char) {
         if (Character.isLowerCase(c)
-                && c == _hDoc.charAt(_caretPosition - 1)) {
-            _fieldController.onPrintableChar(Language.BACKSPACE);
-            _fieldController.onPrintableChar(Character.toUpperCase(c));
+            && c == _hDoc.get(caretPosition - 1)
+        ) {
+            _fieldController!!.onPrintableChar(Language.BACKSPACE)
+            _fieldController!!.onPrintableChar(c.uppercaseChar())
         } else {
-            _fieldController.onPrintableChar(c);
+            _fieldController!!.onPrintableChar(c)
         }
     }
 
     //Precondition: If c is alphabetical, the character before the caret is
     //also c, which can be lower- or upper-case
-    private void handleLongPressDialogDisplay(char c) {
+    private fun handleLongPressDialogDisplay(c: Char) {
         //workaround to get the appropriate caps mode to use
-        boolean isCaps = Character.isUpperCase(_hDoc.charAt(_caretPosition - 1));
-        char base = (isCaps) ? Character.toUpperCase(c) : c;
+        val isCaps = Character.isUpperCase(_hDoc.get(caretPosition - 1))
+        val base = if (isCaps) c.uppercaseChar() else c
 
-        String candidates = PICKER_SETS.get(base);
+        val candidates: String? = PICKER_SETS.get(base.code)
         if (candidates != null) {
-            _fieldController.stopTextComposing();
-            showCharacterPicker(candidates, true);
+            _fieldController!!.stopTextComposing()
+            showCharacterPicker(candidates, true)
         } else {
-            _fieldController.onPrintableChar(c);
+            _fieldController!!.onPrintableChar(c)
         }
     }
 
     /**
      * @param candidates A string of characters to for the user to choose from
      * @param replace    If true, the character before the caret will be replaced
-     *                   with the user-selected char. If false, the user-selected char will
-     *                   be inserted at the caret position.
+     * with the user-selected char. If false, the user-selected char will
+     * be inserted at the caret position.
      */
-    private void showCharacterPicker(String candidates, boolean replace) {
-        final boolean shouldReplace = replace;
-        final SpannableStringBuilder dummyString = new SpannableStringBuilder();
-        Selection.setSelection(dummyString, 0);
+    private fun showCharacterPicker(candidates: String?, replace: Boolean) {
+        val shouldReplace = replace
+        val dummyString = SpannableStringBuilder()
+        Selection.setSelection(dummyString, 0)
 
-        CharacterPickerDialog dialog = new CharacterPickerDialog(getContext(),
-                this, dummyString, candidates, true);
+        val dialog = CharacterPickerDialog(
+            getContext(),
+            this, dummyString, candidates, true
+        )
 
-        dialog.setOnDismissListener(new OnDismissListener() {
-            @Override
-            public void onDismiss(DialogInterface dialog) {
-                if (dummyString.length() > 0) {
+        dialog.setOnDismissListener(object : DialogInterface.OnDismissListener {
+            override fun onDismiss(dialog: DialogInterface?) {
+                if (dummyString.length > 0) {
                     if (shouldReplace) {
-                        _fieldController.onPrintableChar(Language.BACKSPACE);
+                        _fieldController!!.onPrintableChar(Language.BACKSPACE)
                     }
-                    _fieldController.onPrintableChar(dummyString.charAt(0));
+                    _fieldController!!.onPrintableChar(dummyString.get(0))
                 }
             }
-        });
-        dialog.show();
+        })
+        dialog.show()
     }
 
-    @Override
-    public boolean onKeyUp(int keyCode, KeyEvent event) {
+    override fun onKeyUp(keyCode: Int, event: KeyEvent?): Boolean {
         if (_navMethod.onKeyUp(keyCode, event)) {
-            return true;
+            return true
         }
 
-        return super.onKeyUp(keyCode, event);
+        return super.onKeyUp(keyCode, event)
     }
 
-    @Override
-    public boolean onTrackballEvent(MotionEvent event) {
+    override fun onTrackballEvent(event: MotionEvent): Boolean {
         // TODO Test on real device
-        int deltaX = Math.round(event.getX());
-        int deltaY = Math.round(event.getY());
+        var deltaX = Math.round(event.getX())
+        var deltaY = Math.round(event.getY())
         while (deltaX > 0) {
-            _fieldController.moveCaretRight(false);
-            --deltaX;
+            _fieldController!!.moveCaretRight(false)
+            --deltaX
         }
         while (deltaX < 0) {
-            _fieldController.moveCaretLeft(false);
-            ++deltaX;
+            _fieldController!!.moveCaretLeft(false)
+            ++deltaX
         }
         while (deltaY > 0) {
-            _fieldController.moveCaretDown();
-            --deltaY;
+            _fieldController!!.moveCaretDown()
+            --deltaY
         }
         while (deltaY < 0) {
-            _fieldController.moveCaretUp();
-            ++deltaY;
+            _fieldController!!.moveCaretUp()
+            ++deltaY
         }
-        return true;
+        return true
     }
 
-    private MotionEvent mMotionEvent;
-    private float mX;
-    private float mY;
+    private var mMotionEvent: MotionEvent? = null
+    private var mX = 0f
+    private var mY = 0f
 
-    public boolean isAccessibilityEnabled() {
-        return isAccessibilityEnabled;
-    }
-
-    @Override
-    public boolean onHoverEvent(MotionEvent event) {
+    override fun onHoverEvent(event: MotionEvent): Boolean {
         if (isAccessibilityEnabled) {
-            float x = event.getX();
-            float y = event.getY();
+            val x = event.getX()
+            val y = event.getY()
 
-            switch (event.getAction()) {
-                case MotionEvent.ACTION_HOVER_ENTER:
-                    mMotionEvent = event;
-                    break;
-                case MotionEvent.ACTION_HOVER_MOVE:
-                    _navMethod.onScroll(mMotionEvent, event, mX - x, mY - y);
-                    break;
-                case MotionEvent.ACTION_HOVER_EXIT:
-                    _navMethod.onUp(event);
-                    break;
+            when (event.getAction()) {
+                MotionEvent.ACTION_HOVER_ENTER -> mMotionEvent = event
+                MotionEvent.ACTION_HOVER_MOVE -> _navMethod.onScroll(
+                    mMotionEvent,
+                    event,
+                    mX - x,
+                    mY - y
+                )
+
+                MotionEvent.ACTION_HOVER_EXIT -> _navMethod.onUp(event)
             }
-            mX = x;
-            mY = y;
+            mX = x
+            mY = y
         }
-        return super.onHoverEvent(event);
+        return super.onHoverEvent(event)
     }
 
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
+    override fun onTouchEvent(event: MotionEvent): Boolean {
         if (isFocused()) {
-            _navMethod.onTouchEvent(event);
+            _navMethod.onTouchEvent(event)
         } else {
-            if ((event.getAction() & MotionEvent.ACTION_MASK) == MotionEvent.ACTION_UP
-                    && isPointInView((int) event.getX(), (int) event.getY())) {
+            if ((event.getAction() and MotionEvent.ACTION_MASK) == MotionEvent.ACTION_UP
+                && isPointInView(event.getX().toInt(), event.getY().toInt())
+            ) {
                 // somehow, the framework does not automatically change the focus
                 // to this view when it is touched
-                requestFocus();
+                requestFocus()
             }
         }
-        return true;
+        return true
     }
 
-    final private boolean isPointInView(int x, int y) {
-        return (x >= 0 && x < getWidth() &&
-                y >= 0 && y < getHeight());
+    private fun isPointInView(x: Int, y: Int): Boolean {
+        return (x >= 0 && x < getWidth() && y >= 0 && y < getHeight())
     }
 
-    @Override
-    protected void onFocusChanged(boolean gainFocus, int direction, Rect previouslyFocusedRect) {
-        super.onFocusChanged(gainFocus, direction, previouslyFocusedRect);
-        invalidateCaretRow();
+    override fun onFocusChanged(gainFocus: Boolean, direction: Int, previouslyFocusedRect: Rect?) {
+        super.onFocusChanged(gainFocus, direction, previouslyFocusedRect)
+        invalidateCaretRow()
     }
 
     /**
-     * Not public to allow access by {@link TouchNavigationMethod}
+     * Not public to allow access by [TouchNavigationMethod]
      */
-    void showIME(boolean show) {
-        InputMethodManager im = (InputMethodManager) getContext()
-                .getSystemService(Context.INPUT_METHOD_SERVICE);
+    fun showIME(show: Boolean) {
+        val im = getContext()
+            .getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         if (show) {
-            im.showSoftInput(this, 0);
+            im.showSoftInput(this, 0)
         } else {
-            im.hideSoftInputFromWindow(this.getWindowToken(), 0);
+            im.hideSoftInputFromWindow(this.getWindowToken(), 0)
         }
     }
 
@@ -2483,381 +2310,372 @@ public class FreeScrollingTextField extends View
      * They should be notified of application lifecycle events so they can
      * start/stop sensing and load/store their GUI state.
      */
-    void onPause() {
-        _navMethod.onPause();
+    fun onPause() {
+        _navMethod.onPause()
     }
 
-    void onResume() {
-        _navMethod.onResume();
+    fun onResume() {
+        _navMethod.onResume()
     }
 
-    void onDestroy() {
-        _fieldController.cancelSpanning();
+    fun onDestroy() {
+        _fieldController!!.cancelSpanning()
     }
 
-    //*********************************************************************
-    //************************ Controller logic ***************************
-    //*********************************************************************
+    val uiState: Parcelable
+        //*********************************************************************
+        get() = TextFieldUiState(this)
 
-    public Parcelable getUiState() {
-        return new TextFieldUiState(this);
-    }
-
-    public void restoreUiState(Parcelable state) {
-        TextFieldUiState uiState = (TextFieldUiState) state;
-        final int caretPosition = uiState._caretPosition;
+    fun restoreUiState(state: Parcelable?) {
+        val uiState = state as TextFieldUiState
+        val caretPosition = uiState._caretPosition
         // If the text field is in the process of being created, it may not
         // have its width and height set yet.
         // Therefore, post UI restoration tasks to run later.
         if (uiState._selectMode) {
-            final int selStart = uiState._selectBegin;
-            final int selEnd = uiState._selectEnd;
+            val selStart = uiState._selectBegin
+            val selEnd = uiState._selectEnd
 
-            post(new Runnable() {
-                @Override
-                public void run() {
-                    setSelectionRange(selStart, selEnd - selStart);
+            post(object : Runnable {
+                override fun run() {
+                    setSelectionRange(selStart, selEnd - selStart)
                     if (caretPosition < selEnd) {
-                        focusSelectionStart(); //caret at the end by default
+                        focusSelectionStart() //caret at the end by default
                     }
                 }
-            });
+            })
         } else {
-            post(new Runnable() {
-                @Override
-                public void run() {
-                    moveCaret(caretPosition);
+            post(object : Runnable {
+                override fun run() {
+                    moveCaret(caretPosition)
                 }
-            });
+            })
         }
     }
 
     //*********************************************************************
     //**************** UI State for saving and restoring ******************
     //*********************************************************************
-//TODO change private
-    public static class TextFieldUiState implements Parcelable {
-        public static final Parcelable.Creator<TextFieldUiState> CREATOR
-                = new Parcelable.Creator<TextFieldUiState>() {
-            @Override
-            public TextFieldUiState createFromParcel(Parcel in) {
-                return new TextFieldUiState(in);
-            }
+    //TODO change private
+    class TextFieldUiState : Parcelable {
+        val _caretPosition: Int
+        val _scrollX: Int
+        val _scrollY: Int
+        val _selectMode: Boolean
+        val _selectBegin: Int
+        val _selectEnd: Int
 
-            @Override
-            public TextFieldUiState[] newArray(int size) {
-                return new TextFieldUiState[size];
-            }
-        };
-        final int _caretPosition;
-        final int _scrollX;
-        final int _scrollY;
-        final boolean _selectMode;
-        final int _selectBegin;
-        final int _selectEnd;
-
-        public TextFieldUiState(FreeScrollingTextField textField) {
-            _caretPosition = textField.getCaretPosition();
-            _scrollX = textField.getScrollX();
-            _scrollY = textField.getScrollY();
-            _selectMode = textField.isSelectText();
-            _selectBegin = textField.getSelectionStart();
-            _selectEnd = textField.getSelectionEnd();
+        constructor(textField: FreeScrollingTextField) {
+            _caretPosition = textField.caretPosition
+            _scrollX = textField.getScrollX()
+            _scrollY = textField.getScrollY()
+            _selectMode = textField.isSelectText
+            _selectBegin = textField.selectionStart
+            _selectEnd = textField.selectionEnd
         }
 
-        private TextFieldUiState(Parcel in) {
-            _caretPosition = in.readInt();
-            _scrollX = in.readInt();
-            _scrollY = in.readInt();
-            _selectMode = in.readInt() != 0;
-            _selectBegin = in.readInt();
-            _selectEnd = in.readInt();
+        private constructor(`in`: Parcel) {
+            _caretPosition = `in`.readInt()
+            _scrollX = `in`.readInt()
+            _scrollY = `in`.readInt()
+            _selectMode = `in`.readInt() != 0
+            _selectBegin = `in`.readInt()
+            _selectEnd = `in`.readInt()
         }
 
-        @Override
-        public int describeContents() {
-            return 0;
+        override fun describeContents(): Int {
+            return 0
         }
 
-        @Override
-        public void writeToParcel(Parcel out, int flags) {
-            out.writeInt(_caretPosition);
-            out.writeInt(_scrollX);
-            out.writeInt(_scrollY);
-            out.writeInt(_selectMode ? 1 : 0);
-            out.writeInt(_selectBegin);
-            out.writeInt(_selectEnd);
+        override fun writeToParcel(out: Parcel, flags: Int) {
+            out.writeInt(_caretPosition)
+            out.writeInt(_scrollX)
+            out.writeInt(_scrollY)
+            out.writeInt(if (_selectMode) 1 else 0)
+            out.writeInt(_selectBegin)
+            out.writeInt(_selectEnd)
         }
 
+        companion object {
+            @JvmField
+            val CREATOR
+                    : Parcelable.Creator<TextFieldUiState?> =
+                object : Parcelable.Creator<TextFieldUiState?> {
+                    override fun createFromParcel(`in`: Parcel): TextFieldUiState {
+                        return TextFieldUiState(`in`)
+                    }
+
+                    override fun newArray(size: Int): Array<TextFieldUiState?> {
+                        return arrayOfNulls<TextFieldUiState>(size)
+                    }
+                }
+        }
     }
 
-    private class TextFieldController
-            implements Lexer.LexCallback {
-        private final Lexer _lexer = new Lexer(this);
-        private boolean _isInSelectionMode = false;
-        private boolean _isInSelectionMode2;
+    private inner class TextFieldController
+
+        : LexCallback { //end inner controller class
+        private val _lexer = Lexer(this)
+        private var _isInSelectionMode = false
+        var isSelectText2: Boolean = false
+            private set
 
         /**
          * Analyze the text for programming language keywords and redraws the
          * text view when done. The global programming language used is set with
          * the static method Lexer.setLanguage(Language)
-         * <p>
+         *
+         *
          * Does nothing if the Lexer language is not a programming language
          */
-        public void determineSpans() {
-            _lexer.tokenize(_hDoc);
+        fun determineSpans() {
+            _lexer.tokenize(_hDoc)
         }
 
-        public void cancelSpanning() {
-            _lexer.cancelTokenize();
+        fun cancelSpanning() {
+            _lexer.cancelTokenize()
         }
 
-        @Override
         //This is usually called from a non-UI thread
-        public void lexDone(final List<Pair> results) {
-            post(new Runnable() {
-                @Override
-                public void run() {
-                    _hDoc.setSpans(results);
-                    invalidate();
-                }
-            });
-        }
+
 
         //- TextFieldController -----------------------------------------------
         //---------------------------- Key presses ----------------------------
-
         //TODO minimise invalidate calls from moveCaret(), insertion/deletion and word wrap
-        public void onPrintableChar(char c) {
-
+        fun onPrintableChar(c: Char) {
             // delete currently selected text, if any
-            boolean selectionDeleted = false;
+
+            var selectionDeleted = false
             if (_isInSelectionMode) {
-                selectionDelete();
-                selectionDeleted = true;
+                selectionDelete()
+                selectionDeleted = true
             }
 
-            int originalRow = _caretRow;
-            int originalOffset = _hDoc.getRowOffset(originalRow);
+            var originalRow: Int = caretRow
+            val originalOffset = _hDoc.getRowOffset(originalRow)
 
-            switch (c) {
-                case Language.BACKSPACE:
+            when (c) {
+                Language.BACKSPACE -> {
                     if (selectionDeleted) {
-                        break;
+                        return
                     }
 
-                    if (_caretPosition > 0) {
-                        _textLis.onDel(c + "", _caretPosition, 1);
-                        _hDoc.deleteAt(_caretPosition - 1, System.nanoTime());
-                        if (_hDoc.charAt(_caretPosition - 2) == 0xd83d || _hDoc.charAt(_caretPosition - 2) == 0xd83c) {
-                            _hDoc.deleteAt(_caretPosition - 2, System.nanoTime());
-                            moveCaretLeft(true);
+                    if (caretPosition > 0) {
+                        _textLis!!.onDel(c.toString() + "", caretPosition, 1)
+                        _hDoc.deleteAt(caretPosition - 1, System.nanoTime())
+                        if (_hDoc.get(caretPosition - 2).code == 0xd83d || _hDoc.get(caretPosition - 2).code == 0xd83c) {
+                            _hDoc.deleteAt(caretPosition - 2, System.nanoTime())
+                            moveCaretLeft(true)
                         }
 
-                        moveCaretLeft(true);
+                        moveCaretLeft(true)
 
-                        if (_caretRow < originalRow) {
+                        if (caretRow < originalRow) {
                             // either a newline was deleted or the caret was on the
                             // first word and it became short enough to fit the prev
                             // row
-                            invalidateFromRow(_caretRow);
-                        } else if (_hDoc.isWordWrap()) {
+                            invalidateFromRow(caretRow)
+                        } else if (_hDoc.isWordWrap) {
                             if (originalOffset != _hDoc.getRowOffset(originalRow)) {
                                 //invalidate previous row too if its wrapping changed
-                                --originalRow;
+                                --originalRow
                             }
                             //TODO invalidate damaged rows only
-                            invalidateFromRow(originalRow);
+                            invalidateFromRow(originalRow)
                         }
                     }
-                    break;
+                }
 
-                case Language.NEWLINE:
+                Language.NEWLINE -> {
                     if (_isAutoIndent) {
-                        char[] indent = createAutoIndent();
-                        _hDoc.insertBefore(indent, _caretPosition, System.nanoTime());
-                        moveCaret(_caretPosition + indent.length);
+                        val indent = createAutoIndent()
+                        _hDoc.insertBefore(indent, caretPosition, System.nanoTime())
+                        moveCaret(caretPosition + indent.size)
                     } else {
-                        _hDoc.insertBefore(c, _caretPosition, System.nanoTime());
-                        moveCaretRight(true);
+                        _hDoc.insertBefore(c, caretPosition, System.nanoTime())
+                        moveCaretRight(true)
                     }
 
-                    if (_hDoc.isWordWrap() && originalOffset != _hDoc.getRowOffset(originalRow)) {
+                    if (_hDoc.isWordWrap && originalOffset != _hDoc.getRowOffset(originalRow)) {
                         //invalidate previous row too if its wrapping changed
-                        --originalRow;
+                        --originalRow
                     }
 
-                    _textLis.onNewLine(c + "", _caretPosition, 1);
+                    _textLis!!.onNewLine(c.toString() + "", caretPosition, 1)
 
-                    invalidateFromRow(originalRow);
-                    break;
+                    invalidateFromRow(originalRow)
+                }
 
-                default:
-                    _hDoc.insertBefore(c, _caretPosition, System.nanoTime());
-                    moveCaretRight(true);
-                    _textLis.onAdd(c + "", _caretPosition, 1);
+                else -> {
+                    _hDoc.insertBefore(c, caretPosition, System.nanoTime())
+                    moveCaretRight(true)
+                    _textLis!!.onAdd(c.toString() + "", caretPosition, 1)
 
-                    if (_hDoc.isWordWrap()) {
+                    if (_hDoc.isWordWrap) {
                         if (originalOffset != _hDoc.getRowOffset(originalRow)) {
                             //invalidate previous row too if its wrapping changed
-                            --originalRow;
+                            --originalRow
                         }
                         //TODO invalidate damaged rows only
-                        invalidateFromRow(originalRow);
+                        invalidateFromRow(originalRow)
                     }
-                    break;
+                }
             }
 
-            setEdited(true);
-            determineSpans();
+            _isEdited = true
+            determineSpans()
         }
 
         /**
          * Return a char[] with a newline as the 0th element followed by the
          * leading spaces and tabs of the line that the caret is on
          */
-        private char[] createAutoIndent() {
-            int lineNum = _hDoc.findLineNumber(_caretPosition);
-            int startOfLine = _hDoc.getLineOffset(lineNum);
-            int whitespaceCount = 0;
-            _hDoc.seekChar(startOfLine);
+        fun createAutoIndent(): CharArray {
+            val lineNum = _hDoc.findLineNumber(caretPosition)
+            val startOfLine = _hDoc.getLineOffset(lineNum)
+            var whitespaceCount = 0
+            _hDoc.seekChar(startOfLine)
             while (_hDoc.hasNext()) {
-                char c = _hDoc.next();
-                if ((c != ' ' && c != Language.TAB) || startOfLine + whitespaceCount >= _caretPosition) {
-                    break;
+                val c = _hDoc.next()
+                if ((c != ' ' && c != Language.TAB) || startOfLine + whitespaceCount >= caretPosition) {
+                    break
                 }
-                ++whitespaceCount;
+                ++whitespaceCount
             }
 
-            whitespaceCount += _autoIndentWidth * AutoIndent.createAutoIndent(_hDoc.subSequence(startOfLine, _caretPosition - startOfLine));
-            if (whitespaceCount < 0)
-                return new char[]{Language.NEWLINE};
+            whitespaceCount += autoIndentWidth * createAutoIndent(
+                _hDoc.subSequence(
+                    startOfLine,
+                    caretPosition - startOfLine
+                )
+            )
+            if (whitespaceCount < 0) return charArrayOf(Language.NEWLINE)
 
-            char[] indent = new char[1 + whitespaceCount];
-            indent[0] = Language.NEWLINE;
+            val indent = CharArray(1 + whitespaceCount)
+            indent[0] = Language.NEWLINE
 
-            _hDoc.seekChar(startOfLine);
-            for (int i = 0; i < whitespaceCount; ++i) {
-                indent[1 + i] = ' ';
+            _hDoc.seekChar(startOfLine)
+            for (i in 0..<whitespaceCount) {
+                indent[1 + i] = ' '
             }
-            return indent;
+            return indent
         }
 
-        public void moveCaretDown() {
+        fun moveCaretDown() {
             if (!caretOnLastRowOfFile()) {
-                int currCaret = _caretPosition;
-                int currRow = _caretRow;
-                int newRow = currRow + 1;
-                int currColumn = getColumn(currCaret);
-                int currRowLength = _hDoc.getRowSize(currRow);
-                int newRowLength = _hDoc.getRowSize(newRow);
+                val currCaret: Int = caretPosition
+                val currRow: Int = caretRow
+                val newRow = currRow + 1
+                val currColumn = getColumn(currCaret)
+                val currRowLength = _hDoc.getRowSize(currRow)
+                val newRowLength = _hDoc.getRowSize(newRow)
 
                 if (currColumn < newRowLength) {
                     // Position at the same column as old row.
-                    _caretPosition += currRowLength;
+                    caretPosition += currRowLength
                 } else {
                     // Column does not exist in the new row (new row is too short).
                     // Position at end of new row instead.
-                    _caretPosition +=
-                            currRowLength - currColumn + newRowLength - 1;
+                    caretPosition +=
+                        currRowLength - currColumn + newRowLength - 1
                 }
-                ++_caretRow;
+                ++caretRow
 
-                updateSelectionRange(currCaret, _caretPosition);
-                if (!makeCharVisible(_caretPosition)) {
-                    invalidateRows(currRow, newRow + 1);
+                updateSelectionRange(currCaret, caretPosition)
+                if (!makeCharVisible(caretPosition)) {
+                    invalidateRows(currRow, newRow + 1)
                 }
-                _rowLis.onRowChange(newRow);
-                stopTextComposing();
+                _rowLis!!.onRowChange(newRow)
+                stopTextComposing()
             }
         }
 
-        public void moveCaretUp() {
+        fun moveCaretUp() {
             if (!caretOnFirstRowOfFile()) {
-                int currCaret = _caretPosition;
-                int currRow = _caretRow;
-                int newRow = currRow - 1;
-                int currColumn = getColumn(currCaret);
-                int newRowLength = _hDoc.getRowSize(newRow);
+                val currCaret: Int = caretPosition
+                val currRow: Int = caretRow
+                val newRow = currRow - 1
+                val currColumn = getColumn(currCaret)
+                val newRowLength = _hDoc.getRowSize(newRow)
 
                 if (currColumn < newRowLength) {
                     // Position at the same column as old row.
-                    _caretPosition -= newRowLength;
+                    caretPosition -= newRowLength
                 } else {
                     // Column does not exist in the new row (new row is too short).
                     // Position at end of new row instead.
-                    _caretPosition -= (currColumn + 1);
+                    caretPosition -= (currColumn + 1)
                 }
-                --_caretRow;
+                --caretRow
 
-                updateSelectionRange(currCaret, _caretPosition);
-                if (!makeCharVisible(_caretPosition)) {
-                    invalidateRows(newRow, currRow + 1);
+                updateSelectionRange(currCaret, caretPosition)
+                if (!makeCharVisible(caretPosition)) {
+                    invalidateRows(newRow, currRow + 1)
                 }
-                _rowLis.onRowChange(newRow);
-                stopTextComposing();
+                _rowLis!!.onRowChange(newRow)
+                stopTextComposing()
             }
         }
 
         /**
          * @param isTyping Whether caret is moved to a consecutive position as
-         *                 a result of entering text
+         * a result of entering text
          */
-        public void moveCaretRight(boolean isTyping) {
+        fun moveCaretRight(isTyping: Boolean) {
             if (!caretOnEOF()) {
-                int originalRow = _caretRow;
-                ++_caretPosition;
-                updateCaretRow();
-                updateSelectionRange(_caretPosition - 1, _caretPosition);
-                if (!makeCharVisible(_caretPosition)) {
-                    invalidateRows(originalRow, _caretRow + 1);
+                val originalRow: Int = caretRow
+                ++caretPosition
+                updateCaretRow()
+                updateSelectionRange(caretPosition - 1, caretPosition)
+                if (!makeCharVisible(caretPosition)) {
+                    invalidateRows(originalRow, caretRow + 1)
                 }
 
                 if (!isTyping) {
-                    stopTextComposing();
+                    stopTextComposing()
                 }
             }
         }
 
         /**
          * @param isTyping Whether caret is moved to a consecutive position as
-         *                 a result of deleting text
+         * a result of deleting text
          */
-        public void moveCaretLeft(boolean isTyping) {
-            if (_caretPosition > 0) {
-                int originalRow = _caretRow;
-                --_caretPosition;
-                updateCaretRow();
-                updateSelectionRange(_caretPosition + 1, _caretPosition);
-                if (!makeCharVisible(_caretPosition)) {
-                    invalidateRows(_caretRow, originalRow + 1);
+        fun moveCaretLeft(isTyping: Boolean) {
+            if (caretPosition > 0) {
+                val originalRow: Int = caretRow
+                --caretPosition
+                updateCaretRow()
+                updateSelectionRange(caretPosition + 1, caretPosition)
+                if (!makeCharVisible(caretPosition)) {
+                    invalidateRows(caretRow, originalRow + 1)
                 }
 
                 if (!isTyping) {
-                    stopTextComposing();
+                    stopTextComposing()
                 }
             }
         }
 
-        public void moveCaret(int i) {
+        fun moveCaret(i: Int) {
             if (i < 0 || i >= _hDoc.docLength()) {
-                TextWarriorException.fail("Invalid caret position");
-                return;
+                fail("Invalid caret position")
+                return
             }
-            updateSelectionRange(_caretPosition, i);
+            updateSelectionRange(caretPosition, i)
 
-            _caretPosition = i;
-            updateAfterCaretJump();
+            caretPosition = i
+            updateAfterCaretJump()
         }
 
-        private void updateAfterCaretJump() {
-            int oldRow = _caretRow;
-            updateCaretRow();
-            if (!makeCharVisible(_caretPosition)) {
-                invalidateRows(oldRow, oldRow + 1); //old caret row
-                invalidateCaretRow(); //new caret row
+        fun updateAfterCaretJump() {
+            val oldRow: Int = caretRow
+            updateCaretRow()
+            if (!makeCharVisible(caretPosition)) {
+                invalidateRows(oldRow, oldRow + 1) //old caret row
+                invalidateCaretRow() //new caret row
             }
-            stopTextComposing();
+            stopTextComposing()
         }
 
 
@@ -2865,66 +2683,59 @@ public class FreeScrollingTextField extends View
          * This helper method should only be used by internal methods after setting
          * _caretPosition, in order to to recalculate the new row the caret is on.
          */
-        void updateCaretRow() {
-            int newRow = _hDoc.findRowNumber(_caretPosition);
-            if (_caretRow != newRow) {
-                _caretRow = newRow;
-                _rowLis.onRowChange(newRow);
+        fun updateCaretRow() {
+            val newRow = _hDoc.findRowNumber(caretPosition)
+            if (caretRow != newRow) {
+                caretRow = newRow
+                _rowLis!!.onRowChange(newRow)
             }
         }
 
-        public void stopTextComposing() {
-            InputMethodManager im = (InputMethodManager) getContext()
-                    .getSystemService(Context.INPUT_METHOD_SERVICE);
+        fun stopTextComposing() {
+            val im = getContext()
+                .getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
             // This is an overkill way to inform the InputMethod that the caret
             // might have changed position and it should re-evaluate the
             // caps mode to use.
-            im.restartInput(FreeScrollingTextField.this);
-            if (_inputConnection != null && _inputConnection.isComposingStarted()) {
-                _inputConnection.resetComposingState();
+            im.restartInput(this@FreeScrollingTextField)
+            if (_inputConnection != null && _inputConnection!!.isComposingStarted) {
+                _inputConnection!!.resetComposingState()
             }
         }
 
-        //- TextFieldController -----------------------------------------------
-        //-------------------------- Selection mode ---------------------------
-        public final boolean isSelectText() {
-            return _isInSelectionMode;
-        }
+        var isSelectText: Boolean
+            //- TextFieldController -----------------------------------------------
+            get() = _isInSelectionMode
+            /**
+             * Enter or exit select mode.
+             * Does not invalidate view.
+             *
+             * @param mode If true, enter select mode; else exit select mode
+             */
+            public set(mode) {
+                if (!(mode xor _isInSelectionMode)) {
+                    return
+                }
 
-        /**
-         * Enter or exit select mode.
-         * Does not invalidate view.
-         *
-         * @param mode If true, enter select mode; else exit select mode
-         */
-        public void setSelectText(boolean mode) {
-            if (!(mode ^ _isInSelectionMode)) {
-                return;
+                if (mode) {
+                    _selectionAnchor = caretPosition
+                    _selectionEdge = caretPosition
+                } else {
+                    _selectionAnchor = -1
+                    _selectionEdge = -1
+                }
+                _isInSelectionMode = mode
+                this.isSelectText2 = mode
+                _selModeLis!!.onSelectionChanged(mode, selectionStart, selectionEnd)
             }
 
-            if (mode) {
-                _selectionAnchor = _caretPosition;
-                _selectionEdge = _caretPosition;
-            } else {
-                _selectionAnchor = -1;
-                _selectionEdge = -1;
-            }
-            _isInSelectionMode = mode;
-            _isInSelectionMode2 = mode;
-            _selModeLis.onSelectionChanged(mode, getSelectionStart(), getSelectionEnd());
-        }
-
-        public final boolean isSelectText2() {
-            return _isInSelectionMode2;
-        }
-
-        public boolean inSelectionRange(int charOffset) {
+        fun inSelectionRange(charOffset: Int): Boolean {
             if (_selectionAnchor < 0) {
-                return false;
+                return false
             }
 
             return (_selectionAnchor <= charOffset &&
-                    charOffset < _selectionEdge);
+                    charOffset < _selectionEdge)
         }
 
         /**
@@ -2934,44 +2745,48 @@ public class FreeScrollingTextField extends View
          * @param beginPosition
          * @param numChars
          * @param scrollToStart If true, the start of the selection will be scrolled
-         *                      into view. Otherwise, the end of the selection will be scrolled.
+         * into view. Otherwise, the end of the selection will be scrolled.
          */
-        public void setSelectionRange(int beginPosition, int numChars,
-                                      boolean scrollToStart, boolean mode) {
-            TextWarriorException.assertVerbose(
-                    (beginPosition >= 0) && numChars <= (_hDoc.docLength() - 1) && numChars >= 0,
-                    "Invalid range to select");
+        fun setSelectionRange(
+            beginPosition: Int, numChars: Int,
+            scrollToStart: Boolean, mode: Boolean
+        ) {
+            assertVerbose(
+                (beginPosition >= 0) && numChars <= (_hDoc.docLength() - 1) && numChars >= 0,
+                "Invalid range to select"
+            )
 
             if (_isInSelectionMode) {
                 // unhighlight previous selection
-                invalidateSelectionRows();
+                invalidateSelectionRows()
             } else {
                 // unhighlight caret
-                invalidateCaretRow();
-                if (mode)
-                    setSelectText(true);
-                else
-                    _isInSelectionMode = true;
+                invalidateCaretRow()
+                if (mode) this.isSelectText = true
+                else _isInSelectionMode = true
             }
 
-            _selectionAnchor = beginPosition;
-            _selectionEdge = _selectionAnchor + numChars;
+            _selectionAnchor = beginPosition
+            _selectionEdge = _selectionAnchor + numChars
 
-            _caretPosition = _selectionEdge;
-            stopTextComposing();
-            updateCaretRow();
-            if (mode)
-                _selModeLis.onSelectionChanged(isSelectText(), _selectionAnchor, _selectionEdge);
-            boolean scrolled = makeCharVisible(_selectionEdge);
+            caretPosition = _selectionEdge
+            stopTextComposing()
+            updateCaretRow()
+            if (mode) _selModeLis!!.onSelectionChanged(
+                this.isSelectText,
+                _selectionAnchor,
+                _selectionEdge
+            )
+            var scrolled = makeCharVisible(_selectionEdge)
 
             if (scrollToStart) {
                 //TODO reduce unnecessary scrolling and write a method to scroll
                 // the beginning of multi-line selections as far left as possible
-                scrolled = makeCharVisible(_selectionAnchor);
+                scrolled = makeCharVisible(_selectionAnchor)
             }
 
             if (!scrolled) {
-                invalidateSelectionRows();
+                invalidateSelectionRows()
             }
         }
 
@@ -2979,17 +2794,17 @@ public class FreeScrollingTextField extends View
          * Moves the caret to an edge of selected text and scrolls it to view.
          *
          * @param start If true, moves the caret to the beginning of
-         *              the selection. Otherwise, moves the caret to the end of the selection.
-         *              In all cases, the caret is scrolled to view if it is not visible.
+         * the selection. Otherwise, moves the caret to the end of the selection.
+         * In all cases, the caret is scrolled to view if it is not visible.
          */
-        public void focusSelection(boolean start) {
+        fun focusSelection(start: Boolean) {
             if (_isInSelectionMode) {
-                if (start && _caretPosition != _selectionAnchor) {
-                    _caretPosition = _selectionAnchor;
-                    updateAfterCaretJump();
-                } else if (!start && _caretPosition != _selectionEdge) {
-                    _caretPosition = _selectionEdge;
-                    updateAfterCaretJump();
+                if (start && caretPosition != _selectionAnchor) {
+                    caretPosition = _selectionAnchor
+                    updateAfterCaretJump()
+                } else if (!start && caretPosition != _selectionEdge) {
+                    caretPosition = _selectionEdge
+                    updateAfterCaretJump()
                 }
             }
         }
@@ -3000,39 +2815,48 @@ public class FreeScrollingTextField extends View
          * caret position is set.
          * Does nothing if not in selection mode.
          */
-        private void updateSelectionRange(int oldCaretPosition, int newCaretPosition) {
+        fun updateSelectionRange(oldCaretPosition: Int, newCaretPosition: Int) {
             if (isAccessibilityEnabled && Build.VERSION.SDK_INT >= 16) {
-                AccessibilityRecord.obtain();
-                AccessibilityEvent event = AccessibilityEvent.obtain(AccessibilityEvent.TYPE_VIEW_TEXT_TRAVERSED_AT_MOVEMENT_GRANULARITY);
-                if ((oldCaretPosition - newCaretPosition) * (oldCaretPosition - newCaretPosition) == 1)
-                    event.setMovementGranularity(AccessibilityNodeInfo.MOVEMENT_GRANULARITY_CHARACTER);
-                if (oldCaretPosition > newCaretPosition)
-                    event.setAction(ACTION_PREVIOUS_AT_MOVEMENT_GRANULARITY);
-                else
-                    event.setAction(ACTION_NEXT_AT_MOVEMENT_GRANULARITY);
-                event.setFromIndex(Math.min(oldCaretPosition, newCaretPosition));
-                event.setToIndex(Math.max(oldCaretPosition, newCaretPosition));
-                sendAccessibilityEventUnchecked(event);
+                AccessibilityRecord.obtain()
+                val event =
+                    AccessibilityEvent.obtain(AccessibilityEvent.TYPE_VIEW_TEXT_TRAVERSED_AT_MOVEMENT_GRANULARITY)
+                if ((oldCaretPosition - newCaretPosition) * (oldCaretPosition - newCaretPosition) == 1) event.setMovementGranularity(
+                    AccessibilityNodeInfo.MOVEMENT_GRANULARITY_CHARACTER
+                )
+                if (oldCaretPosition > newCaretPosition) event.setAction(AccessibilityNodeInfo.ACTION_PREVIOUS_AT_MOVEMENT_GRANULARITY)
+                else event.setAction(AccessibilityNodeInfo.ACTION_NEXT_AT_MOVEMENT_GRANULARITY)
+                event.setFromIndex(
+                    min(
+                        oldCaretPosition.toDouble(),
+                        newCaretPosition.toDouble()
+                    ).toInt()
+                )
+                event.setToIndex(
+                    max(
+                        oldCaretPosition.toDouble(),
+                        newCaretPosition.toDouble()
+                    ).toInt()
+                )
+                sendAccessibilityEventUnchecked(event)
             }
 
             if (!_isInSelectionMode) {
-                return;
+                return
             }
 
             if (oldCaretPosition < _selectionEdge) {
                 if (newCaretPosition > _selectionEdge) {
-                    _selectionAnchor = _selectionEdge;
-                    _selectionEdge = newCaretPosition;
+                    _selectionAnchor = _selectionEdge
+                    _selectionEdge = newCaretPosition
                 } else {
-                    _selectionAnchor = newCaretPosition;
+                    _selectionAnchor = newCaretPosition
                 }
-
             } else {
                 if (newCaretPosition < _selectionAnchor) {
-                    _selectionEdge = _selectionAnchor;
-                    _selectionAnchor = newCaretPosition;
+                    _selectionEdge = _selectionAnchor
+                    _selectionAnchor = newCaretPosition
                 } else {
-                    _selectionEdge = newCaretPosition;
+                    _selectionEdge = newCaretPosition
                 }
             }
         }
@@ -3040,27 +2864,30 @@ public class FreeScrollingTextField extends View
 
         //- TextFieldController -----------------------------------------------
         //------------------------ Cut, copy, paste ---------------------------
-
         /**
          * Convenience method for consecutive copy and paste calls
          */
-        public void cut(ClipboardManager cb) {
-            copy(cb);
-            selectionDelete();
+        fun cut(cb: ClipboardManager) {
+            copy(cb)
+            selectionDelete()
         }
 
         /**
          * Copies the selected text to the clipboard.
-         * <p>
+         *
+         *
          * Does nothing if not in select mode.
          */
-        public void copy(ClipboardManager cb) {
+        fun copy(cb: ClipboardManager) {
             //TODO catch OutOfMemoryError
             if (_isInSelectionMode &&
-                    _selectionAnchor < _selectionEdge) {
-                CharSequence contents = _hDoc.subSequence(_selectionAnchor,
-                        _selectionEdge - _selectionAnchor);
-                cb.setText(contents);
+                _selectionAnchor < _selectionEdge
+            ) {
+                val contents = _hDoc.subSequence(
+                    _selectionAnchor,
+                    _selectionEdge - _selectionAnchor
+                )
+                cb.setText(contents)
             }
         }
 
@@ -3068,44 +2895,46 @@ public class FreeScrollingTextField extends View
          * Inserts text at the caret position.
          * Existing selected text will be deleted and select mode will end.
          * The deleted area will be invalidated.
-         * <p>
+         *
+         *
          * After insertion, the inserted area will be invalidated.
          */
-        public void paste(String text) {
+        fun paste(text: String?) {
             if (text == null) {
-                return;
+                return
             }
 
-            _hDoc.beginBatchEdit();
-            selectionDelete();
+            _hDoc.beginBatchEdit()
+            selectionDelete()
 
-            int originalRow = _caretRow;
-            int originalOffset = _hDoc.getRowOffset(originalRow);
-            _hDoc.insertBefore(text.toCharArray(), _caretPosition, System.nanoTime());
+            val originalRow: Int = caretRow
+            val originalOffset = _hDoc.getRowOffset(originalRow)
+            _hDoc.insertBefore(text.toCharArray(), caretPosition, System.nanoTime())
             //_textLis.onAdd(text, _caretPosition, text.length());
-            _hDoc.endBatchEdit();
+            _hDoc.endBatchEdit()
 
-            _caretPosition += text.length();
-            updateCaretRow();
+            caretPosition += text.length
+            updateCaretRow()
 
-            setEdited(true);
-            determineSpans();
-            stopTextComposing();
+            _isEdited = true
+            determineSpans()
+            stopTextComposing()
 
-            if (!makeCharVisible(_caretPosition)) {
-                int invalidateStartRow = originalRow;
+            if (!makeCharVisible(caretPosition)) {
+                var invalidateStartRow = originalRow
                 //invalidate previous row too if its wrapping changed
-                if (_hDoc.isWordWrap() &&
-                        originalOffset != _hDoc.getRowOffset(originalRow)) {
-                    --invalidateStartRow;
+                if (_hDoc.isWordWrap &&
+                    originalOffset != _hDoc.getRowOffset(originalRow)
+                ) {
+                    --invalidateStartRow
                 }
 
-                if (originalRow == _caretRow && !_hDoc.isWordWrap()) {
+                if (originalRow == caretRow && !_hDoc.isWordWrap) {
                     //pasted text only affects caret row
-                    invalidateRows(invalidateStartRow, invalidateStartRow + 1);
+                    invalidateRows(invalidateStartRow, invalidateStartRow + 1)
                 } else {
                     //TODO invalidate damaged rows only
-                    invalidateFromRow(invalidateStartRow);
+                    invalidateFromRow(invalidateStartRow)
                 }
             }
         }
@@ -3114,229 +2943,235 @@ public class FreeScrollingTextField extends View
          * Deletes selected text, exits select mode and invalidates deleted area.
          * If the selected range is empty, this method exits select mode and
          * invalidates the caret.
-         * <p>
+         *
+         *
          * Does nothing if not in select mode.
          */
-        public void selectionDelete() {
+        fun selectionDelete() {
             if (!_isInSelectionMode) {
-                return;
+                return
             }
 
-            int totalChars = _selectionEdge - _selectionAnchor;
+            val totalChars = _selectionEdge - _selectionAnchor
 
             if (totalChars > 0) {
-                int originalRow = _hDoc.findRowNumber(_selectionAnchor);
-                int originalOffset = _hDoc.getRowOffset(originalRow);
-                boolean isSingleRowSel = _hDoc.findRowNumber(_selectionEdge) == originalRow;
-                _textLis.onDel("", _caretPosition, totalChars);
-                _hDoc.deleteAt(_selectionAnchor, totalChars, System.nanoTime());
-                _caretPosition = _selectionAnchor;
-                updateCaretRow();
-                setEdited(true);
-                determineSpans();
-                setSelectText(false);
-                stopTextComposing();
+                val originalRow = _hDoc.findRowNumber(_selectionAnchor)
+                val originalOffset = _hDoc.getRowOffset(originalRow)
+                val isSingleRowSel = _hDoc.findRowNumber(_selectionEdge) == originalRow
+                _textLis!!.onDel("", caretPosition, totalChars)
+                _hDoc.deleteAt(_selectionAnchor, totalChars, System.nanoTime())
+                caretPosition = _selectionAnchor
+                updateCaretRow()
+                _isEdited = true
+                determineSpans()
+                this.isSelectText = false
+                stopTextComposing()
 
-                if (!makeCharVisible(_caretPosition)) {
-                    int invalidateStartRow = originalRow;
+                if (!makeCharVisible(caretPosition)) {
+                    var invalidateStartRow = originalRow
                     //invalidate previous row too if its wrapping changed
-                    if (_hDoc.isWordWrap() &&
-                            originalOffset != _hDoc.getRowOffset(originalRow)) {
-                        --invalidateStartRow;
+                    if (_hDoc.isWordWrap &&
+                        originalOffset != _hDoc.getRowOffset(originalRow)
+                    ) {
+                        --invalidateStartRow
                     }
 
-                    if (isSingleRowSel && !_hDoc.isWordWrap()) {
+                    if (isSingleRowSel && !_hDoc.isWordWrap) {
                         //pasted text only affects current row
-                        invalidateRows(invalidateStartRow, invalidateStartRow + 1);
+                        invalidateRows(invalidateStartRow, invalidateStartRow + 1)
                     } else {
                         //TODO invalidate damaged rows only
-                        invalidateFromRow(invalidateStartRow);
+                        invalidateFromRow(invalidateStartRow)
                     }
                 }
             } else {
-                setSelectText(false);
-                invalidateCaretRow();
+                this.isSelectText = false
+                invalidateCaretRow()
             }
         }
 
-        void replaceText(int from, int charCount, String text) {
-            int invalidateStartRow, originalOffset;
-            boolean isInvalidateSingleRow = true;
-            boolean dirty = false;
+        fun replaceText(from: Int, charCount: Int, text: String?) {
+            var invalidateStartRow: Int
+            var originalOffset: Int
+            var isInvalidateSingleRow = true
+            var dirty = false
             //delete selection
             if (_isInSelectionMode) {
-                invalidateStartRow = _hDoc.findRowNumber(_selectionAnchor);
-                originalOffset = _hDoc.getRowOffset(invalidateStartRow);
+                invalidateStartRow = _hDoc.findRowNumber(_selectionAnchor)
+                originalOffset = _hDoc.getRowOffset(invalidateStartRow)
 
-                int totalChars = _selectionEdge - _selectionAnchor;
+                val totalChars = _selectionEdge - _selectionAnchor
 
                 if (totalChars > 0) {
-                    _caretPosition = _selectionAnchor;
-                    _hDoc.deleteAt(_selectionAnchor, totalChars, System.nanoTime());
+                    caretPosition = _selectionAnchor
+                    _hDoc.deleteAt(_selectionAnchor, totalChars, System.nanoTime())
 
-                    if (invalidateStartRow != _caretRow) {
-                        isInvalidateSingleRow = false;
+                    if (invalidateStartRow != caretRow) {
+                        isInvalidateSingleRow = false
                     }
-                    dirty = true;
+                    dirty = true
                 }
 
-                setSelectText(false);
+                this.isSelectText = false
             } else {
-                invalidateStartRow = _caretRow;
-                originalOffset = _hDoc.getRowOffset(_caretRow);
+                invalidateStartRow = caretRow
+                originalOffset = _hDoc.getRowOffset(caretRow)
             }
 
             //delete requested chars
             if (charCount > 0) {
-                int delFromRow = _hDoc.findRowNumber(from);
+                val delFromRow = _hDoc.findRowNumber(from)
                 if (delFromRow < invalidateStartRow) {
-                    invalidateStartRow = delFromRow;
-                    originalOffset = _hDoc.getRowOffset(delFromRow);
+                    invalidateStartRow = delFromRow
+                    originalOffset = _hDoc.getRowOffset(delFromRow)
                 }
 
-                if (invalidateStartRow != _caretRow) {
-                    isInvalidateSingleRow = false;
+                if (invalidateStartRow != caretRow) {
+                    isInvalidateSingleRow = false
                 }
 
-                _caretPosition = from;
-                _hDoc.deleteAt(from, charCount, System.nanoTime());
-                dirty = true;
+                caretPosition = from
+                _hDoc.deleteAt(from, charCount, System.nanoTime())
+                dirty = true
             }
 
             //insert
-            if (text != null && text.length() > 0) {
-                int insFromRow = _hDoc.findRowNumber(from);
+            if (text != null && text.length > 0) {
+                val insFromRow = _hDoc.findRowNumber(from)
                 if (insFromRow < invalidateStartRow) {
-                    invalidateStartRow = insFromRow;
-                    originalOffset = _hDoc.getRowOffset(insFromRow);
+                    invalidateStartRow = insFromRow
+                    originalOffset = _hDoc.getRowOffset(insFromRow)
                 }
 
-                _hDoc.insertBefore(text.toCharArray(), _caretPosition, System.nanoTime());
-                _caretPosition += text.length();
-                dirty = true;
+                _hDoc.insertBefore(text.toCharArray(), caretPosition, System.nanoTime())
+                caretPosition += text.length
+                dirty = true
             }
 
             if (dirty) {
-                setEdited(true);
-                determineSpans();
+                _isEdited = true
+                determineSpans()
             }
 
-            int originalRow = _caretRow;
-            updateCaretRow();
-            if (originalRow != _caretRow) {
-                isInvalidateSingleRow = false;
+            val originalRow: Int = caretRow
+            updateCaretRow()
+            if (originalRow != caretRow) {
+                isInvalidateSingleRow = false
             }
 
-            if (!makeCharVisible(_caretPosition)) {
+            if (!makeCharVisible(caretPosition)) {
                 //invalidate previous row too if its wrapping changed
-                if (_hDoc.isWordWrap() &&
-                        originalOffset != _hDoc.getRowOffset(invalidateStartRow)) {
-                    --invalidateStartRow;
+                if (_hDoc.isWordWrap &&
+                    originalOffset != _hDoc.getRowOffset(invalidateStartRow)
+                ) {
+                    --invalidateStartRow
                 }
 
-                if (isInvalidateSingleRow && !_hDoc.isWordWrap()) {
+                if (isInvalidateSingleRow && !_hDoc.isWordWrap) {
                     //replaced text only affects current row
-                    invalidateRows(_caretRow, _caretRow + 1);
+                    invalidateRows(caretRow, caretRow + 1)
                 } else {
                     //TODO invalidate damaged rows only
-                    invalidateFromRow(invalidateStartRow);
+                    invalidateFromRow(invalidateStartRow)
                 }
             }
         }
 
         //- TextFieldController -----------------------------------------------
         //----------------- Helper methods for InputConnection ----------------
-
         /**
          * Deletes existing selected text, then deletes charCount number of
          * characters starting at from, and inserts text in its place.
-         * <p>
+         *
+         *
          * Unlike paste or selectionDelete, does not signal the end of
          * text composing to the IME.
          */
-        void replaceComposingText(int from, int charCount, String text) {
-            int invalidateStartRow, originalOffset;
-            boolean isInvalidateSingleRow = true;
-            boolean dirty = false;
+        fun replaceComposingText(from: Int, charCount: Int, text: String?) {
+            var invalidateStartRow: Int
+            var originalOffset: Int
+            var isInvalidateSingleRow = true
+            var dirty = false
 
             //delete selection
             if (_isInSelectionMode) {
-                invalidateStartRow = _hDoc.findRowNumber(_selectionAnchor);
-                originalOffset = _hDoc.getRowOffset(invalidateStartRow);
+                invalidateStartRow = _hDoc.findRowNumber(_selectionAnchor)
+                originalOffset = _hDoc.getRowOffset(invalidateStartRow)
 
-                int totalChars = _selectionEdge - _selectionAnchor;
+                val totalChars = _selectionEdge - _selectionAnchor
 
                 if (totalChars > 0) {
-                    _caretPosition = _selectionAnchor;
-                    _hDoc.deleteAt(_selectionAnchor, totalChars, System.nanoTime());
+                    caretPosition = _selectionAnchor
+                    _hDoc.deleteAt(_selectionAnchor, totalChars, System.nanoTime())
 
-                    if (invalidateStartRow != _caretRow) {
-                        isInvalidateSingleRow = false;
+                    if (invalidateStartRow != caretRow) {
+                        isInvalidateSingleRow = false
                     }
-                    dirty = true;
+                    dirty = true
                 }
 
-                setSelectText(false);
+                this.isSelectText = false
             } else {
-                invalidateStartRow = _caretRow;
-                originalOffset = _hDoc.getRowOffset(_caretRow);
+                invalidateStartRow = caretRow
+                originalOffset = _hDoc.getRowOffset(caretRow)
             }
 
             //delete requested chars
             if (charCount > 0) {
-                int delFromRow = _hDoc.findRowNumber(from);
+                val delFromRow = _hDoc.findRowNumber(from)
                 if (delFromRow < invalidateStartRow) {
-                    invalidateStartRow = delFromRow;
-                    originalOffset = _hDoc.getRowOffset(delFromRow);
+                    invalidateStartRow = delFromRow
+                    originalOffset = _hDoc.getRowOffset(delFromRow)
                 }
 
-                if (invalidateStartRow != _caretRow) {
-                    isInvalidateSingleRow = false;
+                if (invalidateStartRow != caretRow) {
+                    isInvalidateSingleRow = false
                 }
 
-                _caretPosition = from;
-                _hDoc.deleteAt(from, charCount, System.nanoTime());
-                dirty = true;
+                caretPosition = from
+                _hDoc.deleteAt(from, charCount, System.nanoTime())
+                dirty = true
             }
 
             //insert
-            if (text != null && text.length() > 0) {
-                int insFromRow = _hDoc.findRowNumber(from);
+            if (text != null && text.length > 0) {
+                val insFromRow = _hDoc.findRowNumber(from)
                 if (insFromRow < invalidateStartRow) {
-                    invalidateStartRow = insFromRow;
-                    originalOffset = _hDoc.getRowOffset(insFromRow);
+                    invalidateStartRow = insFromRow
+                    originalOffset = _hDoc.getRowOffset(insFromRow)
                 }
 
-                _hDoc.insertBefore(text.toCharArray(), _caretPosition, System.nanoTime());
-                _caretPosition += text.length();
-                dirty = true;
+                _hDoc.insertBefore(text.toCharArray(), caretPosition, System.nanoTime())
+                caretPosition += text.length
+                dirty = true
             }
 
-            _textLis.onAdd(text, _caretPosition, text.length() - charCount);
+            _textLis!!.onAdd(text, caretPosition, text!!.length - charCount)
             if (dirty) {
-                setEdited(true);
-                determineSpans();
+                _isEdited = true
+                determineSpans()
             }
 
-            int originalRow = _caretRow;
-            updateCaretRow();
-            if (originalRow != _caretRow) {
-                isInvalidateSingleRow = false;
+            val originalRow: Int = caretRow
+            updateCaretRow()
+            if (originalRow != caretRow) {
+                isInvalidateSingleRow = false
             }
 
-            if (!makeCharVisible(_caretPosition)) {
+            if (!makeCharVisible(caretPosition)) {
                 //invalidate previous row too if its wrapping changed
-                if (_hDoc.isWordWrap() &&
-                        originalOffset != _hDoc.getRowOffset(invalidateStartRow)) {
-                    --invalidateStartRow;
+                if (_hDoc.isWordWrap &&
+                    originalOffset != _hDoc.getRowOffset(invalidateStartRow)
+                ) {
+                    --invalidateStartRow
                 }
 
-                if (isInvalidateSingleRow && !_hDoc.isWordWrap()) {
+                if (isInvalidateSingleRow && !_hDoc.isWordWrap) {
                     //replaced text only affects current row
-                    invalidateRows(_caretRow, _caretRow + 1);
+                    invalidateRows(caretRow, caretRow + 1)
                 } else {
                     //TODO invalidate damaged rows only
-                    invalidateFromRow(invalidateStartRow);
+                    invalidateFromRow(invalidateStartRow)
                 }
             }
         }
@@ -3345,41 +3180,54 @@ public class FreeScrollingTextField extends View
          * Delete leftLength characters of text before the current caret
          * position, and delete rightLength characters of text after the current
          * cursor position.
-         * <p>
+         *
+         *
          * Unlike paste or selectionDelete, does not signal the end of
          * text composing to the IME.
          */
-        void deleteAroundComposingText(int left, int right) {
-            int start = _caretPosition - left;
+        fun deleteAroundComposingText(left: Int, right: Int) {
+            var start: Int = caretPosition - left
             if (start < 0) {
-                start = 0;
+                start = 0
             }
-            int end = _caretPosition + right;
-            int docLength = _hDoc.docLength();
+            var end: Int = caretPosition + right
+            val docLength = _hDoc.docLength()
             if (end > (docLength - 1)) { //exclude the terminal EOF
-                end = docLength - 1;
+                end = docLength - 1
             }
-            replaceComposingText(start, end - start, "");
+            replaceComposingText(start, end - start, "")
         }
 
-        String getTextAfterCursor(int maxLen) {
-            int docLength = _hDoc.docLength();
-            if ((_caretPosition + maxLen) > (docLength - 1)) {
+        fun getTextAfterCursor(maxLen: Int): String {
+            val docLength = _hDoc.docLength()
+            if ((caretPosition + maxLen) > (docLength - 1)) {
                 //exclude the terminal EOF
-                return _hDoc.subSequence(_caretPosition, docLength - _caretPosition - 1).toString();
+                return _hDoc.subSequence(caretPosition, docLength - caretPosition - 1)
+                    .toString()
             }
 
-            return _hDoc.subSequence(_caretPosition, maxLen).toString();
+            return _hDoc.subSequence(caretPosition, maxLen).toString()
         }
 
-        String getTextBeforeCursor(int maxLen) {
-            int start = _caretPosition - maxLen;
+        fun getTextBeforeCursor(maxLen: Int): String {
+            var start: Int = caretPosition - maxLen
             if (start < 0) {
-                start = 0;
+                start = 0
             }
-            return _hDoc.subSequence(start, _caretPosition - start).toString();
+            return _hDoc.subSequence(start, caretPosition - start).toString()
         }
-    }//end inner controller class
+
+
+        override fun lexDone(results: MutableList<Pair>?) {
+            post(object : Runnable {
+                override fun run() {
+                    _hDoc.spans = results as MutableList<Pair?>
+                    invalidate()
+                }
+            })
+        }
+    }
+
 
     //*********************************************************************
     //************************** InputConnection **************************
@@ -3387,227 +3235,281 @@ public class FreeScrollingTextField extends View
     /*
      * Does not provide ExtractedText related methods
 	 */
-    private class TextFieldInputConnection extends BaseInputConnection {
-        private boolean _isComposing = false;
-        private int _composingCharCount = 0;
-
-        public TextFieldInputConnection(FreeScrollingTextField v) {
-            super(v, true);
-        }
-
-        public void resetComposingState() {
-            _composingCharCount = 0;
-            _isComposing = false;
-            _hDoc.endBatchEdit();
-        }
-
-        @Override
-        public boolean performContextMenuAction(int id) {
-            switch (id) {
-                case android.R.id.copy:
-                    copy();
-                    break;
-                case android.R.id.cut:
-                    cut();
-                    break;
-                case android.R.id.paste:
-                    paste();
-                    break;
-                case android.R.id.startSelectingText:
-                case android.R.id.stopSelectingText:
-                case android.R.id.selectAll:
-                    selectAll();
-                    break;
-            }
-
-            return false;
-        }
-
-
-        @Override
-        public boolean sendKeyEvent(KeyEvent event) {
-            switch (event.getKeyCode()) {
-                case KeyEvent.KEYCODE_SHIFT_LEFT:
-                    if (isSelectText())
-                        selectText(false);
-                    else
-                        selectText(true);
-                    break;
-                case KeyEvent.KEYCODE_DPAD_LEFT:
-                    moveCaretLeft();
-                    break;
-                case KeyEvent.KEYCODE_DPAD_UP:
-                    moveCaretUp();
-                    break;
-                case KeyEvent.KEYCODE_DPAD_RIGHT:
-                    moveCaretRight();
-                    break;
-                case KeyEvent.KEYCODE_DPAD_DOWN:
-                    moveCaretDown();
-                    break;
-                case KeyEvent.KEYCODE_MOVE_HOME:
-                    moveCaret(0);
-                    break;
-                case KeyEvent.KEYCODE_MOVE_END:
-                    moveCaret(_hDoc.length());
-                    break;
-                default:
-                    return super.sendKeyEvent(event);
-            }
-            return true;
-        }
-
+    private inner class TextFieldInputConnection(v: FreeScrollingTextField) :
+        BaseInputConnection(v, true) {
         /**
          * Only true when the InputConnection has not been used by the IME yet.
          * Can be programatically cleared by resetComposingState()
          */
-        public boolean isComposingStarted() {
-            return _isComposing;
+        var isComposingStarted: Boolean = false
+            private set
+        private var _composingCharCount = 0
+
+        fun resetComposingState() {
+            _composingCharCount = 0
+            this.isComposingStarted = false
+            _hDoc.endBatchEdit()
         }
 
-        @Override
-        public boolean setComposingText(CharSequence text, int newCursorPosition) {
-            _isComposing = true;
-            if (!_hDoc.isBatchEdit()) {
-                _hDoc.beginBatchEdit();
+        override fun performContextMenuAction(id: Int): Boolean {
+            when (id) {
+                R.id.copy -> copy()
+                R.id.cut -> cut()
+                R.id.paste -> paste()
+                R.id.startSelectingText, R.id.stopSelectingText, R.id.selectAll -> selectAll()
             }
 
-            _fieldController.replaceComposingText(
-                    getCaretPosition() - _composingCharCount,
-                    _composingCharCount,
-                    text.toString());
-            _composingCharCount = text.length();
+            return false
+        }
+
+
+        override fun sendKeyEvent(event: KeyEvent): Boolean {
+            when (event.getKeyCode()) {
+                KeyEvent.KEYCODE_SHIFT_LEFT -> if (isSelectText) selectText(false)
+                else selectText(true)
+
+                KeyEvent.KEYCODE_DPAD_LEFT -> moveCaretLeft()
+                KeyEvent.KEYCODE_DPAD_UP -> moveCaretUp()
+                KeyEvent.KEYCODE_DPAD_RIGHT -> moveCaretRight()
+                KeyEvent.KEYCODE_DPAD_DOWN -> moveCaretDown()
+                KeyEvent.KEYCODE_MOVE_HOME -> moveCaret(0)
+                KeyEvent.KEYCODE_MOVE_END -> moveCaret(_hDoc.length)
+                else -> return super.sendKeyEvent(event)
+            }
+            return true
+        }
+
+        override fun setComposingText(text: CharSequence, newCursorPosition: Int): Boolean {
+            this.isComposingStarted = true
+            if (!_hDoc.isBatchEdit) {
+                _hDoc.beginBatchEdit()
+            }
+
+            _fieldController!!.replaceComposingText(
+                caretPosition - _composingCharCount,
+                _composingCharCount,
+                text.toString()
+            )
+            _composingCharCount = text.length
 
             //TODO reduce invalidate calls
             if (newCursorPosition > 1) {
-                _fieldController.moveCaret(_caretPosition + newCursorPosition - 1);
+                _fieldController!!.moveCaret(caretPosition + newCursorPosition - 1)
             } else if (newCursorPosition <= 0) {
-                _fieldController.moveCaret(_caretPosition - text.length() - newCursorPosition);
+                _fieldController!!.moveCaret(caretPosition - text.length - newCursorPosition)
             }
-            return true;
+            return true
         }
 
-        @Override
-        public boolean commitText(CharSequence text, int newCursorPosition) {
-            _fieldController.replaceComposingText(
-                    getCaretPosition() - _composingCharCount,
-                    _composingCharCount,
-                    text.toString());
-            _composingCharCount = 0;
-            _hDoc.endBatchEdit();
+        override fun commitText(text: CharSequence, newCursorPosition: Int): Boolean {
+            _fieldController!!.replaceComposingText(
+                caretPosition - _composingCharCount,
+                _composingCharCount,
+                text.toString()
+            )
+            _composingCharCount = 0
+            _hDoc.endBatchEdit()
 
             //TODO reduce invalidate calls
             if (newCursorPosition > 1) {
-                _fieldController.moveCaret(_caretPosition + newCursorPosition - 1);
+                _fieldController!!.moveCaret(caretPosition + newCursorPosition - 1)
             } else if (newCursorPosition <= 0) {
-                _fieldController.moveCaret(_caretPosition - text.length() - newCursorPosition);
+                _fieldController!!.moveCaret(caretPosition - text.length - newCursorPosition)
             }
-            _isComposing = false;
-            return true;
+            this.isComposingStarted = false
+            return true
         }
 
 
-        @Override
-        public boolean deleteSurroundingText(int leftLength, int rightLength) {
+        override fun deleteSurroundingText(leftLength: Int, rightLength: Int): Boolean {
             if (_composingCharCount != 0) {
-                Log.i("lua",
-                        "Warning: Implmentation of InputConnection.deleteSurroundingText" +
-                                " will not skip composing text");
+                Log.i(
+                    "lua",
+                    "Warning: Implmentation of InputConnection.deleteSurroundingText" +
+                            " will not skip composing text"
+                )
             }
 
-            _fieldController.deleteAroundComposingText(leftLength, rightLength);
-            return true;
+            _fieldController!!.deleteAroundComposingText(leftLength, rightLength)
+            return true
         }
 
-        @Override
-        public boolean finishComposingText() {
-            resetComposingState();
-            return true;
+        override fun finishComposingText(): Boolean {
+            resetComposingState()
+            return true
         }
 
-        @Override
-        public int getCursorCapsMode(int reqModes) {
-            int capsMode = 0;
+        override fun getCursorCapsMode(reqModes: Int): Int {
+            var capsMode = 0
 
             // Ignore InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS; not used in TextWarrior
-
-            if ((reqModes & InputType.TYPE_TEXT_FLAG_CAP_WORDS)
-                    == InputType.TYPE_TEXT_FLAG_CAP_WORDS) {
-                int prevChar = _caretPosition - 1;
-                if (prevChar < 0 || Lexer.Companion.getLanguage().isWhitespace(_hDoc.charAt(prevChar))) {
-                    capsMode |= InputType.TYPE_TEXT_FLAG_CAP_WORDS;
+            if ((reqModes and InputType.TYPE_TEXT_FLAG_CAP_WORDS)
+                == InputType.TYPE_TEXT_FLAG_CAP_WORDS
+            ) {
+                val prevChar: Int = caretPosition - 1
+                if (prevChar < 0 || language.isWhitespace(_hDoc.get(prevChar))) {
+                    capsMode = capsMode or InputType.TYPE_TEXT_FLAG_CAP_WORDS
 
                     //set CAP_SENTENCES if client is interested in it
-                    if ((reqModes & InputType.TYPE_TEXT_FLAG_CAP_SENTENCES)
-                            == InputType.TYPE_TEXT_FLAG_CAP_SENTENCES) {
-                        capsMode |= InputType.TYPE_TEXT_FLAG_CAP_SENTENCES;
+                    if ((reqModes and InputType.TYPE_TEXT_FLAG_CAP_SENTENCES)
+                        == InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+                    ) {
+                        capsMode = capsMode or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
                     }
                 }
-            }
+            } else {
+                val lang = language
 
-            // Strangely, Android soft keyboard does not set TYPE_TEXT_FLAG_CAP_SENTENCES
-            // in reqModes even if it is interested in doing auto-capitalization.
-            // Android bug? Therefore, we assume TYPE_TEXT_FLAG_CAP_SENTENCES
-            // is always set to be on the safe side.
-            else {
-                Language lang = Lexer.Companion.getLanguage();
-
-                int prevChar = _caretPosition - 1;
-                int whitespaceCount = 0;
-                boolean capsOn = true;
+                var prevChar: Int = caretPosition - 1
+                var whitespaceCount = 0
+                var capsOn = true
 
                 // Turn on caps mode only for the first char of a sentence.
                 // A fresh line is also considered to start a new sentence.
                 // The position immediately after a period is considered lower-case.
                 // Examples: "abc.com" but "abc. Com"
                 while (prevChar >= 0) {
-                    char c = _hDoc.charAt(prevChar);
+                    val c = _hDoc.get(prevChar)
                     if (c == Language.NEWLINE) {
-                        break;
+                        break
                     }
 
                     if (!lang.isWhitespace(c)) {
                         if (whitespaceCount == 0 || !lang.isSentenceTerminator(c)) {
-                            capsOn = false;
+                            capsOn = false
                         }
-                        break;
+                        break
                     }
 
-                    ++whitespaceCount;
-                    --prevChar;
+                    ++whitespaceCount
+                    --prevChar
                 }
 
                 if (capsOn) {
-                    capsMode |= InputType.TYPE_TEXT_FLAG_CAP_SENTENCES;
+                    capsMode = capsMode or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
                 }
             }
 
-            return capsMode;
+            return capsMode
         }
 
-        @Override
-        public CharSequence getTextAfterCursor(int maxLen, int flags) {
-            return _fieldController.getTextAfterCursor(maxLen); //ignore flags
+        override fun getTextAfterCursor(maxLen: Int, flags: Int): CharSequence {
+            return _fieldController!!.getTextAfterCursor(maxLen) //ignore flags
         }
 
-        @Override
-        public CharSequence getTextBeforeCursor(int maxLen, int flags) {
-            return _fieldController.getTextBeforeCursor(maxLen); //ignore flags
+        override fun getTextBeforeCursor(maxLen: Int, flags: Int): CharSequence {
+            return _fieldController!!.getTextBeforeCursor(maxLen) //ignore flags
         }
 
-        @Override
-        public boolean setSelection(int start, int end) {
+        override fun setSelection(start: Int, end: Int): Boolean {
             if (start == end) {
-                _fieldController.moveCaret(start);
+                _fieldController!!.moveCaret(start)
             } else {
-                _fieldController.setSelectionRange(start, end - start, false, true);
+                _fieldController!!.setSelectionRange(start, end - start, false, true)
             }
-            return true;
+            return true
         }
 
-        @Override
-        public boolean reportFullscreenMode(boolean enabled) {
-            return false;
+        override fun reportFullscreenMode(enabled: Boolean): Boolean {
+            return false
         }
-    }// end inner class
+    } // end inner class
+
+    companion object {
+        //---------------------------------------------------------------------
+        //--------------------------  Caret Scroll  ---------------------------
+        const val SCROLL_UP: Int = 0
+        const val SCROLL_DOWN: Int = 1
+        const val SCROLL_LEFT: Int = 2
+        const val SCROLL_RIGHT: Int = 3
+
+        /**
+         * Scale factor for the width of a caret when on a NEWLINE or EOF char.
+         * A factor of 1.0 is equals to the width of a space character
+         */
+        protected var EMPTY_CARET_WIDTH_SCALE: Float = 0.75f
+
+        /**
+         * When in selection mode, the caret height is scaled by this factor
+         */
+        protected var SEL_CARET_HEIGHT_SCALE: Float = 0.5f
+        protected var DEFAULT_TAB_LENGTH_SPACES: Int = 4
+        @JvmStatic
+        var BASE_TEXT_SIZE_PIXELS: Int = 16
+        protected var SCROLL_PERIOD: Long = 250 //in milliseconds
+
+        /*
+     * Hash map for determining which characters to let the user choose from when
+	 * a hardware key is long-pressed. For example, long-pressing "e" displays
+	 * choices of "é, è, ê, ë" and so on.
+	 * This is biased towards European locales, but is standard Android behavior
+	 * for TextView.
+	 *
+	 * Copied from android.text.method.QwertyKeyListener, dated 2006
+	 */
+        private val PICKER_SETS = SparseArray<String?>()
+
+        init {
+            PICKER_SETS.put('A'.code, "\u00C0\u00C1\u00C2\u00C4\u00C6\u00C3\u00C5\u0104\u0100")
+            PICKER_SETS.put('C'.code, "\u00C7\u0106\u010C")
+            PICKER_SETS.put('D'.code, "\u010E")
+            PICKER_SETS.put('E'.code, "\u00C8\u00C9\u00CA\u00CB\u0118\u011A\u0112")
+            PICKER_SETS.put('G'.code, "\u011E")
+            PICKER_SETS.put('L'.code, "\u0141")
+            PICKER_SETS.put('I'.code, "\u00CC\u00CD\u00CE\u00CF\u012A\u0130")
+            PICKER_SETS.put('N'.code, "\u00D1\u0143\u0147")
+            PICKER_SETS.put('O'.code, "\u00D8\u0152\u00D5\u00D2\u00D3\u00D4\u00D6\u014C")
+            PICKER_SETS.put('R'.code, "\u0158")
+            PICKER_SETS.put('S'.code, "\u015A\u0160\u015E")
+            PICKER_SETS.put('T'.code, "\u0164")
+            PICKER_SETS.put('U'.code, "\u00D9\u00DA\u00DB\u00DC\u016E\u016A")
+            PICKER_SETS.put('Y'.code, "\u00DD\u0178")
+            PICKER_SETS.put('Z'.code, "\u0179\u017B\u017D")
+            PICKER_SETS.put('a'.code, "\u00E0\u00E1\u00E2\u00E4\u00E6\u00E3\u00E5\u0105\u0101")
+            PICKER_SETS.put('c'.code, "\u00E7\u0107\u010D")
+            PICKER_SETS.put('d'.code, "\u010F")
+            PICKER_SETS.put('e'.code, "\u00E8\u00E9\u00EA\u00EB\u0119\u011B\u0113")
+            PICKER_SETS.put('g'.code, "\u011F")
+            PICKER_SETS.put('i'.code, "\u00EC\u00ED\u00EE\u00EF\u012B\u0131")
+            PICKER_SETS.put('l'.code, "\u0142")
+            PICKER_SETS.put('n'.code, "\u00F1\u0144\u0148")
+            PICKER_SETS.put('o'.code, "\u00F8\u0153\u00F5\u00F2\u00F3\u00F4\u00F6\u014D")
+            PICKER_SETS.put('r'.code, "\u0159")
+            PICKER_SETS.put('s'.code, "\u00A7\u00DF\u015B\u0161\u015F")
+            PICKER_SETS.put('t'.code, "\u0165")
+            PICKER_SETS.put('u'.code, "\u00F9\u00FA\u00FB\u00FC\u016F\u016B")
+            PICKER_SETS.put('y'.code, "\u00FD\u00FF")
+            PICKER_SETS.put('z'.code, "\u017A\u017C\u017E")
+            PICKER_SETS.put(
+                KeyCharacterMap.PICKER_DIALOG_INPUT.code,
+                "\u2026\u00A5\u2022\u00AE\u00A9\u00B1[]{}\\|"
+            )
+            PICKER_SETS.put('/'.code, "\\")
+
+            // From packages/inputmethods/LatinIME/res/xml/kbd_symbols.xml
+            PICKER_SETS.put('1'.code, "\u00b9\u00bd\u2153\u00bc\u215b")
+            PICKER_SETS.put('2'.code, "\u00b2\u2154")
+            PICKER_SETS.put('3'.code, "\u00b3\u00be\u215c")
+            PICKER_SETS.put('4'.code, "\u2074")
+            PICKER_SETS.put('5'.code, "\u215d")
+            PICKER_SETS.put('7'.code, "\u215e")
+            PICKER_SETS.put('0'.code, "\u207f\u2205")
+            PICKER_SETS.put('$'.code, "\u00a2\u00a3\u20ac\u00a5\u20a3\u20a4\u20b1")
+            PICKER_SETS.put('%'.code, "\u2030")
+            PICKER_SETS.put('*'.code, "\u2020\u2021")
+            PICKER_SETS.put('-'.code, "\u2013\u2014")
+            PICKER_SETS.put('+'.code, "\u00b1")
+            PICKER_SETS.put('('.code, "[{<")
+            PICKER_SETS.put(')'.code, "]}>")
+            PICKER_SETS.put('!'.code, "\u00a1")
+            PICKER_SETS.put('"'.code, "\u201c\u201d\u00ab\u00bb\u02dd")
+            PICKER_SETS.put('?'.code, "\u00bf")
+            PICKER_SETS.put(','.code, "\u201a\u201e")
+
+            // From packages/inputmethods/LatinIME/res/xml/kbd_symbols_shift.xml
+            PICKER_SETS.put('='.code, "\u2260\u2248\u221e")
+            PICKER_SETS.put('<'.code, "\u2264\u00ab\u2039")
+            PICKER_SETS.put('>'.code, "\u2265\u00bb\u203a")
+        }
+    }
 }

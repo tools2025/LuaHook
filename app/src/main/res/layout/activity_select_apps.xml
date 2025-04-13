@@ -8,6 +8,7 @@
     tools:context=".EditActivity">
 
     <com.google.android.material.appbar.AppBarLayout
+        android:fitsSystemWindows="true"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
@@ -15,9 +16,54 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:title="添加App" />
+            app:title="@string/add_app" />
 
     </com.google.android.material.appbar.AppBarLayout>
+
+    <com.google.android.material.card.MaterialCardView
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        style="@style/Widget.Material3.CardView.Elevated"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        app:cardCornerRadius="32dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:padding="16dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="6dp"
+
+                android:contentDescription="@string/search"
+                android:src="@drawable/search_24px" />
+
+            <EditText
+                android:id="@+id/search_bar_text_view"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:autofillHints=""
+                android:background="@null"
+                android:hint="@string/search" />
+
+            <ImageView
+                android:id="@+id/clear_text"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="12dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/close_24px"
+                android:visibility="invisible" />
+
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
 
     <LinearLayout
         android:id="@+id/Linear1"
@@ -27,19 +73,14 @@
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
 
-        <com.google.android.material.search.SearchBar
-            android:id="@+id/searchBar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Search"
-            />
+
+
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rec"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:paddingBottom="?attr/actionBarSize"
             android:clipToPadding="false"
-            />
+            android:paddingBottom="?attr/actionBarSize" />
 
 
     </LinearLayout>

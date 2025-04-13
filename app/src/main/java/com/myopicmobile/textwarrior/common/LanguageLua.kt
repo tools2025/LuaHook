@@ -14,8 +14,8 @@ package com.myopicmobile.textwarrior.common
 class LanguageLua private constructor() : Language() {
     init {
         super.setOperators(LUA_OPERATORS)
-        super.setKeywords(Companion.keywords)
-        super.setNames(Companion.names)
+        super.keywords =Companion.keywords
+        super.names = Companion.names
 
         super.addBasePackage(
             "io",

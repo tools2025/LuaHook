@@ -6,20 +6,21 @@
  *
  * This software is provided "as is". Use at your own risk.
  */
-package com.myopicmobile.textwarrior.android;
+package com.myopicmobile.textwarrior.android
 
-import android.graphics.Canvas;
-import android.graphics.Rect;
-import android.view.GestureDetector;
-import android.view.HapticFeedbackConstants;
-import android.view.KeyEvent;
-import android.view.MotionEvent;
-
-import com.myopicmobile.textwarrior.common.ColorScheme;
-import com.myopicmobile.textwarrior.common.DocumentProvider;
+import android.graphics.Canvas
+import android.graphics.Rect
+import android.view.GestureDetector
+import android.view.GestureDetector.SimpleOnGestureListener
+import android.view.HapticFeedbackConstants
+import android.view.KeyEvent
+import android.view.MotionEvent
+import com.myopicmobile.textwarrior.common.ColorScheme
+import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.sqrt
 
 //TODO minimise unnecessary invalidate calls
-
 /**
  * TouchNavigationMethod classes implementing their own carets have to override
  * getCaretBloat() to return the size of the drawing area it needs, in excess of
@@ -27,342 +28,335 @@ import com.myopicmobile.textwarrior.common.DocumentProvider;
  * onTextDrawComplete(Canvas) to draw the caret. Currently, only a fixed size
  * caret is allowed, but scalable carets may be implemented in future.
  */
-public class TouchNavigationMethod extends GestureDetector.SimpleOnGestureListener {
-    private final static Rect _caretBloat = new Rect(0, 0, 0, 0);
-    // When the caret is dragged to the edges of the text field, the field will
-    // scroll automatically. SCROLL_EDGE_SLOP is the width of these edges in pixels
-    // and extends inside the content area, not outside to the padding area
-    protected static int SCROLL_EDGE_SLOP = 10;
-    /**
-     * The radius, in density-independent pixels, around a point of interest
-     * where any touch event within that radius is considered to have touched
-     * the point of interest itself
-     */
-    protected static int TOUCH_SLOP = 12;
-    protected FreeScrollingTextField _textField;
-    protected boolean _isCaretTouched = false;
-    private GestureDetector _gestureDetector;
-    private float lastDist;
-    private float lastX;
-    private float lastY;
-    private float lastSize;
-    private int fling;
-    private boolean _fastScroll;
+open class TouchNavigationMethod : SimpleOnGestureListener {
+    val _caretBloat: Rect = Rect(0, 0, 0, 0)
+    protected var _textField: FreeScrollingTextField? = null
+    protected var _isCaretTouched: Boolean = false
+    private var _gestureDetector: GestureDetector? = null
+    private var lastDist = 0f
+    private var lastX = 0f
+    private var lastY = 0f
+    private var lastSize = 0f
+    private var fling = 0
+    private var _fastScroll = false
 
-    public TouchNavigationMethod(FreeScrollingTextField textField) {
-        _textField = textField;
-        _gestureDetector = new GestureDetector(textField.getContext(), this);
-        _gestureDetector.setIsLongpressEnabled(true);
+    constructor(textField: FreeScrollingTextField) {
+        _textField = textField
+        _gestureDetector = GestureDetector(textField.getContext(), this)
+        _gestureDetector!!.setIsLongpressEnabled(true)
     }
 
-    @SuppressWarnings("unused")
-    private TouchNavigationMethod() {
-        // do not invoke; always needs a valid _textField
+    @Suppress("unused")
+    private constructor()
+
+
+    open fun getCaretBloat(): Rect {
+        return _caretBloat
     }
 
-    @Override
-    public boolean onDown(MotionEvent e) {
-        int x = screenToViewX((int) e.getX());
-        int y = screenToViewY((int) e.getY());
-        _isCaretTouched = isNearChar(x, y, _textField.getCaretPosition());
-        _fastScroll = x < _textField.getLeftOffset();
-        if (_textField.isFlingScrolling()) {
-            _textField.stopFlingScrolling();
-        } else if (_textField.isSelectText()) {
-            if (isNearChar(x, y, _textField.getSelectionStart())) {
-                _textField.focusSelectionStart();
-                _textField.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
-                _isCaretTouched = true;
-            } else if (isNearChar(x, y, _textField.getSelectionEnd())) {
-                _textField.focusSelectionEnd();
-                _textField.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
-                _isCaretTouched = true;
+    override fun onDown(e: MotionEvent): Boolean {
+        val x = screenToViewX(e.getX().toInt())
+        val y = screenToViewY(e.getY().toInt())
+        _isCaretTouched = isNearChar(x, y, _textField!!.caretPosition)
+        _fastScroll = x < _textField!!.leftOffset
+        if (_textField!!.isFlingScrolling) {
+            _textField!!.stopFlingScrolling()
+        } else if (_textField!!.isSelectText) {
+            if (isNearChar(x, y, _textField!!.selectionStart)) {
+                _textField!!.focusSelectionStart()
+                _textField!!.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                _isCaretTouched = true
+            } else if (isNearChar(x, y, _textField!!.selectionEnd)) {
+                _textField!!.focusSelectionEnd()
+                _textField!!.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                _isCaretTouched = true
             }
         }
 
         if (_isCaretTouched) {
-            _textField.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+            _textField!!.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
         }
 
-        return true;
+        return true
     }
 
-    @Override
-    public void onShowPress(MotionEvent e) {
-
+    override fun onShowPress(e: MotionEvent) {
     }
 
-    @Override
-    public boolean onSingleTapUp(MotionEvent e) {
-        if (_textField.isAccessibilityEnabled()) {
-            _textField.showIME(true);
-            return true;
+    override fun onSingleTapUp(e: MotionEvent): Boolean {
+        if (_textField!!.isAccessibilityEnabled) {
+            _textField!!.showIME(true)
+            return true
         }
-        int x = screenToViewX((int) e.getX());
-        int y = screenToViewY((int) e.getY());
-        int charOffset = _textField.coordToCharIndex(x, y);
+        val x = screenToViewX(e.getX().toInt())
+        val y = screenToViewY(e.getY().toInt())
+        val charOffset = _textField!!.coordToCharIndex(x, y)
 
-        if (_textField.isSelectText()) {
-            int strictCharOffset = _textField.coordToCharIndexStrict(x, y);
-            if (_textField.inSelectionRange(strictCharOffset) ||
-                    isNearChar(x, y, _textField.getSelectionStart()) ||
-                    isNearChar(x, y, _textField.getSelectionEnd())) {
+        if (_textField!!.isSelectText) {
+            val strictCharOffset = _textField!!.coordToCharIndexStrict(x, y)
+            if (_textField!!.inSelectionRange(strictCharOffset) ||
+                isNearChar(x, y, _textField!!.selectionStart) ||
+                isNearChar(x, y, _textField!!.selectionEnd)
+            ) {
                 // do nothing
             } else {
-                _textField.selectText(false);
+                _textField!!.selectText(false)
                 if (strictCharOffset >= 0) {
-                    _textField.moveCaret(charOffset);
+                    _textField!!.moveCaret(charOffset)
                 }
             }
         } else {
             if (charOffset >= 0) {
-                _textField.moveCaret(charOffset);
+                _textField!!.moveCaret(charOffset)
             }
         }
-        boolean displayIME = true;
+        val displayIME = true
         if (displayIME) {
-            _textField.showIME(true);
+            _textField!!.showIME(true)
         }
-        return true;
+        return true
     }
 
     /**
      * Note that up events from a fling are NOT captured here.
      * Subclasses have to call super.onUp(MotionEvent) in their implementations
      * of onFling().
-     * <p>
+     *
+     *
      * Also, up events from non-primary pointers in a multi-touch situation are
      * not captured here.
      *
      * @param e
      * @return
      */
-    public boolean onUp(MotionEvent e) {
-        _textField.stopAutoScrollCaret();
-        _isCaretTouched = false;
-        _fastScroll=false;
-        lastDist = 0;
-        fling = 0;
-        return true;
+    open fun onUp(e: MotionEvent?): Boolean {
+        _textField!!.stopAutoScrollCaret()
+        _isCaretTouched = false
+        _fastScroll = false
+        lastDist = 0f
+        fling = 0
+        return true
     }
 
-    @Override
-    public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX,
-                            float distanceY) {
-
+    override fun onScroll(
+        e1: MotionEvent?, e2: MotionEvent, distanceX: Float,
+        distanceY: Float
+    ): Boolean {
         //onTouchZoon(e2);
 
+        var distanceX = distanceX
+        var distanceY = distanceY
         if (_isCaretTouched) {
-            dragCaret(e2);
+            dragCaret(e2)
         } else if (e2.getPointerCount() == 1) {
-            if (fling == 0)
-                if (Math.abs(distanceX) > Math.abs(distanceY))
-                    fling = 1;
-                else
-                    fling = -1;
-            if (fling == 1)
-                distanceY = 0;
-            else if (fling == -1)
-                distanceX = 0;
-            if (_fastScroll)
-                distanceY *= _textField.getMaxScrollY() / _textField.getHeight();
-            scrollView(distanceX, distanceY);
-            //_textField.smoothScrollBy((int)distanceX, (int)distanceY);
+            if (fling == 0) if (abs(distanceX.toDouble()) > abs(distanceY.toDouble())) fling = 1
+            else fling = -1
+            if (fling == 1) distanceY = 0f
+            else if (fling == -1) distanceX = 0f
+            if (_fastScroll) distanceY *= (_textField!!.maxScrollY / _textField!!.getHeight()).toFloat()
+            scrollView(distanceX, distanceY)
 
+            //_textField.smoothScrollBy((int)distanceX, (int)distanceY);
         }
 
         //TODO find out if ACTION_UP events are actually passed to onScroll
-        if ((e2.getAction() & MotionEvent.ACTION_MASK) == MotionEvent.ACTION_UP) {
-            onUp(e2);
+        if ((e2.getAction() and MotionEvent.ACTION_MASK) == MotionEvent.ACTION_UP) {
+            onUp(e2)
         }
-        return true;
+        return true
     }
 
-    private void dragCaret(MotionEvent e) {
-        if (!_textField.isSelectText() && isDragSelect()) {
-            _textField.selectText(true);
+    private fun dragCaret(e: MotionEvent) {
+        if (!_textField!!.isSelectText && this.isDragSelect) {
+            _textField!!.selectText(true)
         }
 
-        int x = (int) e.getX() - _textField.getPaddingLeft();
-        int y = (int) e.getY() - _textField.getPaddingTop();
-        boolean scrolled = false;
+        val x = e.getX().toInt() - _textField!!.getPaddingLeft()
+        val y = e.getY().toInt() - _textField!!.getPaddingTop()
+        var scrolled = false
 
         // If the edges of the textField content area are touched, scroll in the
         // corresponding direction.
         if (x < SCROLL_EDGE_SLOP) {
-            scrolled = _textField.autoScrollCaret(FreeScrollingTextField.SCROLL_LEFT);
-        } else if (x >= (_textField.getContentWidth() - SCROLL_EDGE_SLOP)) {
-            scrolled = _textField.autoScrollCaret(FreeScrollingTextField.SCROLL_RIGHT);
+            scrolled = _textField!!.autoScrollCaret(FreeScrollingTextField.SCROLL_LEFT)
+
+        } else if (x >= (_textField!!.contentWidth - SCROLL_EDGE_SLOP)) {
+            scrolled = _textField!!.autoScrollCaret(FreeScrollingTextField.SCROLL_RIGHT)
         } else if (y < SCROLL_EDGE_SLOP) {
-            scrolled = _textField.autoScrollCaret(FreeScrollingTextField.SCROLL_UP);
-        } else if (y >= (_textField.getContentHeight() - SCROLL_EDGE_SLOP)) {
-            scrolled = _textField.autoScrollCaret(FreeScrollingTextField.SCROLL_DOWN);
+            scrolled = _textField!!.autoScrollCaret(FreeScrollingTextField.SCROLL_UP)
+        } else if (y >= (_textField!!.contentHeight - SCROLL_EDGE_SLOP)) {
+            scrolled = _textField!!.autoScrollCaret(FreeScrollingTextField.SCROLL_DOWN)
         }
 
         if (!scrolled) {
-            _textField.stopAutoScrollCaret();
-            int newCaretIndex = _textField.coordToCharIndex(
-                    screenToViewX((int) e.getX()),
-                    screenToViewY((int) e.getY())
-            );
+            _textField!!.stopAutoScrollCaret()
+            val newCaretIndex = _textField!!.coordToCharIndex(
+                screenToViewX(e.getX().toInt()),
+                screenToViewY(e.getY().toInt())
+            )
             if (newCaretIndex >= 0) {
-                _textField.moveCaret(newCaretIndex);
+                _textField!!.moveCaret(newCaretIndex)
             }
         }
     }
 
-    private void scrollView(float distanceX, float distanceY) {
-        int newX = (int) distanceX + _textField.getScrollX();
-        int newY = (int) distanceY + _textField.getScrollY();
+    private fun scrollView(distanceX: Float, distanceY: Float) {
+        var newX = distanceX.toInt() + _textField!!.getScrollX()
+        var newY = distanceY.toInt() + _textField!!.getScrollY()
 
         // If scrollX and scrollY are somehow more than the recommended
         // max scroll values, use them as the new maximum
         // Also take into account the size of the caret,
         // which may extend beyond the text boundaries
-        int maxWidth = Math.max(_textField.getMaxScrollX(),
-                _textField.getScrollX());
+        val maxWidth = max(
+            _textField!!.maxScrollX.toDouble(),
+            _textField!!.getScrollX().toDouble()
+        ).toInt()
         if (newX > maxWidth) {
-            newX = maxWidth;
+            newX = maxWidth
         } else if (newX < 0) {
-            newX = 0;
+            newX = 0
         }
 
-        int maxHeight = Math.max(_textField.getMaxScrollY(),
-                _textField.getScrollY());
+        val maxHeight = max(
+            _textField!!.maxScrollY.toDouble(),
+            _textField!!.getScrollY().toDouble()
+        ).toInt()
         if (newY > maxHeight) {
-            newY = maxHeight;
+            newY = maxHeight
         } else if (newY < 0) {
-            newY = 0;
+            newY = 0
         }
         //_textField.scrollTo(newX, newY);
-        _textField.smoothScrollTo(newX, newY);
-
+        _textField!!.smoothScrollTo(newX, newY)
     }
 
-    @Override
-    public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX,
-                           float velocityY) {
+    override fun onFling(
+        e1: MotionEvent?,
+        e2: MotionEvent,
+        velocityX: Float,
+        velocityY: Float
+    ): Boolean {
+        var velocityX = velocityX
+        var velocityY = velocityY
         if (!_isCaretTouched) {
+            if (fling == 1) velocityY = 0f
+            else if (fling == -1) velocityX = 0f
 
-            if (fling == 1)
-                velocityY = 0;
-            else if (fling == -1)
-                velocityX = 0;
-
-            _textField.flingScroll((int) -velocityX * 2, (int) -velocityY * 2);
+            _textField!!.flingScroll(-velocityX.toInt() * 2, -velocityY.toInt() * 2)
         }
-        onUp(e2);
-        return true;
+        onUp(e2)
+        return true
     }
 
-    private float spacing(MotionEvent event) {
-        float x = event.getX(0) - event.getX(1);
-        float y = event.getY(0) - event.getY(1);
-        return (float) Math.sqrt(x * x + y * y);
+    private fun spacing(event: MotionEvent): Float {
+        val x = event.getX(0) - event.getX(1)
+        val y = event.getY(0) - event.getY(1)
+        return sqrt((x * x + y * y).toDouble()).toFloat()
     }
 
-    private boolean onTouchZoom(MotionEvent e) {
+    private fun onTouchZoom(e: MotionEvent): Boolean {
         if (e.getAction() == MotionEvent.ACTION_MOVE) {
             if (e.getPointerCount() == 2) {
-                if (lastDist == 0) {
-                    float x = e.getX(0) - e.getX(1);
-                    float y = e.getY(0) - e.getY(1);
-                    lastDist = (float) Math.sqrt(x * x + y * y);
-                    lastX = (e.getX(0) + e.getX(1)) / 2;
-                    lastY = (e.getY(0) + e.getY(1)) / 2;
-                    lastSize = _textField.getTextSize();
+                if (lastDist == 0f) {
+                    val x = e.getX(0) - e.getX(1)
+                    val y = e.getY(0) - e.getY(1)
+                    lastDist = sqrt((x * x + y * y).toDouble()).toFloat()
+                    lastX = (e.getX(0) + e.getX(1)) / 2
+                    lastY = (e.getY(0) + e.getY(1)) / 2
+                    lastSize = _textField!!.textSize
                 }
 
-                float dist = spacing(e);
-                if (lastDist != 0) {
-                    _textField.setTextSize((int) (lastSize * (dist / lastDist)));
+                val dist = spacing(e)
+                if (lastDist != 0f) {
+                    _textField!!.setTextSize((lastSize * (dist / lastDist)).toInt())
                     //_textField.scrollBy(0,(int)(lastY-lastY*(_textField.getTextSize() / lastSize)));
                 }
                 //_textField.setTextSize((int)(_textField.getTextSize() * (dist / lastDist)));
                 //lastDist = dist;
-                return true;
+                return true
             }
         }
-        lastDist = 0;
-        return false;
+        lastDist = 0f
+        return false
     }
 
     /**
      * Subclasses overriding this method have to call the superclass method
      */
-    public boolean onTouchEvent(MotionEvent event) {
-        onTouchZoom(event);
-        boolean handled = _gestureDetector.onTouchEvent(event);
+    fun onTouchEvent(event: MotionEvent): Boolean {
+        onTouchZoom(event)
+        var handled = _gestureDetector!!.onTouchEvent(event)
         if (!handled
-                && (event.getAction() & MotionEvent.ACTION_MASK) == MotionEvent.ACTION_UP) {
+            && (event.getAction() and MotionEvent.ACTION_MASK) == MotionEvent.ACTION_UP
+        ) {
             // propagate up events since GestureDetector does not do so
-            handled = onUp(event);
+            handled = onUp(event)
         }
-        return handled;
+        return handled
     }
 
-    @Override
-    public void onLongPress(MotionEvent e) {
-        onDoubleTap(e);
+    override fun onLongPress(e: MotionEvent) {
+        onDoubleTap(e)
     }
 
-    @Override
-    public boolean onDoubleTap(MotionEvent e) {
-        _isCaretTouched = true;
-        int x = screenToViewX((int) e.getX());
-        int y = screenToViewY((int) e.getY());
-        int charOffset = _textField.coordToCharIndex(x, y);
+    override fun onDoubleTap(e: MotionEvent): Boolean {
+        _isCaretTouched = true
+        val x = screenToViewX(e.getX().toInt())
+        val y = screenToViewY(e.getY().toInt())
+        val charOffset = _textField!!.coordToCharIndex(x, y)
 
-        if (_textField.isSelectText() && _textField.inSelectionRange(charOffset)) {
-            DocumentProvider doc = _textField.createDocumentProvider();
-            int line = doc.findLineNumber(charOffset);
-            int start = doc.getLineOffset(line);
-            int end = doc.getLineOffset(line + 1) - 1;
-            _textField.setSelectionRange(start, end - start);
+        if (_textField!!.isSelectText && _textField!!.inSelectionRange(charOffset)) {
+            val doc = _textField!!.createDocumentProvider()
+            val line = doc.findLineNumber(charOffset)
+            val start = doc.getLineOffset(line)
+            val end = doc.getLineOffset(line + 1) - 1
+            _textField!!.setSelectionRange(start, end - start)
         } else {
             if (charOffset >= 0) {
-                _textField.moveCaret(charOffset);
-                DocumentProvider doc = _textField.createDocumentProvider();
-                int start;
-                int end;
-                for (start = charOffset; start >= 0; start--) {
-                    char c = doc.charAt(start);
-                    if (!Character.isJavaIdentifierPart(c))
-                        break;
+                _textField!!.moveCaret(charOffset)
+                val doc = _textField!!.createDocumentProvider()
+                var start: Int
+                var end: Int
+                start = charOffset
+                while (start >= 0) {
+                    val c = doc.get(start)
+                    if (!Character.isJavaIdentifierPart(c)) break
+                    start--
                 }
-                if (start != charOffset)
-                    start++;
-                for (end = charOffset; end >= 0; end++) {
-                    char c = doc.charAt(end);
-                    if (!Character.isJavaIdentifierPart(c))
-                        break;
+                if (start != charOffset) start++
+                end = charOffset
+                while (end >= 0) {
+                    val c = doc.get(end)
+                    if (!Character.isJavaIdentifierPart(c)) break
+                    end++
                 }
-                _textField.selectText(true);
-                _textField.setSelectionRange(start, end - start);
+                _textField!!.selectText(true)
+                _textField!!.setSelectionRange(start, end - start)
             }
         }
-        return true;
+        return true
     }
 
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        return false;
+    fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        return false
     }
 
-    public boolean onKeyUp(int keyCode, KeyEvent event) {
-        return false;
+    fun onKeyUp(keyCode: Int, event: KeyEvent?): Boolean {
+        return false
     }
 
     /**
-     * Android lifecyle event. See {@link android.app.Activity#onPause()}.
+     * Android lifecyle event. See [android.app.Activity.onPause].
      */
-    void onPause() {
+    fun onPause() {
         //do nothing
     }
 
     /**
-     * Android lifecyle event. See {@link android.app.Activity#onResume()}.
+     * Android lifecyle event. See [android.app.Activity.onResume].
      */
-    void onResume() {
+    fun onResume() {
         //do nothing
     }
 
@@ -370,16 +364,17 @@ public class TouchNavigationMethod extends GestureDetector.SimpleOnGestureListen
      * Called by FreeScrollingTextField when it has finished drawing text.
      * Classes extending TouchNavigationMethod can use this to draw, for
      * example, a custom caret.
-     * <p>
+     *
+     *
      * The canvas includes padding in it.
      *
      * @param canvas
      */
-    public void onTextDrawComplete(Canvas canvas) {
+    open fun onTextDrawComplete(canvas: Canvas?) {
         // Do nothing. Basic caret drawing is handled by FreeScrollingTextField.
     }
 
-    public void onColorSchemeChanged(ColorScheme colorScheme) {
+    open fun onColorSchemeChanged(colorScheme: ColorScheme?) {
         // Do nothing. Derived classes can use this to change their graphic assets accordingly.
     }
 
@@ -387,51 +382,37 @@ public class TouchNavigationMethod extends GestureDetector.SimpleOnGestureListen
     //*********************************************************************
     //**************************** Utilities ******************************
     //*********************************************************************
-
-    public void onChiralityChanged(boolean isRightHanded) {
+    fun onChiralityChanged(isRightHanded: Boolean) {
         // Do nothing. Derived classes can use this to change their input
         // handling and graphic assets accordingly.
     }
 
-    /**
-     * For any printed character, this method returns the amount of space
-     * required in excess of the bounding box of the character to draw the
-     * caret.
-     * Subclasses should override this method if they are drawing their
-     * own carets.
-     */
-    public Rect getCaretBloat() {
-        return _caretBloat;
-    }
-
-    final protected int getPointerId(MotionEvent e) {
-        return (e.getAction() & MotionEvent.ACTION_POINTER_ID_MASK)
-                >> MotionEvent.ACTION_POINTER_ID_SHIFT;
+    protected fun getPointerId(e: MotionEvent): Int {
+        return ((e.getAction() and MotionEvent.ACTION_POINTER_ID_MASK)
+                shr MotionEvent.ACTION_POINTER_ID_SHIFT)
     }
 
     /**
      * Converts a x-coordinate from screen coordinates to local coordinates,
      * excluding padding
      */
-    final protected int screenToViewX(int x) {
-        return x - _textField.getPaddingLeft() + _textField.getScrollX();
+    protected fun screenToViewX(x: Int): Int {
+        return x - _textField!!.getPaddingLeft() + _textField!!.getScrollX()
     }
 
     /**
      * Converts a y-coordinate from screen coordinates to local coordinates,
      * excluding padding
      */
-    final protected int screenToViewY(int y) {
-        return y - _textField.getPaddingTop() + _textField.getScrollY();
+    protected fun screenToViewY(y: Int): Int {
+        return y - _textField!!.getPaddingTop() + _textField!!.getScrollY()
     }
 
-    final public boolean isRightHanded() {
-        return true;
-    }
+    val isRightHanded: Boolean
+        get() = true
 
-    final private boolean isDragSelect() {
-        return false;
-    }
+    private val isDragSelect: Boolean
+        get() = false
 
     /**
      * Determine if a point(x,y) on screen is near a character of interest,
@@ -443,13 +424,34 @@ public class TouchNavigationMethod extends GestureDetector.SimpleOnGestureListen
      * @param charOffset the character of interest
      * @return Whether (x,y) lies close to the character with index charOffset
      */
-    public boolean isNearChar(int x, int y, int charOffset) {
-        Rect bounds = _textField.getBoundingBox(charOffset);
+    fun isNearChar(x: Int, y: Int, charOffset: Int): Boolean {
+        val bounds = _textField!!.getBoundingBox(charOffset)
 
-        return (y >= (bounds.top - TOUCH_SLOP)
-                && y < (bounds.bottom + TOUCH_SLOP)
-                && x >= (bounds.left - TOUCH_SLOP)
-                && x < (bounds.right + TOUCH_SLOP)
-        );
+        return (y >= (bounds.top - TOUCH_SLOP) && y < (bounds.bottom + TOUCH_SLOP) && x >= (bounds.left - TOUCH_SLOP) && x < (bounds.right + TOUCH_SLOP)
+                )
+    }
+
+    companion object {
+        open val caretBloat: Rect = Rect(0, 0, 0, 0)
+            /**
+             * For any printed character, this method returns the amount of space
+             * required in excess of the bounding box of the character to draw the
+             * caret.
+             * Subclasses should override this method if they are drawing their
+             * own carets.
+             */
+            get() = field
+
+        // When the caret is dragged to the edges of the text field, the field will
+        // scroll automatically. SCROLL_EDGE_SLOP is the width of these edges in pixels
+        // and extends inside the content area, not outside to the padding area
+        protected var SCROLL_EDGE_SLOP: Int = 10
+
+        /**
+         * The radius, in density-independent pixels, around a point of interest
+         * where any touch event within that radius is considered to have touched
+         * the point of interest itself
+         */
+        protected var TOUCH_SLOP: Int = 12
     }
 }
