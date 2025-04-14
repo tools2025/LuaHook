@@ -1,12 +1,16 @@
 package com.kulipai.luahook
 
 import LanguageUtil
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
 import android.view.Menu
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.edit
 import androidx.core.view.ViewCompat
@@ -28,6 +32,7 @@ class MainActivity : AppCompatActivity() {
 
 
 
+    private lateinit var SettingsLauncher: ActivityResultLauncher<Intent>
 
     fun isNightMode(context: Context): Boolean {
         return (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
@@ -38,14 +43,22 @@ class MainActivity : AppCompatActivity() {
     private val viewPager2: ViewPager2 by lazy { findViewById(R.id.viewPager2) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        LanguageUtil.changeLanguage(this,"en")
-//        DynamicColors.applyToActivityIfAvailable(this)
+
+        LanguageUtil.applyLanguage(this)
 
         super.onCreate(savedInstanceState)
 
         enableEdgeToEdge()
 
         setContentView(R.layout.activity_main)
+
+
+        // 注册 ActivityResultLauncher
+        SettingsLauncher = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) {
+            recreate()
+        }
 
         //setting
         toolbar.menu.add(0,1,0,"Setting").setIcon(R.drawable.settings_24px).setShowAsAction(1)
@@ -54,7 +67,7 @@ class MainActivity : AppCompatActivity() {
             when(it.itemId) {
                 1-> {
                     val itent = Intent(this,SettingsActivity::class.java)
-                    startActivity(itent)
+                    SettingsLauncher.launch(itent)
                     true
                 }
                 else -> true
@@ -183,6 +196,8 @@ class MainActivity : AppCompatActivity() {
 
 
     }
+
+
 
 
     fun saveStringList(context: Context, key: String, list: List<String>) {

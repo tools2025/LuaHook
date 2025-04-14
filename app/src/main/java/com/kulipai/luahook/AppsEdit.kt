@@ -5,6 +5,8 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
@@ -13,9 +15,12 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.content.edit
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.color.DynamicColors
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.kulipai.luahook.adapter.ToolAdapter
 import kotlin.system.exitProcess
 
 
@@ -42,6 +47,10 @@ class AppsEdit : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_apps_edit)
+        setSupportActionBar(toolbar)
+
+
+
         //窗口处理
         ViewCompat.setOnApplyWindowInsetsListener(rootLayout) { view, insets ->
             val imeInsets = insets.getInsets(WindowInsetsCompat.Type.ime())
@@ -85,9 +94,21 @@ class AppsEdit : AppCompatActivity() {
         if (intent != null) {
             currentPackageName = intent.getStringExtra("packageName").toString()
             appName = intent.getStringExtra("appName").toString()
-            toolbar.title = appName
+//            toolbar.title = appName
+            title = appName
+
 
         }
+
+        val symbols =
+            listOf("hook", "lp", "(", ")", "\"", ":", "=", "[", "]", "{", "}", "+", "-", "?", "!")
+        val symbolRecyclerView: RecyclerView = findViewById(R.id.symbolRecyclerView)
+        symbolRecyclerView.layoutManager =
+            LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        symbolRecyclerView.adapter = ToolAdapter(symbols, editor)
+
+
+
 
         val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
 
@@ -103,6 +124,64 @@ class AppsEdit : AppCompatActivity() {
 
 
     }
+
+    //菜单
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menu?.add(0, 1, 0, "Undo")
+            ?.setIcon(R.drawable.undo_24px)
+            ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM)
+
+        menu?.add(0, 2, 0, "Redo")
+            ?.setIcon(R.drawable.redo_24px)
+            ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM)
+        menu?.add(0, 3, 0,  resources.getString(R.string.format))
+            ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
+        menu?.add(0, 4, 0, resources.getString(R.string.log))  //LogCat
+            ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
+        menu?.add(0, 5, 0, resources.getString(R.string.manual))
+            ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            1 -> {
+                // "Undo"
+                editor.undo()
+                true
+            }
+
+            2 -> {
+                // "Redo"
+                editor.redo()
+                true
+            }
+
+            3 -> {
+                // 格式化
+                editor.format()
+                true
+            }
+
+            4 -> {
+                //LogCat
+                val intent = Intent(this, LogCatActivity::class.java)
+                startActivity(intent)
+                true
+            }
+
+            5 -> {
+                //示例
+                val intent = Intent(this, Manual::class.java)
+                startActivity(intent)
+                true
+            }
+
+
+            else -> false
+        }
+    }
+
 
 
     // 写入 SharedPreferences 并修改权限

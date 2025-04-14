@@ -26,4 +26,10 @@
     <string name="Tag7">file操作</string>
     <string name="Tag8">json操作</string>
     <string name="Tag9">import操作</string>
+    <string name="Select_language">选择语言</string>
+    <string name="cancel">取消</string>
+    <string name="language">语言</string>
+    <string name="follow_system">跟随系统</string>
+    <string name="appearance">界面外观</string>
+    <string name="setting">设置</string>
 </resources>

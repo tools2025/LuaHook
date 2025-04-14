@@ -54,13 +54,13 @@ class ManualFragment : Fragment(),OnCardExpandListener {
         }
 
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            requireActivity().onBackInvokedDispatcher.registerOnBackInvokedCallback(
-                OnBackInvokedDispatcher.PRIORITY_DEFAULT
-            ) {
-                requireActivity().onBackPressed() // 触发你刚刚写的逻辑
-            }
-        }
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+//            requireActivity().onBackInvokedDispatcher.registerOnBackInvokedCallback(
+//                OnBackInvokedDispatcher.PRIORITY_DEFAULT
+//            ) {
+//                requireActivity().onBackPressed() // 触发你刚刚写的逻辑
+//            }
+//        }
 
         val title =
             listOf(
@@ -241,6 +241,8 @@ class ManualFragment : Fragment(),OnCardExpandListener {
         val callback = object : OnBackPressedCallback(true /* enabled by default */) {
             override fun handleOnBackPressed() {
                 if (detail.isVisible && currentCard != null) {
+
+                    isEnabled = true // 启用
                     // 执行反向动画
                     val transform = MaterialContainerTransform().apply {
                         startView = detail
@@ -258,6 +260,7 @@ class ManualFragment : Fragment(),OnCardExpandListener {
 
                     currentCard = null // 重置
                 } else {
+                    isEnabled = false // 禁用当前的回调
                     requireActivity().onBackPressedDispatcher.onBackPressed()
                 }
             }

@@ -23,6 +23,8 @@ import org.luaj.vm2.lib.VarArgFunction
 import org.luaj.vm2.lib.jse.CoerceJavaToLua
 import org.luaj.vm2.lib.jse.JsePlatform
 import java.io.File
+import kotlin.reflect.KClass
+import kotlin.reflect.cast
 
 
 class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
@@ -109,7 +111,6 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
         }
 
         globals["File"] = LuaFile
-
 
         globals["lpparam"] = CoerceJavaToLua.coerce(lpparam)
 
@@ -258,6 +259,8 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
                     if (classNameOrClass.isstring()) { /////////string,
                         val classLoader =
                             args.optuserdata(2, lpparam.javaClass.classLoader) as ClassLoader
+//                        classLoader.toString().d()
+//                        lpparam.classLoader.toString().d()
                         val className = classNameOrClass.tojstring()
                         methodName = args.checkjstring(3)
 
@@ -486,5 +489,8 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
             else -> null
         }
     }
+
+
+
 
 }

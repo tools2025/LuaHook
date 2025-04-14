@@ -98,7 +98,6 @@ class MyApplication : Application() {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        // 确保配置变更时应用语言
         LanguageUtil.applyLanguage(this)
     }
 

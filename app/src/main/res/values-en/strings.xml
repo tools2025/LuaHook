@@ -26,4 +26,10 @@
     <string name="Tag7">file operation</string>
     <string name="Tag8">JSON operations</string>
     <string name="Tag9">import operation</string>
+    <string name="Select_language">Select a language</string>
+    <string name="cancel">Cancel</string>
+    <string name="language">Language</string>
+    <string name="follow_system">Follow the system</string>
+    <string name="appearance">Appearance</string>
+    <string name="setting">Setting</string>
 </resources>

@@ -75,7 +75,7 @@ class Manual : AppCompatActivity(), OnCardExpandListener {
                 resources.getString(R.string.Tag6),
                 resources.getString(R.string.Tag7),
                 resources.getString(R.string.Tag8),
-                resources.getString(R.string.Tag9)
+                resources.getString(R.string.Tag9),
             )
 
         val body = listOf(
@@ -218,7 +218,8 @@ class Manual : AppCompatActivity(), OnCardExpandListener {
                 --自定义名称
                 AAA = import "android.widget.Toast"
                 AAA:makeText(activity,"hello",1000):show()
-            """.trimIndent()
+            """.trimIndent(),
+
         )
 
         rec.layoutManager =
