@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:fitsSystemWindows="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            app:navigationIcon="@drawable/arrow_back_24px"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:title="设置" />
+    </com.google.android.material.appbar.AppBarLayout>
+
+<androidx.core.widget.NestedScrollView
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="24dp"
+    android:background="?android:colorBackground">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+<!--        &lt;!&ndash; 启动 &ndash;&gt;-->
+<!--        <TextView-->
+<!--            android:text="启动"-->
+<!--            android:textColor="?attr/colorPrimary"-->
+<!--            android:textStyle="bold"-->
+<!--            android:textSize="14sp"-->
+<!--            android:layout_marginTop="8dp"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content" />-->
+
+<!--        &lt;!&ndash; 开机启动 &ndash;&gt;-->
+<!--        <LinearLayout-->
+<!--            android:layout_marginTop="16dp"-->
+<!--            android:orientation="horizontal"-->
+<!--            android:gravity="center_vertical"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content">-->
+
+<!--            <LinearLayout-->
+<!--                android:orientation="vertical"-->
+<!--                android:layout_weight="1"-->
+<!--                android:layout_width="0dp"-->
+<!--                android:layout_height="wrap_content">-->
+
+<!--                <TextView-->
+<!--                    android:text="开机启动（root）"-->
+<!--                    android:textSize="16sp"-->
+<!--                    android:textColor="?android:textColorPrimary"-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:layout_height="wrap_content" />-->
+
+<!--                <TextView-->
+<!--                    android:text="对于已 root 设备，Shizuku 可以开机启动"-->
+<!--                    android:textSize="14sp"-->
+<!--                    android:textColor="?android:textColorSecondary"-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:layout_height="wrap_content" />-->
+<!--            </LinearLayout>-->
+
+<!--            <com.google.android.material.materialswitch.MaterialSwitch-->
+<!--                android:id="@+id/switch_boot"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content" />-->
+<!--        </LinearLayout>-->
+
+        <!-- 语言 -->
+
+        <com.google.android.material.textview.MaterialTextView
+            style="@style/TextAppearance.Material3.LabelLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="语言"
+            android:textColor="?attr/colorPrimary" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:text="语言\n跟随系统"
+            android:textSize="16sp"
+            android:textColor="?android:textColorPrimary"
+            android:layout_marginTop="16dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+<!--        <TextView-->
+<!--            android:text="参与翻译\n帮助我们将 Shizuku 翻译至您的语言"-->
+<!--            android:textSize="16sp"-->
+<!--            android:layout_marginTop="8dp"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content" />-->
+
+        <!-- 外观 -->
+        <com.google.android.material.textview.MaterialTextView
+            style="@style/TextAppearance.Material3.LabelLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="界面外观"
+            android:textColor="?attr/colorPrimary" />
+
+        <!-- 深色主题 -->
+        <LinearLayout
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <com.google.android.material.textview.MaterialTextView
+                android:text="深色主题\n跟随系统"
+                android:textSize="16sp"
+                android:layout_weight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content" />
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/switch_dark_theme"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+<!--        &lt;!&ndash; 黑色夜间主题 &ndash;&gt;-->
+<!--        <LinearLayout-->
+<!--            android:layout_marginTop="8dp"-->
+<!--            android:orientation="horizontal"-->
+<!--            android:gravity="center_vertical"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content">-->
+
+<!--            <LinearLayout-->
+<!--                android:orientation="vertical"-->
+<!--                android:layout_weight="1"-->
+<!--                android:layout_width="0dp"-->
+<!--                android:layout_height="wrap_content">-->
+
+<!--                <TextView-->
+<!--                    android:text="黑色夜间主题"-->
+<!--                    android:textSize="16sp"-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:layout_height="wrap_content" />-->
+
+<!--                <TextView-->
+<!--                    android:text="当夜间模式启用时使用纯黑色主题"-->
+<!--                    android:textSize="14sp"-->
+<!--                    android:textColor="?android:textColorSecondary"-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:layout_height="wrap_content" />-->
+<!--            </LinearLayout>-->
+
+<!--            <com.google.android.material.materialswitch.MaterialSwitch-->
+<!--                android:id="@+id/switch_black_theme"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content" />-->
+<!--        </LinearLayout>-->
+
+<!--        &lt;!&ndash; 使用系统主题颜色 &ndash;&gt;-->
+<!--        <LinearLayout-->
+<!--            android:layout_marginTop="8dp"-->
+<!--            android:orientation="horizontal"-->
+<!--            android:gravity="center_vertical"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content">-->
+
+<!--            <TextView-->
+<!--                android:text="使用系统主题颜色"-->
+<!--                android:textSize="16sp"-->
+<!--                android:layout_weight="1"-->
+<!--                android:layout_width="0dp"-->
+<!--                android:layout_height="wrap_content" />-->
+
+<!--            <com.google.android.material.materialswitch.MaterialSwitch-->
+<!--                android:id="@+id/switch_system_color"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content" />-->
+<!--        </LinearLayout>-->
+        <!-- 外观 -->
+        <com.google.android.material.textview.MaterialTextView
+            style="@style/TextAppearance.Material3.LabelLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="高级"
+            android:textColor="?attr/colorPrimary" />
+
+        <!-- 高级 -->
+        <LinearLayout
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <com.google.android.material.textview.MaterialTextView
+                android:text="关于"
+                android:textSize="16sp"
+                android:layout_weight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content" />
+
+        </LinearLayout>
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

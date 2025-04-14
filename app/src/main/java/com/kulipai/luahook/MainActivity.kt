@@ -1,5 +1,6 @@
 package com.kulipai.luahook
 
+import LanguageUtil
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
@@ -15,6 +16,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
+import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.kulipai.luahook.fragment.AppsFragment
 import com.kulipai.luahook.fragment.HomeFragment
@@ -32,9 +34,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private val bottomBar: BottomNavigationView by lazy { findViewById(R.id.bottomBar) }
+    private val toolbar: MaterialToolbar by lazy { findViewById(R.id.toolbar) }
     private val viewPager2: ViewPager2 by lazy { findViewById(R.id.viewPager2) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        LanguageUtil.changeLanguage(this,"en")
 //        DynamicColors.applyToActivityIfAvailable(this)
 
         super.onCreate(savedInstanceState)
@@ -42,6 +46,20 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
 
         setContentView(R.layout.activity_main)
+
+        //setting
+        toolbar.menu.add(0,1,0,"Setting").setIcon(R.drawable.settings_24px).setShowAsAction(1)
+
+        toolbar.setOnMenuItemClickListener {
+            when(it.itemId) {
+                1-> {
+                    val itent = Intent(this,SettingsActivity::class.java)
+                    startActivity(itent)
+                    true
+                }
+                else -> true
+            }
+        }
 
         //状态检查
         val prefs = getSharedPreferences("status", MODE_PRIVATE)

@@ -12,11 +12,13 @@ object LanguageUtil {
 
     // 设置语言
     fun changeLanguage(context: Context, language: String) {
-        val locale = when (language) {
+        var locale = when (language) {
             LANGUAGE_CHINESE -> Locale.SIMPLIFIED_CHINESE
             LANGUAGE_ENGLISH -> Locale.ENGLISH
             else -> Locale.getDefault() // 默认语言使用系统 Locale
         }
+
+        locale = Locale.ENGLISH
 
         // 更新 Configuration
         val configuration = context.resources.configuration
@@ -44,7 +46,7 @@ object LanguageUtil {
     fun applyLanguage(context: Context) {
         val preferences = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
         val language = preferences.getString(KEY_LANGUAGE, LANGUAGE_DEFAULT) ?: LANGUAGE_DEFAULT
-        changeLanguage(context, language)
+        changeLanguage(context, LANGUAGE_DEFAULT)
     }
 
     // 获取当前语言

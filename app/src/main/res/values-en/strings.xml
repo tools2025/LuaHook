@@ -15,4 +15,15 @@
     <string name="home">Home</string>
     <string name="apps">Apps</string>
     <string name="Xposed_status_ok">Activated</string>
+    <string name="find_us">Check out the source code on GitHub</string>
+    <string name="find_us2">Join our Telegram channel</string>
+    <string name="Tag1">Get the package name</string>
+    <string name="Tag2">Hook introduction</string>
+    <string name="Tag3">Get the class</string>
+    <string name="Tag4">Call the function</string>
+    <string name="Tag5">Modify/get class fields</string>
+    <string name="Tag6">HTTP requests</string>
+    <string name="Tag7">file operation</string>
+    <string name="Tag8">JSON operations</string>
+    <string name="Tag9">import operation</string>
 </resources>

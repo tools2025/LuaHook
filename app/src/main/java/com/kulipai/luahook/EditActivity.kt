@@ -94,7 +94,8 @@ class EditActivity : AppCompatActivity() {
         appVersionTextView.text = getAppVersionName(this)
 
         // 构建包含可点击链接的 SpannableString (与之前的示例代码相同)
-        val descriptionText = "在 GitHub 查看源码\n加入我们的 Telegram 频道"
+        val descriptionText = resources.getString(R.string.find_us) +"\n"+ resources.getString(R.string.find_us2)
+
         val spannableString = SpannableString(descriptionText)
 
         // 设置 GitHub 链接
