@@ -1,4 +1,6 @@
 package com.kulipai.luahook
+import LanguageUtil
+import LanguageUtil.LANGUAGE_ENGLISH
 import android.app.Application
 import android.content.pm.PackageManager
 import android.content.res.Configuration

@@ -19,6 +19,9 @@
         android:theme="@style/Theme.LuaHook"
         tools:targetApi="33">
         <activity
+            android:name=".SettingsActivity"
+            android:exported="false" />
+        <activity
             android:name=".SelectApps"
             android:exported="false" />
         <activity

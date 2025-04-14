@@ -67,15 +67,15 @@ class Manual : AppCompatActivity(), OnCardExpandListener {
 
         val title =
             listOf(
-                "获取包名",
-                "hook介绍",
-                "获取类",
-                "调用函数",
-                "修改/获取类字段",
-                "http请求",
-                "file操作",
-                "json操作",
-                "import操作"
+                resources.getString(R.string.Tag1),
+                resources.getString(R.string.Tag2),
+                resources.getString(R.string.Tag3),
+                resources.getString(R.string.Tag4),
+                resources.getString(R.string.Tag5),
+                resources.getString(R.string.Tag6),
+                resources.getString(R.string.Tag7),
+                resources.getString(R.string.Tag8),
+                resources.getString(R.string.Tag9)
             )
 
         val body = listOf(
