@@ -66,6 +66,10 @@ class LanguageLua private constructor() : Language() {
             package_http.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
         )
         super.addBasePackage(
+            "resources",
+            package_res.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        )
+        super.addBasePackage(
             "file",
             package_file.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
         )
@@ -134,6 +138,7 @@ class LanguageLua private constructor() : Language() {
             "packageName|classLoader|appInfo|isFirstApplication|processName"
         private const val package_http = "get|post"
         private const val package_json = "encode|decode"
+        private const val package_res = "getRConstants|getColor|getString|getResourceId|getDrawable"
         private const val package_file =
             "isFile|isDir|isExists|read|readBytes|write|writeBytes|append|appendBytes|copy|move|rename|delete|getName|getSize"
 

@@ -115,7 +115,15 @@ class LuaEditor : FreeScrollingTextField {
             "http",
             "File",
             "json",
-            "import"
+            "import",
+            "new",
+            "newInstance",
+            "getConstructor",
+            "clearDrawableCache",
+            "loadDrawableFromFile",
+            "loadDrawableAsync",
+            "loadDrawableSync",
+            "resources",
         )
         //String[] Names = {"hook","Xposed","log","setField","getField","invoke"};
         addNames(Names)

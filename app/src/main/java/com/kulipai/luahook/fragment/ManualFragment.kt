@@ -62,17 +62,22 @@ class ManualFragment : Fragment(),OnCardExpandListener {
 //            }
 //        }
 
+
         val title =
             listOf(
-                "获取包名",
-                "hook介绍",
-                "获取类",
-                "调用函数",
-                "修改/获取类字段",
-                "http请求",
-                "file操作",
-                "json操作",
-                "import操作"
+                resources.getString(R.string.Tag1),
+                resources.getString(R.string.Tag2),
+                resources.getString(R.string.Tag3),
+                resources.getString(R.string.Tag4),
+                resources.getString(R.string.Tag5),
+                resources.getString(R.string.Tag6),
+                resources.getString(R.string.Tag7),
+                resources.getString(R.string.Tag8),
+                resources.getString(R.string.Tag9),
+                "new构造方法",
+                "加载网络/本地图片",
+                "获取R类资源"
+
             )
 
         val body = listOf(
@@ -215,7 +220,101 @@ class ManualFragment : Fragment(),OnCardExpandListener {
                 --自定义名称
                 AAA = import "android.widget.Toast"
                 AAA:makeText(activity,"hello",1000):show()
+            """.trimIndent(),
+            """
+                -- new用于基础构造函数
+                --构造File,在lua中不能直接用File("/data/../")
+                --需要用new
+                F = new("java.io.File","/data/...")
+                
+                -- URL
+                url = new("java.net.URL","https://www.google.com")
+                
+                -- 对于参数和构造函数不一致的情况
+                -- 比如这里activity是Context的一个子类，直接用new无法识别参数类型。需要如下构造
+                constructor = getConstructor(xxx:getClass(),"android.content.Context","int","int")
+                aaa = newInstance(constructor,activity,114,514)
+                
+                
+            """.trimIndent(),
+            """
+                -- 异步加载图片,isCache 是 是否启用缓存
+                -- loadDrawableAsync(url,isCache,callback)
+                loadDrawableAsync("https://aaa.png",true,function(drawable)
+                       log(drawable) -- 获取图片drawable属性
+                end)
+                
+                -- 加载本地图片
+                -- drawable = loadDrawableFromFile(path,isCache)
+                drawable = loadDrawableFromFile("/sdcard/a.png",true)
+                
+                -- 清除缓存
+                -- key 特定的缓存键，如果为null且clearAll为true则清除所有缓存，clearAll 是否清除所有缓存，返回是否成功清除缓存
+                -- clearDrawableCache(key,clearAll)
+                clearDrawableCache(nil,true) --清除所有缓存
+            """.trimIndent(),
+            """
+                -- 示例1：获取字符串 (需要有效的 Context 对象)
+                local appNameResId = resources.getResourceId(hostContext, "app_name", "string")
+                if appNameResId and appNameResId ~= 0 then
+                  local appName = resources.getString(hostContext, "app_name")
+                  if appName then
+                    print("App Name: " .. appName)
+                   else
+                    print("Failed to get string for 'app_name'")
+                  end
+                 else
+                  print("Resource ID for 'app_name' not found.")
+                end
+
+                -- 示例2：获取 Drawable (需要有效的 Context 对象)
+                -- 注意：直接在Lua中使用Drawable对象可能意义不大，除非你有特定的库或方法来处理它
+                -- 通常更有用的是获取资源ID，然后在需要的地方使用它（例如，在其他Java调用中）
+                local launcherIcon = resources.getDrawable(hostContext, "ic_launcher")
+                if launcherIcon then
+                  print("Got launcher icon Drawable object: " .. tostring(launcherIcon))
+                  -- 你可能无法直接在纯Lua中显示这个Drawable
+                  -- 可以尝试获取它的类名等信息
+                  print("Icon Class: " .. launcherIcon:getClass():getName())
+                 else
+                  print("Failed to get drawable 'ic_launcher'")
+                end
+
+                -- 示例3：获取颜色 (需要有效的 Context 对象)
+                local primaryColor = resources.getColor(hostContext, "colorPrimary")
+                if primaryColor and primaryColor ~= 0 then -- 检查非0，因为0可能是有效颜色（透明黑）也可能是错误
+                  print(string.format("Primary Color (int): %d (Hex: #%08x)", primaryColor, primaryColor))
+                 else
+                  print("Failed to get color 'colorPrimary'")
+                end
+
+                -- 示例4：获取指定包名的资源 (假设目标包已安装且有权限访问)
+                -- local otherAppIcon = resources.getDrawable(hostContext, "some_icon", "com.other.app")
+                -- if otherAppIcon then
+                --     print("Got icon from another app!")
+                -- else
+                --     print("Failed to get icon from com.other.app")
+                -- end
+
+                -- 示例5: 获取所有 drawable 资源的名称和 ID
+                local drawableConstants = resources.getRConstants(hostContext, "drawable")
+                if drawableConstants then
+                  print("Drawable Resources:")
+                  local count = 0
+                  for name, id in pairs(drawableConstants) do
+                    print(string.format("  %s = %d", name, id))
+                    count = count + 1
+                    if count > 10 then -- 限制打印数量
+                      print("  ... and more")
+                      break
+                    end
+                  end
+                 else
+                  print("Failed to get drawable constants.")
+                end
             """.trimIndent()
+
+
         )
 
         rec.layoutManager =
