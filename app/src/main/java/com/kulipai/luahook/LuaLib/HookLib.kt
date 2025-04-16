@@ -1,17 +1,33 @@
 import android.content.pm.PackageManager
+import android.text.Editable
+import android.text.TextWatcher
+import android.util.Log
+import android.view.GestureDetector
+import android.view.MotionEvent
+import android.view.View
+import android.widget.EditText
+import android.widget.ListView
+import androidx.recyclerview.widget.RecyclerView
 import com.kulipai.luahook.util.d
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
+import org.luaj.vm2.LuaError
+import org.luaj.vm2.LuaTable
 import org.luaj.vm2.LuaValue
 import org.luaj.vm2.Varargs
 import org.luaj.vm2.lib.OneArgFunction
 import org.luaj.vm2.lib.TwoArgFunction
 import org.luaj.vm2.lib.VarArgFunction
 import org.luaj.vm2.lib.jse.CoerceJavaToLua
+import org.luaj.vm2.lib.jse.CoerceLuaToJava
 import java.lang.reflect.Constructor
+import java.lang.reflect.InvocationHandler
 import java.lang.reflect.InvocationTargetException
+import java.lang.reflect.Method
+import java.lang.reflect.Proxy
+import kotlin.jvm.java
 
 class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
 
@@ -230,7 +246,7 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
                             else -> Class.forName(typeName)
                         }
                         paramTypes.add(type as Class<*>)
-                    } catch (e: ClassNotFoundException) {
+                    } catch (_: ClassNotFoundException) {
                         return error("Class not found: $typeName")
                     }
                 }
@@ -238,8 +254,8 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
                 return try {
                     val constructor = clazz.getConstructor(*paramTypes.toTypedArray())
                     CoerceJavaToLua.coerce(constructor)
-                } catch (e: NoSuchMethodException) {
-                    LuaValue.NIL
+                } catch (_: NoSuchMethodException) {
+                    NIL
                 }
             }
         }
@@ -273,7 +289,7 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
                 } catch (e: Exception) {
                     error("An unexpected error occurred: ${e.message}")
                 }
-                return LuaValue.NIL
+                return NIL
             }
         }
 
@@ -339,11 +355,7 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
                                 }
                             }
                         }
-                        if (foundConstructor == null) {
-                            throw e // Re-throw the original NoSuchMethodException if no flexible match found
-                        } else {
-                            foundConstructor
-                        }
+                        foundConstructor ?: throw e // Re-throw the original NoSuchMethodException if no flexible match found
                     }
 
                     constructor.isAccessible = true // 允许访问非公共构造函数
@@ -578,7 +590,6 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
                             }
                         )
 
-
                     }
 
                     PackageManager.PERMISSION_GRANTED
@@ -593,8 +604,544 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
 
 
 
+        globals["hookcotr"] = object : VarArgFunction() {
+            override fun invoke(args: Varargs): LuaValue {
+                try {
+                    val classNameOrClass = args.arg(1)
+                    val classLoader: ClassLoader? = null
+
+                    if (classNameOrClass.isstring()) { // If first arg is a string (class name)
+                        val classLoader = args.optuserdata(2, lpparam.javaClass.classLoader) as ClassLoader
+                        val className = classNameOrClass.tojstring()
+
+                        // Dynamic parameter type handling
+                        val paramTypes = mutableListOf<Class<*>>()
+
+                        // Collect parameter types (starting from index 3)
+                        for (i in 3 until args.narg() - 1) {
+                            val param = args.arg(i)
+                            when {
+                                param.isstring() -> {
+                                    // Support various type conversions
+                                    val typeStr = param.tojstring()
+                                    val type = when (typeStr) {
+                                        "int" -> Int::class.javaPrimitiveType
+                                        "long" -> Long::class.javaPrimitiveType
+                                        "boolean" -> Boolean::class.javaPrimitiveType
+                                        "double" -> Double::class.javaPrimitiveType
+                                        "float" -> Float::class.javaPrimitiveType
+                                        "String" -> String::class.java
+                                        else -> Class.forName(typeStr, true, classLoader)
+                                    }
+                                    paramTypes.add(type!!)
+                                }
+                                // Can expand more type handling here
+                                else -> {
+                                    throw IllegalArgumentException("Unsupported parameter type: ${param.type()}")
+                                }
+                            }
+                        }
+
+                        val beforeFunc = args.optfunction(args.narg() - 1, null)
+                        val afterFunc = args.optfunction(args.narg(), null)
+
+                        XposedHelpers.findAndHookConstructor(
+                            className,
+                            classLoader,
+                            *paramTypes.toTypedArray(),
+                            object : XC_MethodHook() {
+                                override fun beforeHookedMethod(param: MethodHookParam?) {
+                                    beforeFunc?.let { func ->
+                                        val luaParam = CoerceJavaToLua.coerce(param)
+
+                                        // Allow parameter modification in Lua
+                                        val modifiedParam = func.call(luaParam)
+
+                                        // Replace original parameters if modified
+                                        if (!modifiedParam.isnil()) {
+                                            if (modifiedParam.istable()) {
+                                                val table = modifiedParam.checktable()
+                                                val argsTable = table.get("args")
+
+                                                if (argsTable.istable()) {
+                                                    val argsModified = argsTable.checktable()
+                                                    for (i in 1..argsModified.length()) {
+                                                        // Convert Lua parameters back to Java types
+                                                        param?.args?.set(
+                                                            i - 1,
+                                                            fromLuaValue(argsModified.get(i))
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                override fun afterHookedMethod(param: MethodHookParam?) {
+                                    afterFunc?.let { func ->
+                                        val luaParam = CoerceJavaToLua.coerce(param)
+
+                                        // Allow modification of return value in Lua
+                                        val modifiedResult = func.call(luaParam)
+
+                                        // Replace original return value if modified
+                                        if (!modifiedResult.isnil()) {
+                                            param?.result = fromLuaValue(modifiedResult)
+                                        }
+                                    }
+                                }
+                            }
+                        )
+
+                    } else if (classNameOrClass.isuserdata(Class::class.java)) { // If first arg is a Class object
+                        val hookClass = classNameOrClass.touserdata(Class::class.java) as Class<*>
+
+                        // Dynamic parameter type handling
+                        val paramTypes = mutableListOf<Class<*>>()
+
+                        // Collect parameter types (starting from index 2)
+                        for (i in 2 until args.narg() - 1) {
+                            val param = args.arg(i)
+                            when {
+                                param.isstring() -> {
+                                    // Support various type conversions
+                                    val typeStr = param.tojstring()
+                                    val type = when (typeStr) {
+                                        "int" -> Int::class.javaPrimitiveType
+                                        "long" -> Long::class.javaPrimitiveType
+                                        "boolean" -> Boolean::class.javaPrimitiveType
+                                        "double" -> Double::class.javaPrimitiveType
+                                        "float" -> Float::class.javaPrimitiveType
+                                        "String" -> String::class.java
+                                        else -> Class.forName(typeStr, true, classLoader)
+                                    }
+                                    paramTypes.add(type!!)
+                                }
+                                // Can expand more type handling here
+                                else -> {
+                                    throw IllegalArgumentException("Unsupported parameter type: ${param.type()}")
+                                }
+                            }
+                        }
+
+                        val beforeFunc = args.optfunction(args.narg() - 1, null)
+                        val afterFunc = args.optfunction(args.narg(), null)
+
+                        XposedHelpers.findAndHookConstructor(
+                            hookClass,
+                            *paramTypes.toTypedArray(),
+                            object : XC_MethodHook() {
+                                override fun beforeHookedMethod(param: MethodHookParam?) {
+                                    beforeFunc?.let { func ->
+                                        val luaParam = CoerceJavaToLua.coerce(param)
+
+                                        // Allow parameter modification in Lua
+                                        val modifiedParam = func.call(luaParam)
+
+                                        // Replace original parameters if modified
+                                        if (!modifiedParam.isnil()) {
+                                            if (modifiedParam.istable()) {
+                                                val table = modifiedParam.checktable()
+                                                val argsTable = table.get("args")
+
+                                                if (argsTable.istable()) {
+                                                    val argsModified = argsTable.checktable()
+                                                    for (i in 1..argsModified.length()) {
+                                                        // Convert Lua parameters back to Java types
+                                                        param?.args?.set(
+                                                            i - 1,
+                                                            fromLuaValue(argsModified.get(i))
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                override fun afterHookedMethod(param: MethodHookParam?) {
+                                    afterFunc?.let { func ->
+                                        val luaParam = CoerceJavaToLua.coerce(param)
+
+                                        // Allow modification of return value in Lua
+                                        val modifiedResult = func.call(luaParam)
+
+                                        // Replace original return value if modified
+                                        if (!modifiedResult.isnil()) {
+                                            param?.result = fromLuaValue(modifiedResult)
+                                        }
+                                    }
+                                }
+                            }
+                        )
+                    }
+
+                    return NIL
+
+                } catch (e: Exception) {
+                    println("Hook constructor error: ${e.message}")
+                    e.printStackTrace()
+                    return NIL
+                }
+            }
+        }
+
+
+
+
+
+        globals["createProxy"] = object : VarArgFunction() {
+            override fun invoke(args: Varargs): LuaValue {
+                // --- CORRECTED ARGUMENT PARSING ---
+
+                // Argument 1: Interface Class (as Java Class userdata at index 1)
+                val interfaceClass = args.checkuserdata(1, Class::class.java) as Class<*>
+                if (!interfaceClass.isInterface) {
+                    // Use argerror for better Lua-side error reporting
+                    LuaValue.argerror(1, "Expected an interface class")
+                }
+
+                // Argument 2: Lua Table with method implementations (at index 2)
+                val implementationTable = args.checktable(2)
+
+                // Argument 3: Optional ClassLoader (as ClassLoader userdata at index 3)
+                // Default to the interface's classloader if argument 3 is nil or absent.
+                val classLoaderOrDefault = interfaceClass.classLoader // Define default value
+                val classLoader = args.optuserdata(
+                    3, // Index of the Lua argument
+                    ClassLoader::class.java, // Expected Java type
+                    classLoaderOrDefault // Default value if arg 3 is nil/absent
+                ) as ClassLoader? // Cast the result (Object) to ClassLoader?
+                    ?: classLoaderOrDefault // Use default if optuserdata returned null (which it shouldn't with a non-null default, but good practice)
+
+                // Ensure we have a non-null loader (should always be true here)
+                val finalClassLoader = classLoader ?: classLoaderOrDefault
+
+                // --- END OF CORRECTIONS ---
+
+                println("createProxy: Interface=${interfaceClass.name}, Loader=${finalClassLoader}")
+
+                // Create the InvocationHandler
+                val handler = LuaInvocationHandler(implementationTable) // Assumes LuaInvocationHandler class is defined elsewhere
+
+                try {
+                    // Create the proxy instance using the specified class loader
+                    val proxyInstance = Proxy.newProxyInstance(
+                        finalClassLoader, // Use the resolved class loader
+                        arrayOf(interfaceClass),
+                        handler
+                    )
+
+                    // Return the proxy instance coerced to a LuaValue
+                    return CoerceJavaToLua.coerce(proxyInstance)
+
+                } catch (e: Exception) {
+                    println("createProxy error: ${e.message}")
+                    e.printStackTrace() // Log the full stack trace for debugging
+                    // Consider returning a LuaError for better script handling
+                    // throw LuaError("Failed to create proxy: ${e.message}")
+                    return LuaValue.NIL
+                }
+            }
+        }
+
+//// 专门为EditText添加文本变化监听器
+//        globals["registerTextWatcher"] = object : VarArgFunction() {
+//            override fun invoke(args: Varargs): LuaValue {
+//                try {
+//                    if (args.narg() < 2) {
+//                        return LuaValue.error("至少需要两个参数: EditText控件和回调函数")
+//                    }
+//
+//                    // 获取EditText控件
+//                    val editText = args.arg(1).touserdata(View::class.java) as? EditText
+//                        ?: return LuaValue.error("第一个参数必须是EditText对象")
+//
+//                    // 获取回调函数
+//                    val beforeTextChangedCallback = args.optfunction(2, null)
+//                    val onTextChangedCallback = args.optfunction(3, null)
+//                    val afterTextChangedCallback = args.optfunction(4, null)
+//
+//                    // 创建文本监听器
+//                    val textWatcher = object : TextWatcher {
+//                        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+//                            beforeTextChangedCallback?.let {
+//                                try {
+//                                    val luaText = LuaValue.valueOf(s.toString())
+//                                    val luaStart = LuaValue.valueOf(start)
+//                                    val luaCount = LuaValue.valueOf(count)
+//                                    val luaAfter = LuaValue.valueOf(after)
+//                                    it.call(luaText, luaStart, luaCount, luaAfter)
+//                                } catch (e: Exception) {
+//                                    Log.e("LuaXposed", "beforeTextChanged回调执行错误: ${e.message}")
+//                                    e.printStackTrace()
+//                                }
+//                            }
+//                        }
+//
+//                        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+//                            onTextChangedCallback?.let {
+//                                try {
+//                                    val luaText = LuaValue.valueOf(s.toString())
+//                                    val luaStart = LuaValue.valueOf(start)
+//                                    val luaBefore = LuaValue.valueOf(before)
+//                                    val luaCount = LuaValue.valueOf(count)
+//                                    it.call(luaText, luaStart, luaBefore, luaCount)
+//                                } catch (e: Exception) {
+//                                    Log.e("LuaXposed", "onTextChanged回调执行错误: ${e.message}")
+//                                    e.printStackTrace()
+//                                }
+//                            }
+//                        }
+//
+//                        override fun afterTextChanged(s: Editable?) {
+//                            afterTextChangedCallback?.let {
+//                                try {
+//                                    val luaText = LuaValue.valueOf(s.toString())
+//                                    it.call(luaText)
+//                                } catch (e: Exception) {
+//                                    Log.e("LuaXposed", "afterTextChanged回调执行错误: ${e.message}")
+//                                    e.printStackTrace()
+//                                }
+//                            }
+//                        }
+//                    }
+//
+//                    // 添加监听器
+//                    editText.addTextChangedListener(textWatcher)
+//
+//                    return LuaValue.TRUE
+//                } catch (e: Exception) {
+//                    Log.e("LuaXposed", "设置文本监听器错误: ${e.message}")
+//                    e.printStackTrace()
+//                    return LuaValue.error("设置文本监听器错误: ${e.message}")
+//                }
+//            }
+//        }
+//
+//// 为ListView/RecyclerView添加条目点击监听
+//        globals["registerItemClickListener"] = object : VarArgFunction() {
+//            override fun invoke(args: Varargs): LuaValue {
+//                try {
+//                    if (args.narg() < 2) {
+//                        return LuaValue.error("至少需要两个参数: ListView/RecyclerView控件和回调函数")
+//                    }
+//
+//                    val view = args.arg(1).touserdata(View::class.java)
+//                    val callback = args.checkfunction(2)
+//
+//                    when (view) {
+//                        is ListView -> {
+//                            view.setOnItemClickListener { parent, v, position, id ->
+//                                try {
+//                                    val luaParent = CoerceJavaToLua.coerce(parent)
+//                                    val luaView = CoerceJavaToLua.coerce(v)
+//                                    val luaPosition = LuaValue.valueOf(position)
+//                                    val luaId = LuaValue.valueOf(id)
+//                                    callback.call(luaParent, luaView, luaPosition, luaId)
+//                                } catch (e: Exception) {
+//                                    Log.e("LuaXposed", "列表项点击回调执行错误: ${e.message}")
+//                                    e.printStackTrace()
+//                                }
+//                            }
+//                        }
+//                        is RecyclerView -> {
+//                            // 为RecyclerView添加点击监听需要自定义ItemTouchListener
+//                            view.addOnItemTouchListener(object : RecyclerView.OnItemTouchListener {
+//                                val gestureDetector = GestureDetector(view.context, object : GestureDetector.SimpleOnGestureListener() {
+//                                    override fun onSingleTapUp(e: MotionEvent): Boolean {
+//                                        val childView = view.findChildViewUnder(e.x, e.y)
+//                                        if (childView != null) {
+//                                            val position = view.getChildAdapterPosition(childView)
+//                                            try {
+//                                                val luaRecyclerView = CoerceJavaToLua.coerce(view)
+//                                                val luaChildView = CoerceJavaToLua.coerce(childView)
+//                                                val luaPosition = LuaValue.valueOf(position)
+//                                                callback.call(luaRecyclerView, luaChildView, luaPosition)
+//                                            } catch (e: Exception) {
+//                                                Log.e("LuaXposed", "RecyclerView项点击回调执行错误: ${e.message}")
+//                                                e.printStackTrace()
+//                                            }
+//                                            return true
+//                                        }
+//                                        return false
+//                                    }
+//                                })
+//
+//                                override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
+//                                    gestureDetector.onTouchEvent(e)
+//                                    return false
+//                                }
+//
+//                                override fun onTouchEvent(rv: RecyclerView, e: MotionEvent) {}
+//
+//                                override fun onRequestDisallowInterceptTouchEvent(disallowIntercept: Boolean) {}
+//                            })
+//                        }
+//                        else -> {
+//                            return LuaValue.error("不支持的控件类型，只支持ListView或RecyclerView")
+//                        }
+//                    }
+//
+//                    return LuaValue.TRUE
+//                } catch (e: Exception) {
+//                    Log.e("LuaXposed", "设置列表项点击监听器错误: ${e.message}")
+//                    e.printStackTrace()
+//                    return LuaValue.error("设置列表项点击监听器错误: ${e.message}")
+//                }
+//            }
+//        }
+//
+//// 综合手势检测器
+//        globals["registerGestureDetector"] = object : VarArgFunction() {
+//            override fun invoke(args: Varargs): LuaValue {
+//                try {
+//                    if (args.narg() < 2) {
+//                        return LuaValue.error("至少需要两个参数: View控件和回调表")
+//                    }
+//
+//                    val view = args.arg(1).touserdata(View::class.java) as? View
+//                        ?: return LuaValue.error("第一个参数必须是View对象")
+//
+//                    val callbackTable = args.checktable(2)
+//
+//                    // 从表中获取各种回调函数
+//                    val onDownCallback = callbackTable.get("onDown").optfunction(null)
+//                    val onShowPressCallback = callbackTable.get("onShowPress").optfunction(null)
+//                    val onSingleTapUpCallback = callbackTable.get("onSingleTapUp").optfunction(null)
+//                    val onScrollCallback = callbackTable.get("onScroll").optfunction(null)
+//                    val onLongPressCallback = callbackTable.get("onLongPress").optfunction(null)
+//                    val onFlingCallback = callbackTable.get("onFling").optfunction(null)
+//                    val onDoubleTapCallback = callbackTable.get("onDoubleTap").optfunction(null)
+//
+//                    // 创建手势检测器
+//                    val gestureDetector = GestureDetector(view.context, object : GestureDetector.SimpleOnGestureListener() {
+//                        override fun onDown(e: MotionEvent): Boolean {
+//                            return onDownCallback?.let {
+//                                try {
+//                                    val luaEvent = CoerceJavaToLua.coerce(e)
+//                                    val result = it.call(luaEvent)
+//                                    if (result.isboolean()) result.toboolean() else super.onDown(e)
+//                                } catch (e: Exception) {
+//                                    Log.e("LuaXposed", "onDown回调执行错误: ${e.message}")
+//                                    e.printStackTrace()
+//                                    super.onDown(e)
+//                                }
+//                            } ?: super.onDown(e)
+//                        }
+//
+//                        override fun onShowPress(e: MotionEvent) {
+//                            onShowPressCallback?.let {
+//                                try {
+//                                    val luaEvent = CoerceJavaToLua.coerce(e)
+//                                    it.call(luaEvent)
+//                                } catch (e: Exception) {
+//                                    Log.e("LuaXposed", "onShowPress回调执行错误: ${e.message}")
+//                                    e.printStackTrace()
+//                                }
+//                            } ?: super.onShowPress(e)
+//                        }
+//
+//                        override fun onSingleTapUp(e: MotionEvent): Boolean {
+//                            return onSingleTapUpCallback?.let {
+//                                try {
+//                                    val luaEvent = CoerceJavaToLua.coerce(e)
+//                                    val result = it.call(luaEvent)
+//                                    if (result.isboolean()) result.toboolean() else super.onSingleTapUp(e)
+//                                } catch (e: Exception) {
+//                                    Log.e("LuaXposed", "onSingleTapUp回调执行错误: ${e.message}")
+//                                    e.printStackTrace()
+//                                    super.onSingleTapUp(e)
+//                                }
+//                            } ?: super.onSingleTapUp(e)
+//                        }
+//
+//                        override fun onScroll(e1: MotionEvent, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
+//                            return onScrollCallback?.let {
+//                                try {
+//                                    val luaE1 = CoerceJavaToLua.coerce(e1)
+//                                    val luaE2 = CoerceJavaToLua.coerce(e2)
+//                                    val luaDistanceX = LuaValue.valueOf(distanceX.toDouble())
+//                                    val luaDistanceY = LuaValue.valueOf(distanceY.toDouble())
+//                                    val result = it.call(luaE1, luaE2, luaDistanceX, luaDistanceY)
+//                                    if (result.isboolean()) result.toboolean() else super.onScroll(e1, e2, distanceX, distanceY)
+//                                } catch (e: Exception) {
+//                                    Log.e("LuaXposed", "onScroll回调执行错误: ${e.message}")
+//                                    e.printStackTrace()
+//                                    super.onScroll(e1, e2, distanceX, distanceY)
+//                                }
+//                            } ?: super.onScroll(e1, e2, distanceX, distanceY)
+//                        }
+//
+//                        override fun onLongPress(e: MotionEvent) {
+//                            onLongPressCallback?.let {
+//                                try {
+//                                    val luaEvent = CoerceJavaToLua.coerce(e)
+//                                    it.call(luaEvent)
+//                                } catch (e: Exception) {
+//                                    Log.e("LuaXposed", "onLongPress回调执行错误: ${e.message}")
+//                                    e.printStackTrace()
+//                                }
+//                            } ?: super.onLongPress(e)
+//                        }
+//
+//                        override fun onFling(e1: MotionEvent, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
+//                            return onFlingCallback?.let {
+//                                try {
+//                                    val luaE1 = CoerceJavaToLua.coerce(e1)
+//                                    val luaE2 = CoerceJavaToLua.coerce(e2)
+//                                    val luaVelocityX = LuaValue.valueOf(velocityX.toDouble())
+//                                    val luaVelocityY = LuaValue.valueOf(velocityY.toDouble())
+//                                    val result = it.call(luaE1, luaE2, luaVelocityX, luaVelocityY)
+//                                    if (result.isboolean()) result.toboolean() else super.onFling(e1, e2, velocityX, velocityY)
+//                                } catch (e: Exception) {
+//                                    Log.e("LuaXposed", "onFling回调执行错误: ${e.message}")
+//                                    e.printStackTrace()
+//                                    super.onFling(e1, e2, velocityX, velocityY)
+//                                }
+//                            } ?: super.onFling(e1, e2, velocityX, velocityY)
+//                        }
+//
+//                        override fun onDoubleTap(e: MotionEvent): Boolean {
+//                            return onDoubleTapCallback?.let {
+//                                try {
+//                                    val luaEvent = CoerceJavaToLua.coerce(e)
+//                                    val result = it.call(luaEvent)
+//                                    if (result.isboolean()) result.toboolean() else super.onDoubleTap(e)
+//                                } catch (e: Exception) {
+//                                    Log.e("LuaXposed", "onDoubleTap回调执行错误: ${e.message}")
+//                                    e.printStackTrace()
+//                                    super.onDoubleTap(e)
+//                                }
+//                            } ?: super.onDoubleTap(e)
+//                        }
+//                    })
+//
+//                    // 启用双击检测
+//                    gestureDetector.setIsLongpressEnabled(true)
+//
+//                    // 添加触摸监听
+//                    view.setOnTouchListener { v, event ->
+//                        gestureDetector.onTouchEvent(event)
+//                        true
+//                    }
+//
+//                    return LuaValue.TRUE
+//                } catch (e: Exception) {
+//                    Log.e("LuaXposed", "设置手势检测器错误: ${e.message}")
+//                    e.printStackTrace()
+//                    return LuaValue.error("设置手势检测器错误: ${e.message}")
+//                }
+//            }
+//        }
+
         return NIL
     }
+
+
+
+
 
 
     // 将Lua值转换回Java类型
@@ -608,6 +1155,82 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
             value.isstring() -> value.tojstring()
             value.isuserdata() -> value.touserdata()
             else -> null
+        }
+    }
+
+
+    class LuaInvocationHandler(private val luaTable: LuaTable) : InvocationHandler {
+
+        override fun invoke(proxy: Any, method: Method, args: Array<Any?>?): Any? {
+            val methodName = method.name
+            val luaFunction = luaTable.get(methodName)
+
+            // Debugging log
+            // println("Proxy invoked: Method=$methodName, LuaFunction found=${!luaFunction.isnil()}")
+
+            return if (luaFunction.isfunction()) {
+                try {
+                    // Convert Java arguments to LuaValue varargs
+                    val luaArgs = convertArgsToLuaValues(args)
+                    // Call the Lua function
+                    // Note: Lua functions typically don't receive 'self' implicitly when called from Java proxies.
+                    // We pass only the method arguments.
+                    val result = luaFunction.invoke(luaArgs) // Use invoke for Varargs
+
+                    // Convert the Lua return value back to the expected Java type
+                    CoerceLuaToJava.coerce(result.arg1(), method.returnType) // result is Varargs, get first value
+                } catch (e: LuaError) {
+                    println("LuaError during proxy invocation of '$methodName': ${e.message}")
+                    // Decide how to handle Lua errors. Re-throwing might be appropriate.
+                    throw RuntimeException("Lua execution failed for method $methodName", e)
+                } catch (e: Exception) {
+                    println("Exception during proxy invocation of '$methodName': ${e.message}")
+                    throw RuntimeException("Java exception during proxy method $methodName", e) // Re-throw
+                }
+            } else {
+                // Handle standard Object methods or missing implementations
+                when (methodName) {
+                    "toString" -> "LuaProxy<${proxy.javaClass.interfaces.firstOrNull()?.name ?: "UnknownInterface"}>@${Integer.toHexString(hashCode())}"
+                    "hashCode" -> luaTable.hashCode() // Or System.identityHashCode(proxy)? Or handler's hashcode? Be consistent.
+                    "equals" -> proxy === args?.get(0) // Standard proxy equality check
+                    else -> {
+                        // No Lua function found for this method
+                        println("Warning: No Lua implementation found for proxied method: $methodName")
+                        // Return default value based on return type, or throw exception
+                        if (method.returnType == Void.TYPE) {
+                            null // Return null for void methods
+                        } else if (method.returnType.isPrimitive) {
+                            // Return default primitive values (0, false)
+                            when (method.returnType) {
+                                Boolean::class.javaPrimitiveType -> false
+                                Char::class.javaPrimitiveType -> '\u0000'
+                                Byte::class.javaPrimitiveType -> 0.toByte()
+                                Short::class.javaPrimitiveType -> 0.toShort()
+                                Int::class.javaPrimitiveType -> 0
+                                Long::class.javaPrimitiveType -> 0L
+                                Float::class.javaPrimitiveType -> 0.0f
+                                Double::class.javaPrimitiveType -> 0.0
+                                else -> throw UnsupportedOperationException("Unsupported primitive return type: ${method.returnType.name}")
+                            }
+                        } else {
+                            // Return null for object return types
+                            null
+                            // Alternatively, throw an exception:
+                            // throw UnsupportedOperationException("No Lua implementation for method: $methodName")
+                        }
+                    }
+                }
+            }
+        }
+
+        // Helper function to convert Java args array to LuaValue Varargs
+        private fun convertArgsToLuaValues(javaArgs: Array<Any?>?): Varargs {
+            if (javaArgs == null || javaArgs.isEmpty()) {
+                return LuaValue.NONE
+            }
+            val luaArgs = javaArgs.map { CoerceJavaToLua.coerce(it) }.toTypedArray()
+            // Important: Use varargsOf, not listOf, to create Varargs correctly
+            return LuaValue.varargsOf(luaArgs)
         }
     }
 

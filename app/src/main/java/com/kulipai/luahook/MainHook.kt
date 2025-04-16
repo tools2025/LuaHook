@@ -8,11 +8,6 @@ import LuaImport
 import LuaJson
 import LuaResourceBridge
 import Luafile
-import android.content.Context
-import android.content.pm.PackageManager
-import android.graphics.BitmapFactory
-import android.graphics.drawable.BitmapDrawable
-import android.graphics.drawable.Drawable
 import com.kulipai.luahook.util.d
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.IXposedHookZygoteInit
@@ -21,32 +16,12 @@ import de.robv.android.xposed.XSharedPreferences
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import okhttp3.Cache
-import okhttp3.Call
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.Response
 import org.luaj.vm2.Globals
-import org.luaj.vm2.LuaError
-import org.luaj.vm2.LuaString
 import org.luaj.vm2.LuaValue
-
-import org.luaj.vm2.Varargs
 import org.luaj.vm2.lib.OneArgFunction
-import org.luaj.vm2.lib.TwoArgFunction
-import org.luaj.vm2.lib.VarArgFunction
 import org.luaj.vm2.lib.jse.CoerceJavaToLua
 import org.luaj.vm2.lib.jse.JsePlatform
 import java.io.File
-import java.io.IOException
-import java.lang.reflect.Constructor
-import java.util.concurrent.TimeUnit
-import kotlin.reflect.KClass
-import kotlin.reflect.cast
-import androidx.core.graphics.drawable.toDrawable
 
 
 class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
@@ -118,6 +93,8 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
         val globals: Globals = JsePlatform.standardGlobals()
 
         //加载Lua模块
+        globals["XposedHelpers"] = CoerceJavaToLua.coerce(XposedHelpers::class.java)
+        globals["XposedBridge"] = CoerceJavaToLua.coerce(XposedBridge::class.java)
         HookLib(lpparam).call(globals)
         LuaJson().call(globals)
         LuaHttp().call(globals)
@@ -137,11 +114,7 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
 
         LuaResourceBridge().registerTo(globals)
 
-
         LuaDrawableLoader().registerTo(globals)
-
-
-
 
         //全局脚本
         try {
@@ -167,10 +140,6 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
 
 
     }
-
-
-
-
 
 
 }

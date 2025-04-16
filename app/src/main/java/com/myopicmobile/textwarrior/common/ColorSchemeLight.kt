@@ -15,16 +15,16 @@ package com.myopicmobile.textwarrior.common
 class ColorSchemeLight : ColorScheme() {
     init {
         setColor(Colorable.FOREGROUND, OFF_BLACK)
-        setColor(Colorable.BACKGROUND, OFF_WHITE)
-        setColor(Colorable.SELECTION_FOREGROUND, OFF_WHITE)
-        setColor(Colorable.CARET_FOREGROUND, OFF_WHITE)
+        setColor(Colorable.BACKGROUND, OFF_WHITE.toInt())
+        setColor(Colorable.SELECTION_FOREGROUND, OFF_WHITE.toInt())
+        setColor(Colorable.CARET_FOREGROUND, OFF_WHITE.toInt())
     }
 
     override val isDark: Boolean
         get() = false
 
     companion object {
-        private const val OFF_WHITE = -0xf0f13
+        private const val OFF_WHITE = 0   //背景
         private const val OFF_BLACK = -0xcccccd
     }
 }

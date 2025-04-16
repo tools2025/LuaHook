@@ -13,11 +13,12 @@ class LuaImport(private val classLoader: ClassLoader,private val env:LuaValue) :
             // 提取简名作为全局变量（例如 java.io.File -> File）
             val simpleName = className.substringAfterLast('.')
             env.set(simpleName, luaClass)
-
             luaClass
         } catch (e: Exception) {
             println("import error: ${e.message}")
-            LuaValue.NIL
+            NIL
         }
     }
+
+
 }

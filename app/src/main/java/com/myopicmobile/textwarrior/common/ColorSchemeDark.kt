@@ -37,7 +37,7 @@ class ColorSchemeDark : ColorScheme() {
         private const val LIGHT_GREY = -0x2c2c2d
         private const val MARINE = -0xa9632a
         private const val OCEAN_BLUE = -0xda9c6b
-        private const val OFF_BLACK = -0xfbfbfc
+        private const val OFF_BLACK = 0
         private const val OFF_WHITE = -0x2f2d2d
         private const val PEACH = -0x29627b
     }

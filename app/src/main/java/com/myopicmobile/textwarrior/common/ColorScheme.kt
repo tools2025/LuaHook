@@ -74,11 +74,11 @@ abstract class ColorScheme {
         colors.put(Colorable.LINE_HIGHLIGHT, 0x20888888)
 
         colors.put(Colorable.NON_PRINTING_GLYPH, LIGHT_GREY)
-        colors.put(Colorable.COMMENT, OLIVE_GREEN) //  Eclipse default color
-        colors.put(Colorable.KEYWORD, DARK_BLUE) // Eclipse default color
-        colors.put(Colorable.NAME, INDIGO) // Eclipse default color
-        colors.put(Colorable.LITERAL, LIGHT_BLUE) // Eclipse default color
-        colors.put(Colorable.STRING, PURPLE) // Eclipse default color
+        colors.put(Colorable.COMMENT, OLIVE_GREEN.toInt()) //  Eclipse default color
+        colors.put(Colorable.KEYWORD, DARK_BLUE.toInt()) // Eclipse default color
+        colors.put(Colorable.NAME, INDIGO.toInt()) // Eclipse default color
+        colors.put(Colorable.LITERAL, LIGHT_BLUE.toInt()) // Eclipse default color
+        colors.put(Colorable.STRING, PURPLE.toInt()) // Eclipse default color
         colors.put(Colorable.SECONDARY, GREY)
         return colors
     }
@@ -88,17 +88,17 @@ abstract class ColorScheme {
         private const val BLACK = -0x1000000
         private const val BLUE = -0xffff01
         private const val DARK_RED = -0x750000
-        private const val DARK_BLUE = -0x2fbf23
+        private const val DARK_BLUE = 0xFFB4002D   //if g关键字
         private const val GREY = -0x7f7f80
         private const val LIGHT_GREY = -0x555556
         private const val MAROON = -0x800000
-        private const val INDIGO = -0xd5bf01
-        private const val OLIVE_GREEN = -0xc080a1
-        private const val PURPLE = -0x22bb78
+        private const val INDIGO = 0xFF4477E0   //函数方法变量
+        private const val OLIVE_GREEN = 0xFF488064  // 注释
+        private const val PURPLE = 0xFFBB2661  //字符串颜色
         private const val RED = 0x44FF0000
         private const val WHITE = -0x20
         private const val PURPLE2 = -0xff01
-        private const val LIGHT_BLUE = -0x9f7f01
+        private const val LIGHT_BLUE = 0xFF5967B9  //数字颜色
         private const val LIGHT_BLUE2 = -0xbf4f01
         private const val GREEN = -0x775578
     }

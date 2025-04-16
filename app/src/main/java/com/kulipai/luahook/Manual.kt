@@ -78,7 +78,9 @@ class Manual : AppCompatActivity(), OnCardExpandListener {
                 resources.getString(R.string.Tag9),
                 "new构造方法",
                 "加载网络/本地图片",
-                "获取R类资源"
+                "获取R类资源",
+                "hook构造方法",
+                "创建代理createProxy"
 
             )
 
@@ -314,6 +316,33 @@ class Manual : AppCompatActivity(), OnCardExpandListener {
                  else
                   print("Failed to get drawable constants.")
                 end
+            """.trimIndent(),
+            """
+                -- 顾名思义 hook构造方法
+                hookcotr("com.ad2001.frida0x7.Checker",
+                lpparam.classLoader,
+                "int","int",
+                function(it)
+                  it.args[1]=666
+                  it.args[2]=777
+                end,
+                function(it)
+                  --log(it.result)
+                end)
+            """.trimIndent(),
+            """
+                -- 类似luajava的createProxy，它允许你在 Lua 中创建一个 Java 接口的代理对象。
+                -- 比如点击事件监听
+                local listenerInterface = findClass("android.view.View${'$'}OnClickListener", classLoader1)
+                local listenerImpl = {
+                  onClick = function(view) -- The argument 'view' will be passed from Java
+                    log("145141")
+                  end
+                }
+
+                local onClickListener = createProxy(listenerInterface, listenerImpl, classLoader1)
+
+                button:setOnClickListener(onClickListener)
             """.trimIndent()
 
 

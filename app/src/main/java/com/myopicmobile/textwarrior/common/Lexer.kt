@@ -11,6 +11,7 @@ package com.myopicmobile.textwarrior.common
 import android.graphics.Rect
 import com.androlua.LuaLexer
 import com.androlua.LuaTokenTypes
+import com.kulipai.luahook.util.d
 import com.myopicmobile.textwarrior.common.TextWarriorException.Companion.fail
 
 //import static com.myopicmobile.textwarrior.common.LuaTokenTypes;
@@ -227,9 +228,17 @@ class Lexer(callback: LexCallback?) {
                             tokens.add(Pair(len, SINGLE_SYMBOL_DELIMITED_A).also { pair = it })
                             if (rowCount > maxRow) break
 
-                            if (lastName == "require") isModule = true
+                            if (lastName == "require") {
+                                isModule = true
+                                bul.append(lexer.yytext())
+                            }
+                            if (lastName == "import") {
+                                isModule = true
+                                bul.append(lexer.yytext()[0]+lexer.yytext().substringAfterLast("."))
+                            }
 
-                            if (isModule) bul.append(lexer.yytext())
+
+
                         }
 
                         LuaTokenTypes.NAME -> {
