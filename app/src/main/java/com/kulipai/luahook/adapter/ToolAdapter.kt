@@ -3,8 +3,10 @@ package com.kulipai.luahook.adapter
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.card.MaterialCardView
 import com.kulipai.luahook.LuaEditor
 import com.kulipai.luahook.R
 
@@ -13,9 +15,10 @@ class ToolAdapter(private val symbols: List<String>, private val editor: LuaEdit
 
     inner class SymbolViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val symbolTextView: TextView = itemView.findViewById(R.id.symbolTextView) // 使用自定义布局中的 ID
+        val symbolItem: MaterialCardView = itemView.findViewById(R.id.symbolItem) // 使用自定义布局中的 ID
 
         init {
-            symbolTextView.setOnClickListener {
+            symbolItem.setOnClickListener {
                 val symbol = symbols[adapterPosition]
                 var idx = editor.selectionStart
                 if (editor.isSelected && symbol == "\"") {
@@ -23,22 +26,14 @@ class ToolAdapter(private val symbols: List<String>, private val editor: LuaEdit
                     editor.insert(editor.selectionEnd, symbol)
                 }
                 when (symbol) {
-                    "hook" -> editor.insert(
+                    "log" -> {editor.insert(
                         idx,
-                        """hook("class",
-lpparam.classLoader,
-"fun",
---"type",
-function(it)
-  --log(it.args[1])
-
-end,
-function(it)
-  --log(it.result)
-end)"""
+                        """log()"""
                     )
+                        editor.setSelection(editor.selectionStart-1)
+                    }
 
-                    "lp" -> editor.insert(idx,"lpparam")
+                    "lp" -> editor.insert(idx, "lpparam")
                     else -> editor.insert(editor.selectionStart, symbol)
                 }
 

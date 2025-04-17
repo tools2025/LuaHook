@@ -5,6 +5,7 @@ import android.content.Context
 import android.graphics.Rect
 import android.os.Bundle
 import android.view.View
+import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.ImageView
 import androidx.activity.enableEdgeToEdge
@@ -16,6 +17,7 @@ import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.card.MaterialCardView
 import com.google.android.material.color.DynamicColors
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.kulipai.luahook.fragment.AppInfo
@@ -40,6 +42,7 @@ class SelectApps : AppCompatActivity() {
     private val fab: FloatingActionButton by lazy { findViewById(R.id.fab) }
     private  val searchEdit: EditText by lazy { findViewById(R.id.search_bar_text_view) }
     private val clearImage: ImageView by lazy { findViewById(R.id.clear_text) }
+    private val searchbar: MaterialCardView by lazy { findViewById(R.id.searchbar) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         DynamicColors.applyToActivityIfAvailable(this)
@@ -86,6 +89,14 @@ class SelectApps : AppCompatActivity() {
                 }
             }
         })
+
+
+        searchbar.setOnClickListener {
+            searchEdit.requestFocus()
+            // 显示软键盘
+            val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+            imm.showSoftInput(searchEdit, InputMethodManager.SHOW_IMPLICIT)
+        }
 
         //搜索
         searchEdit.doAfterTextChanged { s ->

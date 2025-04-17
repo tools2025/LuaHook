@@ -101,7 +101,25 @@ class AppsEdit : AppCompatActivity() {
         }
 
         val symbols =
-            listOf("hook", "lp", "(", ")", "\"", ":", "=", "[", "]", "{", "}", "+", "-", "?", "!")
+            listOf(
+                "log",
+                "lp",
+                "(",
+                ")",
+                "\"",
+                ":",
+                ",",
+                "=",
+                "[",
+                "]",
+                "+",
+                "-",
+                "{",
+                "}",
+                "?",
+                "!",
+
+            )
         val symbolRecyclerView: RecyclerView = findViewById(R.id.symbolRecyclerView)
         symbolRecyclerView.layoutManager =
             LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)

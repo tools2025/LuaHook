@@ -24,7 +24,7 @@ class ColorSchemeLight : ColorScheme() {
         get() = false
 
     companion object {
-        private const val OFF_WHITE = 0   //背景
+        private const val OFF_WHITE = 0xFFF0F0ED
         private const val OFF_BLACK = -0xcccccd
     }
 }

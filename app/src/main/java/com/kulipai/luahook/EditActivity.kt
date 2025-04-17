@@ -1,7 +1,6 @@
 package com.kulipai.luahook
 
 import android.annotation.SuppressLint
-import com.kulipai.luahook.adapter.ToolAdapter
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -35,13 +34,12 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.MaterialToolbar
-import com.google.android.material.color.DynamicColors
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.kulipai.luahook.adapter.ToolAdapter
 import kotlin.system.exitProcess
 
 class EditActivity : AppCompatActivity() {
-
 
 
     private fun getAppVersionName(context: Context): String {
@@ -94,7 +92,8 @@ class EditActivity : AppCompatActivity() {
         appVersionTextView.text = getAppVersionName(this)
 
         // 构建包含可点击链接的 SpannableString (与之前的示例代码相同)
-        val descriptionText = resources.getString(R.string.find_us) +"\n"+ resources.getString(R.string.find_us2)
+        val descriptionText =
+            resources.getString(R.string.find_us) + "\n" + resources.getString(R.string.find_us2)
 
         val spannableString = SpannableString(descriptionText)
 
@@ -192,7 +191,7 @@ class EditActivity : AppCompatActivity() {
         //保存状态
         val prefs = getSharedPreferences("status", MODE_PRIVATE)
         prefs.edit {
-            putString("current","global")
+            putString("current", "global")
         }
 
 
@@ -221,7 +220,7 @@ class EditActivity : AppCompatActivity() {
         menu?.add(0, 2, 0, "Redo")
             ?.setIcon(R.drawable.redo_24px)
             ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM)
-        menu?.add(0, 3, 0,  resources.getString(R.string.format))
+        menu?.add(0, 3, 0, resources.getString(R.string.format))
             ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
         menu?.add(0, 4, 0, resources.getString(R.string.log))  //LogCat
             ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
@@ -322,7 +321,25 @@ class EditActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
 
         val symbols =
-            listOf("hook", "lp", "(", ")", "\"", ":", "=", "[", "]", "{", "}", "+", "-", "?", "!")
+            listOf(
+                "log",
+                "lp",
+                "(",
+                ")",
+                "\"",
+                ":",
+                ",",
+                "=",
+                "[",
+                "]",
+                "+",
+                "-",
+                "{",
+                "}",
+                "?",
+                "!",
+
+                )
         val symbolRecyclerView: RecyclerView = findViewById(R.id.symbolRecyclerView)
         symbolRecyclerView.layoutManager =
             LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
@@ -345,7 +362,7 @@ class EditActivity : AppCompatActivity() {
                 // 因为 bottomSymbolBar 已经移动到输入法上方
                 view.setPadding(
                     navigationBarInsets.left,
-                    statusBarInsets.top,
+                    0,
                     navigationBarInsets.right,
                     0
                 )
@@ -354,7 +371,7 @@ class EditActivity : AppCompatActivity() {
                 // 输入法不可见时，设置底部内边距以避免内容被导航栏遮挡
                 view.setPadding(
                     navigationBarInsets.left,
-                    statusBarInsets.top,
+                    0,
                     navigationBarInsets.right,
                     navigationBarInsets.bottom
                 )
@@ -365,9 +382,6 @@ class EditActivity : AppCompatActivity() {
 
         // 确保在布局稳定后请求 WindowInsets，以便监听器能够正确工作
         ViewCompat.requestApplyInsets(rootLayout)
-
-        //夜间模式
-        editor.setDark(isNightMode(this))
 
         var luaScript = readPrefs(this)
         if (luaScript == "") {

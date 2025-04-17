@@ -8,6 +8,8 @@
     tools:context=".EditActivity">
 
     <com.google.android.material.appbar.AppBarLayout
+
+        android:fitsSystemWindows="true"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
@@ -61,7 +63,7 @@
             android:layout_gravity="center"
             android:id="@+id/symbolRecyclerView"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:orientation="horizontal" />
     </LinearLayout>
 

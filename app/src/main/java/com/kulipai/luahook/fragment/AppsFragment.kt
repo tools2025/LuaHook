@@ -16,6 +16,7 @@ import android.widget.EditText
 import android.widget.ImageView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.content.edit
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
@@ -24,6 +25,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.card.MaterialCardView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.kulipai.luahook.MyApplication
 import com.kulipai.luahook.R
@@ -35,6 +37,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import android.view.inputmethod.InputMethodManager
 
 data class AppInfo(
     val appName: String,
@@ -128,6 +131,7 @@ class AppsFragment : Fragment() {
         val fab: FloatingActionButton by lazy { view.findViewById(R.id.fab) }
         val searchEdit: EditText by lazy { view.findViewById(R.id.search_bar_text_view) }
         val clearImage: ImageView by lazy { view.findViewById(R.id.clear_text) }
+        val searchbar: MaterialCardView by lazy { view.findViewById(R.id.searchbar) }
 
         // 设置rec的bottom高度适配
         activity?.findViewById<BottomNavigationView>(R.id.bottomBar)?.let { bottomNavigationView ->
@@ -157,6 +161,14 @@ class AppsFragment : Fragment() {
 
 
         }
+
+        searchbar.setOnClickListener {
+            searchEdit.requestFocus()
+            // 显示软键盘
+            val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            imm.showSoftInput(searchEdit, InputMethodManager.SHOW_IMPLICIT)
+        }
+
 
 
         //搜索

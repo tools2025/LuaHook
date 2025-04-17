@@ -11,8 +11,8 @@ package com.myopicmobile.textwarrior.common
 
 class ColorSchemeDark : ColorScheme() {
     init {
-        setColor(Colorable.FOREGROUND, OFF_WHITE)
-        setColor(Colorable.BACKGROUND, OFF_BLACK)
+        setColor(Colorable.FOREGROUND, OFF_WHITE.toInt())
+        setColor(Colorable.BACKGROUND, OFF_BLACK.toInt())
         //setColor(Colorable.SELECTION_FOREGROUND, OFF_WHITE);
         //setColor(Colorable.SELECTION_BACKGROUND, OCEAN_BLUE);
         //setColor(Colorable.CARET_FOREGROUND, OFF_BLACK);
@@ -38,7 +38,7 @@ class ColorSchemeDark : ColorScheme() {
         private const val MARINE = -0xa9632a
         private const val OCEAN_BLUE = -0xda9c6b
         private const val OFF_BLACK = 0
-        private const val OFF_WHITE = -0x2f2d2d
+        private const val OFF_WHITE = 0xFFD0D2D3
         private const val PEACH = -0x29627b
     }
 }
