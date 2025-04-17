@@ -18,8 +18,8 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.MaterialToolbar
-import com.google.android.material.color.DynamicColors
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.kulipai.luahook.adapter.SymbolAdapter
 import com.kulipai.luahook.adapter.ToolAdapter
 import kotlin.system.exitProcess
 
@@ -32,6 +32,8 @@ class AppsEdit : AppCompatActivity() {
     private val fab: FloatingActionButton by lazy { findViewById(R.id.fab) }
     private val rootLayout: CoordinatorLayout by lazy { findViewById(R.id.main) }
     private val bottomSymbolBar: LinearLayout by lazy { findViewById(R.id.bottomBar) }
+    private val symbolRecyclerView: RecyclerView by lazy  {findViewById(R.id.symbolRecyclerView)}
+    private val ToolRec: RecyclerView by lazy  {findViewById(R.id.toolRec)}
 
 
     //全局变量
@@ -120,10 +122,27 @@ class AppsEdit : AppCompatActivity() {
                 "!",
 
             )
-        val symbolRecyclerView: RecyclerView = findViewById(R.id.symbolRecyclerView)
+
         symbolRecyclerView.layoutManager =
             LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
-        symbolRecyclerView.adapter = ToolAdapter(symbols, editor)
+        symbolRecyclerView.adapter = SymbolAdapter(symbols, editor)
+
+
+
+        val tool =
+            listOf(
+                "Hook方法",
+                "Hook构造",
+                "方法签名"
+
+
+            )
+
+        ToolRec.layoutManager =
+            LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        ToolRec.adapter = ToolAdapter(tool, editor,this)
+
+
 
 
 

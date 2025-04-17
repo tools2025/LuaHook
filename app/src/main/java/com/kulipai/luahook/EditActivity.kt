@@ -36,7 +36,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.kulipai.luahook.adapter.ToolAdapter
+import com.kulipai.luahook.adapter.SymbolAdapter
 import kotlin.system.exitProcess
 
 class EditActivity : AppCompatActivity() {
@@ -343,7 +343,7 @@ class EditActivity : AppCompatActivity() {
         val symbolRecyclerView: RecyclerView = findViewById(R.id.symbolRecyclerView)
         symbolRecyclerView.layoutManager =
             LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
-        symbolRecyclerView.adapter = ToolAdapter(symbols, editor)
+        symbolRecyclerView.adapter = SymbolAdapter(symbols, editor)
 
 
         //窗口处理

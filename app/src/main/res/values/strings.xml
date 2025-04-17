@@ -31,4 +31,8 @@
     <string name="follow_system">跟随系统</string>
     <string name="appearance">界面外观</string>
     <string name="setting">设置</string>
+    <string name="className">类名</string>
+    <string name="funcName">方法名</string>
+    <string name="param">参数</string>
+    <string name="funcSign">方法签名</string>
 </resources>

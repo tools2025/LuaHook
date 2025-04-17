@@ -29,6 +29,7 @@
                 android:contentDescription="@string/search"
                 android:src="@drawable/search_24px"/>
             <EditText
+                android:singleLine="true"
                 android:id="@+id/search_bar_text_view"
                 android:layout_marginStart="12dp"
                 android:autofillHints=""
