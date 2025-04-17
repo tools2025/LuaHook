@@ -7,12 +7,14 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import com.kulipai.luahook.LuaEditor
 import com.kulipai.luahook.R
+import com.kulipai.luahook.util.d
 
 class ToolAdapter(
     private val symbols: List<String>,
@@ -48,8 +50,7 @@ class ToolAdapter(
                                     view.findViewById<TextInputEditText>(R.id.funcName).text.toString()
                                 val param: String =
                                     view.findViewById<TextInputEditText>(R.id.param).text.toString()
-                                val p = param.split(",").joinToString(",") { "\"${it.trim()}\"" }
-
+                                var p = param.split(",").joinToString(",") { "\"${it.trim()}\"" }
                                 val hookLua =
                                     "hook(\"$className\",\nlpparam.classLoader,\n\"$funcName\",\n$p,\nfunction(it)\n\nend,\nfunction(it)\n\nend)"
                                 editor.insert(editor.selectionStart, hookLua)
@@ -72,7 +73,7 @@ class ToolAdapter(
                                     view.findViewById<TextInputEditText>(R.id.className).text.toString()
                                 val param: String =
                                     view.findViewById<TextInputEditText>(R.id.param).text.toString()
-                                val p = param.split(",").joinToString(",") { "\"${it.trim()}\"" }
+                                var p = param.split(",").joinToString(",") { "\"${it.trim()}\"" }
 
                                 val hookLua =
                                     "hookcotr(\"$className\",\nlpparam.classLoader,\n$p,\nfunction(it)\n\nend,\nfunction(it)\n\nend)"
@@ -95,12 +96,31 @@ class ToolAdapter(
                             .setPositiveButton("确定") { dialog, which ->
                                 val input: String =
                                     view.findViewById<TextInputEditText>(R.id.input).text.toString()
-                                val methodInfo = parseMethodSignature(input)
-                                val p =
-                                    methodInfo.parameterTypes.joinToString(",") { "\"${it.trim()}\"" }
 
-                                val hookLua =
-                                    "hook(\"${methodInfo.className}\",\nlpparam.classLoader,\n\"${methodInfo.methodName}\",\n$p,\nfunction(it)\n\nend,\nfunction(it)\n\nend)"
+                                var methodInfo: MethodInfo
+                                try {
+                                    methodInfo = parseMethodSignature(input)
+
+                                } catch (e: Exception) {
+                                    Toast.makeText(context, "参数错误", Toast.LENGTH_SHORT).show()
+                                    return@setPositiveButton
+                                }
+
+
+                                val par = methodInfo.parameterTypes
+                                par.size.toString().d()
+                                var p =
+                                    if (par.isEmpty()) "" else "\n" + par.joinToString(",") { "\"${it.trim()}\"" } + ","
+
+                                var hookLua: String
+                                if (methodInfo.methodName == "<init>") {
+                                    hookLua =
+                                        "hookcotr(\"${methodInfo.className}\",\nlpparam.classLoader,$p\nfunction(it)\n\nend,\nfunction(it)\n\nend)"
+                                } else {
+                                    hookLua =
+                                        "hook(\"${methodInfo.className}\",\nlpparam.classLoader,\n\"${methodInfo.methodName}\",$p\nfunction(it)\n\nend,\nfunction(it)\n\nend)"
+
+                                }
 
                                 editor.insert(editor.selectionStart, hookLua)
                                 dialog.dismiss()

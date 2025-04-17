@@ -13,8 +13,8 @@ android {
         applicationId = "com.kulipai.luahook"
         minSdk = 28
         targetSdk = 35
-        versionCode = 6
-        versionName = "2.5-beta"
+        versionCode = 7
+        versionName = "2.6-beta"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -55,5 +55,9 @@ dependencies {
     compileOnly(fileTree("compileOnly"))
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.fragment.ktx)
+    val libsuVersion = "6.0.0"
+
+    // The core module that provides APIs to a shell
+    implementation("com.github.topjohnwu.libsu:core:$libsuVersion")
 
 }

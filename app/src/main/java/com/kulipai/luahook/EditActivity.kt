@@ -187,25 +187,6 @@ class EditActivity : AppCompatActivity() {
             .show()
     }
 
-    fun Context.softRestartApp(delayMillis: Long = 100) {
-        //保存状态
-        val prefs = getSharedPreferences("status", MODE_PRIVATE)
-        prefs.edit {
-            putString("current", "global")
-        }
-
-
-        val packageManager = packageManager
-        val intent = packageManager.getLaunchIntentForPackage(packageName)
-        intent?.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
-
-        Handler(Looper.getMainLooper()).postDelayed({
-            startActivity(intent)
-            // 结束当前应用的所有 Activity
-            android.os.Process.killProcess(android.os.Process.myPid())
-            exitProcess(0)
-        }, delayMillis)
-    }
 
     fun isNightMode(context: Context): Boolean {
         return (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
@@ -289,7 +270,7 @@ class EditActivity : AppCompatActivity() {
 
     // 写入 SharedPreferences 并修改权限
     fun savePrefs(context: Context, text: String) {
-        val prefs = context.getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+        val prefs = context.getSharedPreferences(PREFS_NAME, MODE_WORLD_READABLE)
         prefs.edit().apply {
             putString("lua", text)
             apply()
@@ -298,7 +279,7 @@ class EditActivity : AppCompatActivity() {
     }
 
     fun readPrefs(context: Context): String {
-        val prefs = context.getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+        val prefs = context.getSharedPreferences(PREFS_NAME, MODE_WORLD_READABLE)
         return prefs.getString("lua", "") ?: ""
     }
 
@@ -395,7 +376,6 @@ class EditActivity : AppCompatActivity() {
         fab.setOnClickListener {
             savePrefs(this@EditActivity, editor.text.toString())
             Toast.makeText(this, resources.getString(R.string.save_ok), Toast.LENGTH_SHORT).show()
-            softRestartApp()
         }
 
 
