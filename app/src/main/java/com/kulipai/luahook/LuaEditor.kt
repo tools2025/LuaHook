@@ -130,7 +130,7 @@ class LuaEditor : FreeScrollingTextField {
             "createProxy",
             "DexKitBridge",
             "findClass",
-            "XpHelper"
+            "DexFinder",
         )
         //String[] Names = {"hook","Xposed","log","setField","getField","invoke"};
         addNames(Names)

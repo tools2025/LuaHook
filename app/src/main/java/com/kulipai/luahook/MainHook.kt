@@ -8,6 +8,8 @@ import LuaImport
 import LuaJson
 import LuaResourceBridge
 import Luafile
+import android.app.Application
+import android.content.Context
 import com.kulipai.luahook.util.d
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.IXposedHookZygoteInit
@@ -16,14 +18,16 @@ import de.robv.android.xposed.XSharedPreferences
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
+import kotlinx.coroutines.CoroutineScope
 import org.luaj.vm2.Globals
 import org.luaj.vm2.LuaValue
 import org.luaj.vm2.lib.OneArgFunction
 import org.luaj.vm2.lib.jse.CoerceJavaToLua
 import org.luaj.vm2.lib.jse.JsePlatform
 import org.luckypray.dexkit.DexKitBridge
+import top.sacz.xphelper.XpHelper
 import java.io.File
-
+import top.sacz.xphelper.dexkit.DexFinder
 
 class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
 
@@ -99,7 +103,12 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
         val globals: Globals = JsePlatform.standardGlobals()
 
 
+
+
+
         //加载Lua模块
+        globals["XpHelper"] = CoerceJavaToLua.coerce(XpHelper::class.java)
+        globals["DexFinder"]= CoerceJavaToLua.coerce(DexFinder)
         globals["XposedHelpers"] = CoerceJavaToLua.coerce(XposedHelpers::class.java)
         globals["XposedBridge"] = CoerceJavaToLua.coerce(XposedBridge::class.java)
         globals["DexKitBridge"] = CoerceJavaToLua.coerce(DexKitBridge::class.java)
