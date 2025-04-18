@@ -6,6 +6,7 @@ plugins {
 }
 
 android {
+
     namespace = "com.kulipai.luahook"
     compileSdk = 35
 
@@ -55,9 +56,10 @@ dependencies {
     compileOnly(fileTree("compileOnly"))
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.fragment.ktx)
-    val libsuVersion = "6.0.0"
-
     // The core module that provides APIs to a shell
-    implementation("com.github.topjohnwu.libsu:core:$libsuVersion")
+    implementation(libs.core)
+
+    implementation(libs.github.xphelper)
+    implementation(libs.dexkit)
 
 }
