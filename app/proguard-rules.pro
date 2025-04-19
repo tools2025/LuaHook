@@ -21,7 +21,8 @@
 #-renamesourcefileattribute SourceFile
 -dontwarn javax.script.ScriptEngineFactory
 
-
+-keep class org.luckypray.** {*;}
+-keep class top.sacz.xphelper.** {*;}
 
 -keep class com.kulipai.luahook.fragment.HomeFragment { *; }
 -keep class com.kulipai.luahook.MainHook { *; }
