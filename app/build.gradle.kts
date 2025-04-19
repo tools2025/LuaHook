@@ -59,7 +59,7 @@ dependencies {
     // The core module that provides APIs to a shell
     implementation(libs.core)
 
-    implementation(libs.github.xphelper)
+    implementation(libs.xphelper)
     implementation(libs.dexkit)
 
 }

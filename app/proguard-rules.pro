@@ -21,6 +21,8 @@
 #-renamesourcefileattribute SourceFile
 -dontwarn javax.script.ScriptEngineFactory
 
+
+
 -keep class com.kulipai.luahook.fragment.HomeFragment { *; }
 -keep class com.kulipai.luahook.MainHook { *; }
 # 保留整个 LuaJ 库

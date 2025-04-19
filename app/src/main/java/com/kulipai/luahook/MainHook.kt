@@ -32,9 +32,9 @@ import top.sacz.xphelper.dexkit.DexFinder
 class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
 
     companion object {
-        init {
-            System.loadLibrary("dexkit")
-        }
+//        init {
+//            System.loadLibrary("dexkit")
+//        }
 
         const val MODULE_PACKAGE = "com.kulipai.luahook"  // 模块包名
         const val PREFS_NAME = "xposed_prefs"
@@ -108,7 +108,7 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
 
         //加载Lua模块
         globals["XpHelper"] = CoerceJavaToLua.coerce(XpHelper::class.java)
-        globals["DexFinder"]= CoerceJavaToLua.coerce(DexFinder)
+        globals["DexFinder"]= CoerceJavaToLua.coerce(DexFinder::class.java)
         globals["XposedHelpers"] = CoerceJavaToLua.coerce(XposedHelpers::class.java)
         globals["XposedBridge"] = CoerceJavaToLua.coerce(XposedBridge::class.java)
         globals["DexKitBridge"] = CoerceJavaToLua.coerce(DexKitBridge::class.java)

@@ -603,6 +603,78 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
         }
 
 
+        globals["hookm"] = object : VarArgFunction() {
+            override fun invoke(args: Varargs): LuaValue {
+                try {
+                    // Check if the first argument is a method object
+                    if (!args.arg(1).isuserdata(Method::class.java)) {
+                        throw IllegalArgumentException("First argument must be a Method object")
+                    }
+
+                    val method = args.arg(1).touserdata(Method::class.java) as Method
+                    val beforeFunc = args.optfunction(2, null)
+                    val afterFunc = args.optfunction(3, null)
+
+                    XposedBridge.hookMethod(
+                        method,
+                        object : XC_MethodHook() {
+                            override fun beforeHookedMethod(param: MethodHookParam?) {
+                                beforeFunc?.let { func ->
+                                    val luaParam = CoerceJavaToLua.coerce(param)
+
+                                    // Allow modifying parameters in Lua
+                                    val modifiedParam = func.call(luaParam)
+
+                                    // If Lua function returned modified parameters, replace original parameters
+                                    if (!modifiedParam.isnil()) {
+                                        // Assuming return is a table containing modified parameters
+                                        if (modifiedParam.istable()) {
+                                            val table = modifiedParam.checktable()
+                                            val argsTable = table.get("args")
+
+                                            if (argsTable.istable()) {
+                                                val argsModified = argsTable.checktable()
+                                                for (i in 1..argsModified.length()) {
+                                                    // Convert Lua parameters back to Java types
+                                                    param?.args?.set(
+                                                        i - 1,
+                                                        fromLuaValue(argsModified.get(i))
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            override fun afterHookedMethod(param: MethodHookParam?) {
+                                afterFunc?.let { func ->
+                                    val luaParam = CoerceJavaToLua.coerce(param)
+
+                                    // Allow modifying return value in Lua
+                                    val modifiedResult = func.call(luaParam)
+
+                                    // If Lua function returned modified result, replace original result
+                                    if (!modifiedResult.isnil()) {
+                                        param?.result = fromLuaValue(modifiedResult)
+                                    }
+                                }
+                            }
+                        }
+                    )
+
+                    return TRUE
+
+                } catch (e: Exception) {
+                    println("HookMethod error: ${e.message}")
+                    e.printStackTrace()
+                    return FALSE
+                }
+            }
+        }
+
+
+
 
         globals["hookcotr"] = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
