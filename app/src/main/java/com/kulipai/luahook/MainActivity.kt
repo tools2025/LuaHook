@@ -22,6 +22,7 @@ import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.card.MaterialCardView
 import com.kulipai.luahook.fragment.AppsFragment
 import com.kulipai.luahook.fragment.HomeFragment
 import com.kulipai.luahook.fragment.ManualFragment
@@ -41,6 +42,8 @@ class MainActivity : AppCompatActivity() {
     private val bottomBar: BottomNavigationView by lazy { findViewById(R.id.bottomBar) }
     private val toolbar: MaterialToolbar by lazy { findViewById(R.id.toolbar) }
     private val viewPager2: ViewPager2 by lazy { findViewById(R.id.viewPager2) }
+
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -124,6 +127,8 @@ class MainActivity : AppCompatActivity() {
 
 
         val menu: Menu = bottomBar.getMenu()
+
+
 
         menu.add(Menu.NONE, 0, 0, resources.getString(R.string.home))
             .setIcon(R.drawable.home_24px)
@@ -219,3 +224,5 @@ class MainActivity : AppCompatActivity() {
 
 
 }
+
+

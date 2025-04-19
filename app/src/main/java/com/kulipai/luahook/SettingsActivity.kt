@@ -2,6 +2,7 @@ package com.kulipai.luahook
 
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import androidx.activity.enableEdgeToEdge
@@ -17,18 +18,19 @@ class SettingsActivity : AppCompatActivity() {
 
     private val language: MaterialCardView by lazy { findViewById(R.id.language) }
     private val toolbar: MaterialToolbar by lazy { findViewById(R.id.toolbar) }
+    private val about: MaterialCardView by lazy { findViewById(R.id.about) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        this.enableEdgeToEdge()
+        enableEdgeToEdge()
         setContentView(R.layout.activity_settings)
         ViewCompat.setOnApplyWindowInsetsListener(
-            findViewById<View?>(R.id.main),
-            OnApplyWindowInsetsListener { v: View?, insets: WindowInsetsCompat? ->
-                val systemBars = insets!!.getInsets(WindowInsetsCompat.Type.systemBars())
-                v!!.setPadding(systemBars.left, 0, systemBars.right, systemBars.bottom)
-                insets
-            })
+            findViewById(R.id.main)
+        ) { v: View?, insets: WindowInsetsCompat? ->
+            val systemBars = insets!!.getInsets(WindowInsetsCompat.Type.systemBars())
+            v!!.setPadding(systemBars.left, 0, systemBars.right, systemBars.bottom)
+            insets
+        }
 
         toolbar.setNavigationOnClickListener {
             finish()
@@ -38,8 +40,14 @@ class SettingsActivity : AppCompatActivity() {
 
         language.setOnClickListener {
             showLanguagePickerDialog(this,)
+
         }
 
+        about.setOnClickListener {
+        val intent=Intent(this,AboutActivity::class.java)
+        startActivity(intent)
+
+        }
 
 
     }
