@@ -45,6 +45,16 @@ class AppsEdit : AppCompatActivity() {
         const val PREFS_NAME = "apps"
     }
 
+    override fun onStop() {
+        super.onStop()
+        savePrefs(currentPackageName,editor.text.toString())
+    }
+
+    override fun onPause() {
+        super.onPause()
+        savePrefs(currentPackageName, editor.text.toString())
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -183,6 +193,7 @@ class AppsEdit : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             0 -> {
+                savePrefs(currentPackageName, editor.text.toString())
 //                operateAppAdvanced(this,currentPackageName)
                 Shell.cmd("am force-stop $currentPackageName").exec()
                 launchApp(this,currentPackageName)
