@@ -1,13 +1,4 @@
 import android.content.pm.PackageManager
-import android.text.Editable
-import android.text.TextWatcher
-import android.util.Log
-import android.view.GestureDetector
-import android.view.MotionEvent
-import android.view.View
-import android.widget.EditText
-import android.widget.ListView
-import androidx.recyclerview.widget.RecyclerView
 import com.kulipai.luahook.util.d
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
@@ -27,11 +18,109 @@ import java.lang.reflect.InvocationHandler
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
-import kotlin.jvm.java
 
 class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
 
     override fun call(globals: LuaValue): LuaValue {
+
+
+        globals["float"] = object : OneArgFunction() {
+            override fun call(p0: LuaValue): LuaValue? {
+                return CoerceJavaToLua.coerce(p0.tofloat())
+            }
+        }
+        globals["double"] = object : OneArgFunction() {
+            override fun call(p0: LuaValue): LuaValue? {
+                return CoerceJavaToLua.coerce(p0.todouble())
+            }
+        }
+
+
+        globals["arrayOf"] = object : VarArgFunction() {
+            override fun invoke(args: Varargs): LuaValue {
+                try {
+                    // Create a new ArrayList
+                    val arrayList = ArrayList<Any?>()
+
+                    // Add all arguments to the ArrayList
+                    for (i in 1..args.narg()) {
+                        val arg = args.arg(i)
+
+                        // Convert Lua values to appropriate Java types
+                        val javaValue = when {
+                            arg.isnil() -> null
+                            arg.isboolean() -> arg.toboolean()
+                            arg.isint() -> arg.toint()
+                            arg.islong() -> arg.tolong()
+                            arg.isnumber() -> arg.todouble()
+                            arg.isstring() -> arg.tojstring()
+                            arg.istable() -> {
+                                // Convert table to ArrayList (for nested arrays)
+                                val nestedList = ArrayList<Any?>()
+                                val table = arg.checktable()
+                                for (j in 1..table.length()) {
+                                    nestedList.add(fromLuaValue(table.get(j)))
+                                }
+                                nestedList
+                            }
+
+                            arg.isuserdata() -> arg.touserdata()
+                            else -> arg.toString()
+                        }
+
+                        arrayList.add(javaValue)
+                    }
+
+                    // Return the ArrayList wrapped as a LuaValue
+                    return CoerceJavaToLua.coerce(arrayList)
+
+                } catch (e: Exception) {
+                    println("arrayOf error: ${e.message}")
+                    e.printStackTrace()
+                    return NIL
+                }
+            }
+        }
+
+//        globals["arrayOfType"] = object : TwoArgFunction() {
+//            override fun call(listArg: LuaValue, typeArg: LuaValue): LuaValue {
+//                return try {
+//                    // 获取传入的 ArrayList（通过 luajava 传入）
+//                    val list = listArg.touserdata(ArrayList::class.java) as? ArrayList<*> ?: return NIL
+//
+//                    // 获取目标类型（通过 Class 或字符串表示）
+//                    val componentType: Class<*>? = when {
+//                        typeArg.isuserdata(Class::class.java) -> typeArg.touserdata(Class::class.java) as Class<*>
+//                        typeArg.isstring() -> when (val name = typeArg.tojstring()) {
+//                            "String" -> String::class.java
+//                            "Class" -> Class::class.java
+//                            "Integer" -> Int::class.javaObjectType
+//                            "Long" -> Long::class.javaObjectType
+//                            "Double" -> Double::class.javaObjectType
+//                            "Boolean" -> Boolean::class.javaObjectType
+//                            "Any" -> Any::class.java
+//                            else -> throw IllegalArgumentException("Unknown type: $name")
+//                        }
+//                        else -> throw IllegalArgumentException("Invalid type argument: $typeArg")
+//                    }
+//
+//                    // 创建数组
+//                    val javaArray = java.lang.reflect.Array.newInstance(componentType, list.size) as Array<Any?>
+//
+//                    for (i in list.indices) {
+//                        javaArray[i] = list[i]
+//                    }
+//
+//                    // 返回数组包装为 LuaValue
+//                    CoerceJavaToLua.coerce(javaArray)
+//
+//                } catch (e: Exception) {
+//                    println("arrayOfType error: ${e.message}")
+//                    e.printStackTrace()
+//                    NIL
+//                }
+//            }
+//        }
 
 
         globals["lpparam"] = CoerceJavaToLua.coerce(lpparam)
@@ -173,10 +262,6 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
         }
 
 
-
-
-
-
 //        globals["new"] = object : VarArgFunction() {
 //            override fun invoke(args: Varargs): LuaValue {
 //                try {
@@ -217,8 +302,6 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
 //                return NIL
 //            }
 //        }
-
-
 
 
         // 封装获取构造函数的 Lua 函数
@@ -355,7 +438,8 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
                                 }
                             }
                         }
-                        foundConstructor ?: throw e // Re-throw the original NoSuchMethodException if no flexible match found
+                        foundConstructor
+                            ?: throw e // Re-throw the original NoSuchMethodException if no flexible match found
                     }
 
                     constructor.isAccessible = true // 允许访问非公共构造函数
@@ -402,7 +486,7 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
         }
 
 
-            globals["hook"] = object : VarArgFunction() {
+        globals["hook"] = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
                 try {
                     val classNameOrClass = args.arg(1)
@@ -606,11 +690,10 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
         globals["hookm"] = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
                 try {
-                    // Check if the first argument is a method object
-                    if (!args.arg(1).isuserdata(Method::class.java)) {
-                        throw IllegalArgumentException("First argument must be a Method object")
-                    }
 
+                    if (!args.arg(1).isuserdata(Method::class.java)) {
+                        "hook参数非method".d()
+                    }
                     val method = args.arg(1).touserdata(Method::class.java) as Method
                     val beforeFunc = args.optfunction(2, null)
                     val afterFunc = args.optfunction(3, null)
@@ -666,7 +749,7 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
                     return TRUE
 
                 } catch (e: Exception) {
-                    println("HookMethod error: ${e.message}")
+                    ("HookMethod error: ${e.message}").d()
                     e.printStackTrace()
                     return FALSE
                 }
@@ -683,7 +766,8 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
                     val classLoader: ClassLoader? = null
 
                     if (classNameOrClass.isstring()) { // If first arg is a string (class name)
-                        val classLoader = args.optuserdata(2, lpparam.javaClass.classLoader) as ClassLoader
+                        val classLoader =
+                            args.optuserdata(2, lpparam.javaClass.classLoader) as ClassLoader
                         val className = classNameOrClass.tojstring()
 
                         // Dynamic parameter type handling
@@ -895,7 +979,8 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
                 println("createProxy: Interface=${interfaceClass.name}, Loader=${finalClassLoader}")
 
                 // Create the InvocationHandler
-                val handler = LuaInvocationHandler(implementationTable) // Assumes LuaInvocationHandler class is defined elsewhere
+                val handler =
+                    LuaInvocationHandler(implementationTable) // Assumes LuaInvocationHandler class is defined elsewhere
 
                 try {
                     // Create the proxy instance using the specified class loader
@@ -1212,10 +1297,6 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
     }
 
 
-
-
-
-
     // 将Lua值转换回Java类型
     fun fromLuaValue(value: LuaValue?): Any? {
         return when {
@@ -1250,19 +1331,30 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
                     val result = luaFunction.invoke(luaArgs) // Use invoke for Varargs
 
                     // Convert the Lua return value back to the expected Java type
-                    CoerceLuaToJava.coerce(result.arg1(), method.returnType) // result is Varargs, get first value
+                    CoerceLuaToJava.coerce(
+                        result.arg1(),
+                        method.returnType
+                    ) // result is Varargs, get first value
                 } catch (e: LuaError) {
                     println("LuaError during proxy invocation of '$methodName': ${e.message}")
                     // Decide how to handle Lua errors. Re-throwing might be appropriate.
                     throw RuntimeException("Lua execution failed for method $methodName", e)
                 } catch (e: Exception) {
                     println("Exception during proxy invocation of '$methodName': ${e.message}")
-                    throw RuntimeException("Java exception during proxy method $methodName", e) // Re-throw
+                    throw RuntimeException(
+                        "Java exception during proxy method $methodName",
+                        e
+                    ) // Re-throw
                 }
             } else {
                 // Handle standard Object methods or missing implementations
                 when (methodName) {
-                    "toString" -> "LuaProxy<${proxy.javaClass.interfaces.firstOrNull()?.name ?: "UnknownInterface"}>@${Integer.toHexString(hashCode())}"
+                    "toString" -> "LuaProxy<${proxy.javaClass.interfaces.firstOrNull()?.name ?: "UnknownInterface"}>@${
+                        Integer.toHexString(
+                            hashCode()
+                        )
+                    }"
+
                     "hashCode" -> luaTable.hashCode() // Or System.identityHashCode(proxy)? Or handler's hashcode? Be consistent.
                     "equals" -> proxy === args?.get(0) // Standard proxy equality check
                     else -> {

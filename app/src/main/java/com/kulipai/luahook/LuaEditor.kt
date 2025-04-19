@@ -132,6 +132,8 @@ class LuaEditor : FreeScrollingTextField {
             "findClass",
             "DexFinder",
             "hookm",
+            "arrayOf",
+//            "arrayOfType"
         )
         //String[] Names = {"hook","Xposed","log","setField","getField","invoke"};
         addNames(Names)

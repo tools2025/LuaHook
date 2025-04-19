@@ -14,8 +14,8 @@ android {
         applicationId = "com.kulipai.luahook"
         minSdk = 28
         targetSdk = 35
-        versionCode = 7
-        versionName = "2.6-beta"
+        versionCode = 9
+        versionName = "2.8-beta"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -40,6 +40,9 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
+    aaptOptions {
+        additionalParameters += listOf("--package-id", "0x77", "--allow-reserved-package-id")
+    }
 }
 
 dependencies {
@@ -58,6 +61,8 @@ dependencies {
     implementation(libs.androidx.fragment.ktx)
     // The core module that provides APIs to a shell
     implementation(libs.core)
+    implementation(libs.kotlin.reflect)
+
 
     implementation(libs.xphelper)
     implementation(libs.dexkit)
