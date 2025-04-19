@@ -28,7 +28,7 @@ This module is still in the early stages of development and may contain various 
 
 **重要提示**
 
-本模块尚处于早期开发阶段，可能存在各种问题和不足。如果你在使用过程中遇到任何错误，我深感抱歉。
+本模块尚处于早期开发阶段，可能存在各种问题和不足。如果你在使用过程中遇到任何错误，我深深感抱歉。
 
 **Contact**
 
