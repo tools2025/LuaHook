@@ -42,12 +42,12 @@ class SettingsActivity : AppCompatActivity() {
 
 
         language.setOnClickListener {
-            var menu = SimpleMenuPopupWindow(this)
-            menu.entries = arrayOf("中文","English").toList()
-            menu.show(language, language.parent as View,100)
-//
+//            var menu = SimpleMenuPopupWindow(this)
+//            menu.entries = arrayOf("中文","English").toList()
+//            menu.show(language, language.parent as View,100)
+////
 //            val menu =
-//            showLanguagePickerDialog(this,)
+            showLanguagePickerDialog(this,)
 
         }
 
@@ -61,7 +61,7 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     fun showLanguagePickerDialog(context: Context) {
-        val languages = arrayOf("English", "简体中文","English", "简体中文","English", "简体中文","English", "简体中文","English", "简体中文","English", "简体中文","English", "简体中文","English", "简体中文","English", "简体中文","English", "简体中文")
+        val languages = arrayOf("English", "简体中文")
         val languageCodes = arrayOf(LanguageUtil.LANGUAGE_ENGLISH, LanguageUtil.LANGUAGE_CHINESE)
         val currentLanguage = LanguageUtil.getCurrentLanguage(context)
         val checkedItem = languageCodes.indexOf(currentLanguage)
