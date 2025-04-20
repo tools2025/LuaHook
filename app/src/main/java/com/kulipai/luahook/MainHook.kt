@@ -118,7 +118,7 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
         LuaJson().call(globals)
         LuaHttp().call(globals)
         Luafile().call(globals)
-        globals["import"] = LuaImport(lpparam.classLoader, globals)
+        globals["import"] = LuaImport(lpparam.classLoader,this::class.java.classLoader!!, globals)
 
 
         val LuaFile = object : OneArgFunction() {

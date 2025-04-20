@@ -10,9 +10,8 @@ import androidx.annotation.AttrRes
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.card.MaterialCardView
-import com.kulipai.luahook.fragment.AppInfo
 import com.kulipai.luahook.R
-
+import com.kulipai.luahook.fragment.AppInfo
 
 
 fun getDynamicColor(context: Context, @AttrRes colorAttributeResId: Int): Int {
@@ -26,8 +25,6 @@ fun getDynamicColor(context: Context, @AttrRes colorAttributeResId: Int): Int {
 }
 
 
-
-
 class SelectAppsAdapter(
     private var apps: List<AppInfo>,
     private val context: Context,
@@ -36,6 +33,8 @@ class SelectAppsAdapter(
 
 
     RecyclerView.Adapter<SelectAppsAdapter.AppsViewHolder>() {
+    val pm = context.packageManager
+
 
     inner class AppsViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val name: TextView = itemView.findViewById(R.id.name)
@@ -52,7 +51,12 @@ class SelectAppsAdapter(
 
                 if (apps[adapterPosition].packageName in selectApps) {
                     card.cardElevation = 0.toFloat()
-                    icon.setImageDrawable(apps[adapterPosition].icon)
+
+
+                    val aicon =
+                        pm.getApplicationIcon(pm.getApplicationInfo(apps[position].packageName, 0))
+                    icon.setImageDrawable(aicon)
+//                    icon.setImageDrawable(apps[adapterPosition].icon)
                     icon.setColorFilter(0)
                     selectApps -= apps[adapterPosition].packageName
                 } else {
@@ -98,7 +102,11 @@ class SelectAppsAdapter(
             )
         } else {
             holder.card.cardElevation = 0.toFloat()
-            holder.icon.setImageDrawable(apps[position].icon)
+
+
+            val aicon = pm.getApplicationIcon(pm.getApplicationInfo(apps[position].packageName, 0))
+            holder.icon.setImageDrawable(aicon)
+//            holder.icon.setImageDrawable(apps[position].icon)
             holder.icon.setColorFilter(0)
         }
 

@@ -49,7 +49,7 @@
                         android:id="@+id/app_logo"
                         android:layout_width="80dp"
                         android:layout_height="80dp"
-                        android:background="@android:color/background_light"
+
                         android:clickable="false"
                         android:contentDescription="App Icon"
                         android:duplicateParentState="false"
@@ -157,13 +157,25 @@
                                     android:src="@drawable/kulipai"
                                     app:shapeAppearanceOverlay="@style/ShapeAppearance.App.CircleImageView" />
 
-                                <com.google.android.material.textview.MaterialTextView
-                                    android:layout_width="0dp"
+                                <LinearLayout
+                                    android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:text="KuLiPai"
-                                    android:textAppearance="?attr/textAppearanceBodyMedium" />
+                                    android:orientation="vertical">
+
+                                    <com.google.android.material.textview.MaterialTextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="KuLiPai"
+                                        android:textAppearance="?attr/textAppearanceBodyMedium" />
+
+                                    <com.google.android.material.textview.MaterialTextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="Developer"
+                                        android:textAppearance="?attr/textAppearanceBodyMedium" />
+                                </LinearLayout>
                             </LinearLayout>
+
                         </com.google.android.material.card.MaterialCardView>
 
                         <com.google.android.material.card.MaterialCardView
@@ -193,12 +205,24 @@
                                     android:src="@drawable/california"
                                     app:shapeAppearanceOverlay="@style/ShapeAppearance.App.CircleImageView" />
 
-                                <com.google.android.material.textview.MaterialTextView
-                                    android:layout_width="0dp"
+                                <LinearLayout
+                                    android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:text="California"
-                                    android:textAppearance="?attr/textAppearanceBodyMedium" />
+                                    android:orientation="vertical">
+
+                                    <com.google.android.material.textview.MaterialTextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="California"
+                                        android:textAppearance="?attr/textAppearanceBodyMedium" />
+
+                                    <com.google.android.material.textview.MaterialTextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="翻译、部分界面设计"
+                                        android:textAppearance="?attr/textAppearanceBodyMedium" />
+
+                                </LinearLayout>
                             </LinearLayout>
                         </com.google.android.material.card.MaterialCardView>
 
@@ -206,36 +230,36 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-<!--            <com.google.android.material.card.MaterialCardView-->
-<!--                android:id="@+id/card_license"-->
-<!--                android:layout_width="match_parent"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:layout_marginHorizontal="16dp"-->
-<!--                android:layout_marginBottom="12dp"-->
-<!--                app:cardCornerRadius="@dimen/card_corner_radius"-->
-<!--                app:strokeWidth="0dp">-->
-<!--开源协议部分-->
-<!--                <LinearLayout-->
-<!--                    android:layout_width="match_parent"-->
-<!--                    android:layout_height="wrap_content"-->
-<!--                    android:orientation="vertical"-->
-<!--                    android:padding="16dp">-->
+            <!--            <com.google.android.material.card.MaterialCardView-->
+            <!--                android:id="@+id/card_license"-->
+            <!--                android:layout_width="match_parent"-->
+            <!--                android:layout_height="wrap_content"-->
+            <!--                android:layout_marginHorizontal="16dp"-->
+            <!--                android:layout_marginBottom="12dp"-->
+            <!--                app:cardCornerRadius="@dimen/card_corner_radius"-->
+            <!--                app:strokeWidth="0dp">-->
+            <!--开源协议部分-->
+            <!--                <LinearLayout-->
+            <!--                    android:layout_width="match_parent"-->
+            <!--                    android:layout_height="wrap_content"-->
+            <!--                    android:orientation="vertical"-->
+            <!--                    android:padding="16dp">-->
 
-<!--                    <com.google.android.material.textview.MaterialTextView-->
-<!--                        android:layout_width="wrap_content"-->
-<!--                        android:layout_height="wrap_content"-->
-<!--                        android:text="@string/open_source_protocol"-->
-<!--                        android:textAppearance="?attr/textAppearanceTitleMedium" />-->
+            <!--                    <com.google.android.material.textview.MaterialTextView-->
+            <!--                        android:layout_width="wrap_content"-->
+            <!--                        android:layout_height="wrap_content"-->
+            <!--                        android:text="@string/open_source_protocol"-->
+            <!--                        android:textAppearance="?attr/textAppearanceTitleMedium" />-->
 
-<!--                    <com.google.android.material.textview.MaterialTextView-->
-<!--                        android:layout_width="wrap_content"-->
-<!--                        android:layout_height="wrap_content"-->
-<!--                        android:layout_marginTop="4dp"-->
-<!--                        android:text="@string/open_source_protocol2"-->
-<!--                        android:textAppearance="?attr/textAppearanceBodyMedium"-->
-<!--                        android:textColor="?android:attr/textColorSecondary" />-->
-<!--                </LinearLayout>-->
-<!--            </com.google.android.material.card.MaterialCardView>-->
+            <!--                    <com.google.android.material.textview.MaterialTextView-->
+            <!--                        android:layout_width="wrap_content"-->
+            <!--                        android:layout_height="wrap_content"-->
+            <!--                        android:layout_marginTop="4dp"-->
+            <!--                        android:text="@string/open_source_protocol2"-->
+            <!--                        android:textAppearance="?attr/textAppearanceBodyMedium"-->
+            <!--                        android:textColor="?android:attr/textColorSecondary" />-->
+            <!--                </LinearLayout>-->
+            <!--            </com.google.android.material.card.MaterialCardView>-->
 
 
             <com.google.android.material.card.MaterialCardView

@@ -20,7 +20,6 @@ import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.kulipai.luahook.adapter.SymbolAdapter
 import com.kulipai.luahook.adapter.ToolAdapter
-import com.kulipai.luahook.util.d
 import com.topjohnwu.superuser.Shell
 
 
@@ -47,7 +46,7 @@ class AppsEdit : AppCompatActivity() {
 
     override fun onStop() {
         super.onStop()
-        savePrefs(currentPackageName,editor.text.toString())
+        savePrefs(currentPackageName, editor.text.toString())
     }
 
     override fun onPause() {
@@ -60,8 +59,6 @@ class AppsEdit : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_apps_edit)
         setSupportActionBar(toolbar)
-
-
 
 
         //窗口处理
@@ -144,8 +141,6 @@ class AppsEdit : AppCompatActivity() {
                 "Hook方法",
                 "Hook构造",
                 "方法签名"
-
-
             )
 
         ToolRec.layoutManager =
@@ -187,6 +182,7 @@ class AppsEdit : AppCompatActivity() {
             ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
         menu?.add(0, 5, 0, resources.getString(R.string.manual))
             ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
+        menu?.add(0, 9, 0, "搜索")?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
         return true
     }
 
@@ -196,7 +192,7 @@ class AppsEdit : AppCompatActivity() {
                 savePrefs(currentPackageName, editor.text.toString())
 //                operateAppAdvanced(this,currentPackageName)
                 Shell.cmd("am force-stop $currentPackageName").exec()
-                launchApp(this,currentPackageName)
+                launchApp(this, currentPackageName)
                 true
 
             }
@@ -233,6 +229,11 @@ class AppsEdit : AppCompatActivity() {
                 true
             }
 
+            9->{
+                editor.search()
+                true
+            }
+
 
             else -> false
         }
@@ -257,7 +258,9 @@ class AppsEdit : AppCompatActivity() {
 
 
                 // 2. 使用 pm dump 查找主 Activity
-                val dumpResult = Shell.cmd("pm dump $packageName | grep -E \"android\\.intent\\.action\\.MAIN.*category android\\.intent\\.category\\.LAUNCHER\" -B 1").exec()
+                val dumpResult =
+                    Shell.cmd("pm dump $packageName | grep -E \"android\\.intent\\.action\\.MAIN.*category android\\.intent\\.category\\.LAUNCHER\" -B 1")
+                        .exec()
                 if (dumpResult.out.isNotEmpty()) {
                     val outputLines = dumpResult.out
                     var activityName: String? = null
@@ -284,19 +287,31 @@ class AppsEdit : AppCompatActivity() {
                         val startIntent = Intent(Intent.ACTION_MAIN)
                         startIntent.addCategory(Intent.CATEGORY_LAUNCHER)
                         startIntent.component = componentName
-                        startIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
+                        startIntent.flags =
+                            Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
 
                         try {
                             context.startActivity(startIntent)
-                            Log.d("RootShell", "Successfully launched $packageName with component: $componentName")
+                            Log.d(
+                                "RootShell",
+                                "Successfully launched $packageName with component: $componentName"
+                            )
                         } catch (e: Exception) {
                             Log.e("RootShell", "Failed to launch $packageName: ${e.message}")
-                            Toast.makeText(context, "启动应用失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(
+                                context,
+                                "启动应用失败: ${e.message}",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
 
                     } else {
-                        Log.w("RootShell", "Could not find the main activity for $packageName in pm dump output.")
-                        Toast.makeText(context, "找不到应用的主 Activity", Toast.LENGTH_SHORT).show()
+                        Log.w(
+                            "RootShell",
+                            "Could not find the main activity for $packageName in pm dump output."
+                        )
+                        Toast.makeText(context, "找不到应用的主 Activity", Toast.LENGTH_SHORT)
+                            .show()
                     }
 
                 } else {

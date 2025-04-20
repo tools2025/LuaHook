@@ -26,21 +26,19 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.collections.mutableListOf
-import kotlin.getValue
 
 class SelectApps : AppCompatActivity() {
 
     var selectApps = mutableListOf<String>()
     var searchJob: Job? = null
-    lateinit var availableAppsToShow:List<AppInfo>
+    lateinit var availableAppsToShow: List<AppInfo>
     lateinit var adapter: SelectAppsAdapter
-
+    var isLoaded = false
 
 
     private val rec: RecyclerView by lazy { findViewById(R.id.rec) }
     private val fab: FloatingActionButton by lazy { findViewById(R.id.fab) }
-    private  val searchEdit: EditText by lazy { findViewById(R.id.search_bar_text_view) }
+    private val searchEdit: EditText by lazy { findViewById(R.id.search_bar_text_view) }
     private val clearImage: ImageView by lazy { findViewById(R.id.clear_text) }
     private val searchbar: MaterialCardView by lazy { findViewById(R.id.searchbar) }
 
@@ -56,10 +54,10 @@ class SelectApps : AppCompatActivity() {
             insets
         }
 
-        val selectedPackageNames = getStringList(this@SelectApps,"selectApps")
+        val selectedPackageNames = getStringList(this@SelectApps, "selectApps")
         selectApps = selectedPackageNames
 
-        adapter = SelectAppsAdapter(emptyList(),this,selectApps) // 先传空列表
+        adapter = SelectAppsAdapter(emptyList(), this, selectApps) // 先传空列表
         rec.layoutManager = LinearLayoutManager(this)
         rec.adapter = adapter
 
@@ -73,7 +71,9 @@ class SelectApps : AppCompatActivity() {
                 !selectedPackagesSet.contains(appInfo.packageName)
                 // 或者写成: appInfo.packageName !in selectedPackagesSet
             }
+
             adapter.updateData(availableAppsToShow)
+            isLoaded = true
         }
 
 
@@ -103,8 +103,10 @@ class SelectApps : AppCompatActivity() {
             val input = s.toString()
             searchJob?.cancel()
             searchJob = CoroutineScope(Dispatchers.Main).launch {
-                delay(100) // 延迟300ms
-                filterAppList(s.toString().trim(),clearImage)
+                if (isLoaded) {
+                    delay(100) // 延迟300ms
+                    filterAppList(s.toString().trim(), clearImage)
+                }
             }
         }
 
@@ -114,23 +116,21 @@ class SelectApps : AppCompatActivity() {
         }
 
         fab.setOnClickListener {
-            saveStringList(this,"selectApps",selectApps)
+            saveStringList(this, "selectApps", selectApps)
             finish()
         }
-
-
 
 
     }
 
     fun saveStringList(context: Context, key: String, list: List<String>) {
-        val prefs = context.getSharedPreferences("MyAppPrefs", MODE_PRIVATE)
+        val prefs = context.getSharedPreferences("MyAppPrefs", MODE_WORLD_READABLE)
         val serialized = list.joinToString(",")
         prefs.edit { putString(key, serialized) }
     }
 
     fun getStringList(context: Context, key: String): MutableList<String> {
-        val prefs = context.getSharedPreferences("MyAppPrefs", MODE_PRIVATE)
+        val prefs = context.getSharedPreferences("MyAppPrefs", MODE_WORLD_READABLE)
         val serialized = prefs.getString(key, "") ?: ""
         return if (serialized.isNotEmpty()) {
             serialized.split(",").toMutableList()
@@ -138,7 +138,8 @@ class SelectApps : AppCompatActivity() {
             mutableListOf()
         }
     }
-    private fun filterAppList(query: String,clearImage: ImageView) {
+
+    private fun filterAppList(query: String, clearImage: ImageView) {
         val filteredList = if (query.isEmpty()) {
             clearImage.visibility = View.INVISIBLE
             availableAppsToShow // 显示全部
@@ -151,7 +152,6 @@ class SelectApps : AppCompatActivity() {
         }
         adapter.updateData(filteredList)
     }
-
 
 
 }

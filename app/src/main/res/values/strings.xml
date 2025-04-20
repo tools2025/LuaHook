@@ -47,4 +47,5 @@
     <string name="funcName">方法名</string>
     <string name="param">参数</string>
     <string name="funcSign">方法签名</string>
+    <string name="plugins">插件</string>
 </resources>

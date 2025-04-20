@@ -1,5 +1,6 @@
 package com.kulipai.luahook
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -13,6 +14,8 @@ import androidx.core.view.WindowInsetsCompat
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import concerrox.ripple.menu.SimpleMenuPopupWindow
+import concerrox.preference.widget.Preference
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -20,6 +23,7 @@ class SettingsActivity : AppCompatActivity() {
     private val toolbar: MaterialToolbar by lazy { findViewById(R.id.toolbar) }
     private val about: MaterialCardView by lazy { findViewById(R.id.about) }
 
+    @SuppressLint("RestrictedApi")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -37,9 +41,13 @@ class SettingsActivity : AppCompatActivity() {
         }
 
 
-
         language.setOnClickListener {
-            showLanguagePickerDialog(this,)
+            var menu = SimpleMenuPopupWindow(this)
+            menu.entries = arrayOf("中文","English").toList()
+            menu.show(language, language.parent as View,100)
+//
+//            val menu =
+//            showLanguagePickerDialog(this,)
 
         }
 
@@ -53,7 +61,7 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     fun showLanguagePickerDialog(context: Context) {
-        val languages = arrayOf("English", "简体中文")
+        val languages = arrayOf("English", "简体中文","English", "简体中文","English", "简体中文","English", "简体中文","English", "简体中文","English", "简体中文","English", "简体中文","English", "简体中文","English", "简体中文","English", "简体中文")
         val languageCodes = arrayOf(LanguageUtil.LANGUAGE_ENGLISH, LanguageUtil.LANGUAGE_CHINESE)
         val currentLanguage = LanguageUtil.getCurrentLanguage(context)
         val checkedItem = languageCodes.indexOf(currentLanguage)

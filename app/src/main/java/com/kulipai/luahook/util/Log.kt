@@ -15,7 +15,7 @@ fun String.d(text: String = "Debug"): String {
 }
 
 fun String.e(text: String = "Error"): String {
-    Log.e(TAG, "$text : $this")
+    Log.e(TAG, this)
     return this
 }
 

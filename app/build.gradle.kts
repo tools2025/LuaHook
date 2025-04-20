@@ -14,8 +14,8 @@ android {
         applicationId = "com.kulipai.luahook"
         minSdk = 28
         targetSdk = 35
-        versionCode = 9
-        versionName = "2.8-beta"
+        versionCode = 11
+        versionName = "2.99-beta"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -41,7 +41,7 @@ android {
         jvmTarget = "11"
     }
     aaptOptions {
-        additionalParameters += listOf("--package-id", "0x77", "--allow-reserved-package-id")
+        additionalParameters += listOf("--package-id", "0x69", "--allow-reserved-package-id")
     }
 }
 
@@ -62,9 +62,9 @@ dependencies {
     // The core module that provides APIs to a shell
     implementation(libs.core)
     implementation(libs.kotlin.reflect)
-
-
     implementation(libs.xphelper)
     implementation(libs.dexkit)
+    implementation(libs.ripple.components.android)
+    implementation(libs.ripple.insets)
 
 }

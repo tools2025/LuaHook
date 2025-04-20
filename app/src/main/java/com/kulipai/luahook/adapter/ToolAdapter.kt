@@ -9,6 +9,8 @@ import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
@@ -40,6 +42,29 @@ class ToolAdapter(
                 when (adapterPosition) {
                     0 -> {
                         val view = LayoutInflater.from(context).inflate(R.layout.dialog_hook, null)
+
+//                        val bottomSheetDialog = BottomSheetDialog(context)
+//                        bottomSheetDialog.setTitle("Hook方法")
+//                        bottomSheetDialog.setContentView(view)
+//                        val ok = view.findViewById<MaterialButton>(R.id.ok)
+//                        ok.setOnClickListener {
+//                            val className: String =
+//                                view.findViewById<TextInputEditText>(R.id.className).text.toString()
+//                            val funcName: String =
+//                                view.findViewById<TextInputEditText>(R.id.funcName).text.toString()
+//                            val param: String =
+//                                view.findViewById<TextInputEditText>(R.id.param).text.toString()
+//                            var p = param.split(",").joinToString(",") { "\"${it.trim()}\"" }
+//                            val hookLua =
+//                                "hook(\"$className\",\nlpparam.classLoader,\n\"$funcName\",\n$p,\nfunction(it)\n\nend,\nfunction(it)\n\nend)"
+//                            editor.insert(editor.selectionStart, hookLua)
+//                            bottomSheetDialog.dismiss()
+//                        }
+//                        val cancel = view.findViewById<MaterialButton>(R.id.cancel)
+//                        cancel.setOnClickListener {
+//                            bottomSheetDialog.dismiss()
+//                        }
+//                        bottomSheetDialog.show()
                         MaterialAlertDialogBuilder(context)
                             .setTitle("Hook方法")
                             .setView(view)
@@ -65,6 +90,28 @@ class ToolAdapter(
                     1 -> {
                         val view =
                             LayoutInflater.from(context).inflate(R.layout.dialog_hookctotr, null)
+
+//                        val bottomSheetDialog = BottomSheetDialog(context)
+//                        bottomSheetDialog.setTitle("Hook构造方法")
+//                        bottomSheetDialog.setContentView(view)
+//                        val ok = view.findViewById<MaterialButton>(R.id.ok)
+//                        ok.setOnClickListener {
+//                            val className: String =
+//                                view.findViewById<TextInputEditText>(R.id.className).text.toString()
+//                            val param: String =
+//                                view.findViewById<TextInputEditText>(R.id.param).text.toString()
+//                            var p = param.split(",").joinToString(",") { "\"${it.trim()}\"" }
+//
+//                            val hookLua =
+//                                "hookcotr(\"$className\",\nlpparam.classLoader,\n$p,\nfunction(it)\n\nend,\nfunction(it)\n\nend)"
+//                            editor.insert(editor.selectionStart, hookLua)
+//                            bottomSheetDialog.dismiss()
+//                        }
+//                        val cancel = view.findViewById<MaterialButton>(R.id.cancel)
+//                        cancel.setOnClickListener {
+//                            bottomSheetDialog.dismiss()
+//                        }
+//                        bottomSheetDialog.show()
                         MaterialAlertDialogBuilder(context)
                             .setTitle("Hook构造函数")
                             .setView(view)
@@ -90,6 +137,48 @@ class ToolAdapter(
 
                         val view =
                             LayoutInflater.from(context).inflate(R.layout.dialog_funcsign, null)
+
+//                        val bottomSheetDialog = BottomSheetDialog(context)
+//                        bottomSheetDialog.setTitle("Hook方法")
+//                        bottomSheetDialog.setContentView(view)
+//                        val ok = view.findViewById<MaterialButton>(R.id.ok)
+//                        ok.setOnClickListener {
+//                            val input: String =
+//                                view.findViewById<TextInputEditText>(R.id.input).text.toString()
+//
+//                            var methodInfo: MethodInfo
+//                            try {
+//                                methodInfo = parseMethodSignature(input)
+//
+//                            } catch (e: Exception) {
+//                                Toast.makeText(context, "参数错误", Toast.LENGTH_SHORT).show()
+//                                return@setOnClickListener
+//                            }
+//
+//
+//                            val par = methodInfo.parameterTypes
+//                            par.size.toString().d()
+//                            var p =
+//                                if (par.isEmpty()) "" else "\n" + par.joinToString(",") { "\"${it.trim()}\"" } + ","
+//
+//                            var hookLua: String
+//                            if (methodInfo.methodName == "<init>") {
+//                                hookLua =
+//                                    "hookcotr(\"${methodInfo.className}\",\nlpparam.classLoader,$p\nfunction(it)\n\nend,\nfunction(it)\n\nend)"
+//                            } else {
+//                                hookLua =
+//                                    "hook(\"${methodInfo.className}\",\nlpparam.classLoader,\n\"${methodInfo.methodName}\",$p\nfunction(it)\n\nend,\nfunction(it)\n\nend)"
+//
+//                            }
+//
+//                            editor.insert(editor.selectionStart, hookLua)
+//                            bottomSheetDialog.dismiss()
+//                        }
+//                        val cancel = view.findViewById<MaterialButton>(R.id.cancel)
+//                        cancel.setOnClickListener {
+//                            bottomSheetDialog.dismiss()
+//                        }
+//                        bottomSheetDialog.show()
                         MaterialAlertDialogBuilder(context)
                             .setTitle("导入方法签名")
                             .setView(view)

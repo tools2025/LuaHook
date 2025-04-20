@@ -1,5 +1,6 @@
 package com.kulipai.luahook
 
+import android.content.Context
 import com.kulipai.luahook.adapter.LogAdapter
 import android.os.Bundle
 import android.view.View
@@ -11,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.transition.Visibility
@@ -20,6 +22,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.kulipai.luahook.MainActivity
 import com.kulipai.luahook.util.LogcatHelper
 import com.kulipai.luahook.util.RootHelper
+import kotlinx.coroutines.launch
 import org.w3c.dom.Text
 
 class LogCatActivity : AppCompatActivity() {
@@ -65,19 +68,23 @@ class LogCatActivity : AppCompatActivity() {
 
 
         if(RootHelper.canGetRoot()){
-            var logs = LogcatHelper.getSystemLogsByTagSince("LuaXposed")
-            LogRecyclerView.layoutManager =
-                LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
-            adapter = LogAdapter(logs as MutableList<String>)
-            LogRecyclerView.adapter = adapter
+            lifecycleScope.launch {
+                var logs = LogcatHelper.getSystemLogsByTagSince("LuaXposed")
+                LogRecyclerView.layoutManager =
+                    LinearLayoutManager(this@LogCatActivity, LinearLayoutManager.VERTICAL, false)
+                adapter = LogAdapter(logs as MutableList<String>)
+                LogRecyclerView.adapter = adapter
+            }
         } else {
             noPower.visibility = View.VISIBLE
             LogRecyclerView.visibility = View.INVISIBLE
         }
 
         reresh.setOnClickListener {
-            var logs = LogcatHelper.getSystemLogsByTagSince("LuaXposed")
-            adapter.updateLogs(logs)
+            lifecycleScope.launch {
+                var logs = LogcatHelper.getSystemLogsByTagSince("LuaXposed")
+                adapter.updateLogs(logs)
+            }
 
         }
 

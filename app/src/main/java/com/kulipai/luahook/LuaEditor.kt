@@ -131,7 +131,8 @@ class LuaEditor : FreeScrollingTextField {
             "DexKitBridge",
             "findClass",
             "DexFinder",
-            "hookm",
+//            "hookm",
+            "hookAll",
             "arrayOf",
 //            "arrayOfType"
         )

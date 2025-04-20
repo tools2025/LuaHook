@@ -18,8 +18,10 @@ import com.kulipai.luahook.fragment.AppInfo
 
 class AppsAdapter(private var apps: List<AppInfo>, private val context: Context) :
     RecyclerView.Adapter<AppsAdapter.AppsViewHolder>() {
+    val pm = context.packageManager
 
     inner class AppsViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+
         val name: TextView = itemView.findViewById(R.id.name)
         val icon: ImageView = itemView.findViewById(R.id.icon)
         val packageName: TextView = itemView.findViewById(R.id.packageName)
@@ -75,7 +77,10 @@ class AppsAdapter(private var apps: List<AppInfo>, private val context: Context)
         holder.name.text= apps[position].appName
         holder.packageName.text= apps[position].packageName
         holder.version.text= apps[position].versionName
-        holder.icon.setImageDrawable(apps[position].icon)
+//        holder.icon.setImageDrawable(apps[position].icon)
+
+        val icon = pm.getApplicationIcon(pm.getApplicationInfo(apps[position].packageName, 0))
+        holder.icon.setImageDrawable(icon)
 
     }
 

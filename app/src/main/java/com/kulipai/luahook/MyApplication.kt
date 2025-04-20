@@ -51,7 +51,6 @@ class MyApplication : Application() {
                     AppInfo(
                         appName = appName,
                         packageName = pkg,
-                        icon = icon,
                         versionName = versionName,
                         versionCode = versionCode
                     )

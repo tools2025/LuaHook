@@ -42,7 +42,7 @@ import android.view.inputmethod.InputMethodManager
 data class AppInfo(
     val appName: String,
     val packageName: String,
-    val icon: Drawable,
+//    val icon: Drawable,
     val versionName: String,
     val versionCode: Long
 )
@@ -70,7 +70,8 @@ fun getInstalledApps(context: Context): List<AppInfo> {
                     packageInfo.versionCode.toLong()
                 }
 
-                apps.add(AppInfo(appName, packageName, icon, versionName, versionCode))
+//                apps.add(AppInfo(appName, packageName, icon, versionName, versionCode))
+                apps.add(AppInfo(appName, packageName, versionName, versionCode))
             } catch (e: PackageManager.NameNotFoundException) {
                 // 忽略未找到的包
             }
@@ -210,7 +211,7 @@ class AppsFragment : Fragment() {
 
 
     fun saveStringList(context: Context, key: String, list: MutableList<String>) {
-        val sharedPreferences = context.getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE)
+        val sharedPreferences = context.getSharedPreferences("MyAppPrefs", Context.MODE_WORLD_READABLE)
         val serializedList = list.joinToString(",") // 使用逗号作为分隔符
         sharedPreferences.edit {
             putString(key, serializedList)
@@ -218,7 +219,7 @@ class AppsFragment : Fragment() {
     }
 
     fun getStringList(context: Context, key: String): MutableList<String> {
-        val sharedPreferences = context.getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE)
+        val sharedPreferences = context.getSharedPreferences("MyAppPrefs", Context.MODE_WORLD_READABLE)
         val serializedList = sharedPreferences.getString(key, "") ?: ""
         return if (serializedList.isNotEmpty()) {
             serializedList.split(",").toMutableList()

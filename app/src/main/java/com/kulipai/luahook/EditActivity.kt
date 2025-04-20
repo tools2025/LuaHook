@@ -209,6 +209,7 @@ class EditActivity : AppCompatActivity() {
             ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
         menu?.add(0, 6, 0, resources.getString(R.string.about))
             ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
+        menu?.add(0, 9, 0, "搜索")?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
         return true
     }
 
@@ -250,6 +251,12 @@ class EditActivity : AppCompatActivity() {
                 showLsposedInfoDialog()
                 true
             }
+
+            9->{
+                editor.search()
+                true
+            }
+
 
             else -> false
         }

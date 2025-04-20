@@ -1,6 +1,7 @@
 package com.kulipai.luahook
 
 import android.animation.ArgbEvaluator
+import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -37,6 +38,9 @@ import java.io.IOException
 // 导入 JSON 解析相关类
 import org.json.JSONObject
 import org.json.JSONException
+import androidx.core.view.isVisible
+import androidx.core.view.isInvisible
+import androidx.core.net.toUri
 
 
 class AboutActivity : AppCompatActivity() {
@@ -139,9 +143,9 @@ class AboutActivity : AppCompatActivity() {
             val appLogoAlpha = (1f - scrollRatio).coerceIn(0f, 1f)
             appLogo.alpha = appLogoAlpha
 
-            if (appLogoAlpha == 0f && appLogo.visibility == View.VISIBLE) {
+            if (appLogoAlpha == 0f && appLogo.isVisible) {
                 appLogo.visibility = View.INVISIBLE
-            } else if (appLogoAlpha > 0f && appLogo.visibility == View.INVISIBLE) {
+            } else if (appLogoAlpha > 0f && appLogo.isInvisible) {
                 appLogo.visibility = View.VISIBLE
             }
             if (verticalOffset == 0) {
@@ -187,7 +191,7 @@ class AboutActivity : AppCompatActivity() {
 
     // --- 打开 GitHub URL 函数 ---
     private fun openGithubUrl(url: String) {
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        val intent = Intent(Intent.ACTION_VIEW, url.toUri())
         if (intent.resolveActivity(packageManager) != null) {
             startActivity(intent)
         } else {
@@ -213,6 +217,7 @@ class AboutActivity : AppCompatActivity() {
 
         // 使用 OkHttp 进行异步网络请求
         okHttpClient.newCall(request).enqueue(object : Callback {
+            @SuppressLint("SetTextI18n")
             override fun onFailure(call: Call, e: IOException) {
                 // 网络请求失败，切换到 UI 线程更新 UI
                 runOnUiThread {
@@ -223,6 +228,7 @@ class AboutActivity : AppCompatActivity() {
                 }
             }
 
+            @SuppressLint("SetTextI18n")
             override fun onResponse(call: Call, response: Response) {
                 // 网络请求成功，切换到 UI 线程更新 UI
                 runOnUiThread {
@@ -255,7 +261,8 @@ class AboutActivity : AppCompatActivity() {
                                         .setMessage("当前版本: $currentVersion\n最新版本: $latestVersion\n\n是否前往 GitHub Release 页面查看并更新？")
                                         .setPositiveButton("前往 GitHub Release") { dialog, _ ->
                                             // 打开 Release 页面链接
-                                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(releasePageUrl))
+                                            val intent = Intent(Intent.ACTION_VIEW,
+                                                releasePageUrl.toUri())
                                             if (intent.resolveActivity(packageManager) != null) {
                                                 startActivity(intent)
                                             } else {

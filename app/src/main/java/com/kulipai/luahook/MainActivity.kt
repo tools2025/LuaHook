@@ -25,7 +25,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.card.MaterialCardView
 import com.kulipai.luahook.fragment.AppsFragment
 import com.kulipai.luahook.fragment.HomeFragment
-import com.kulipai.luahook.fragment.ManualFragment
+import com.kulipai.luahook.fragment.PluginsFragment
 import kotlinx.coroutines.launch
 
 
@@ -136,14 +136,14 @@ class MainActivity : AppCompatActivity() {
         menu.add(Menu.NONE, 1, 1, resources.getString(R.string.apps))
             .setIcon(R.drawable.apps_24px)
 
-        menu.add(Menu.NONE, 2, 2, resources.getString(R.string.manual))
-            .setIcon(R.drawable.book_24px)
+        menu.add(Menu.NONE, 2, 2, resources.getString(R.string.plugins))
+            .setIcon(R.drawable.extension_24px)
 
 
         val fragmentList = listOf(
             HomeFragment(),
             AppsFragment(),
-            ManualFragment(),
+            PluginsFragment(),
             )
 
         // 创建 FragmentStateAdapter
@@ -164,14 +164,14 @@ class MainActivity : AppCompatActivity() {
             override fun onPageSelected(position: Int) {
                 bottomBar.menu[position].isChecked = true
                 menu.get(0).setIcon(R.drawable.home_24px)
-                menu.get(2).setIcon(R.drawable.book_24px)
+                menu.get(2).setIcon(R.drawable.extension_24px)
 
                 if (position == 0) {
                     menu.get(0).setIcon(R.drawable.home_fill_24px)
 
                 } else if (position == 2) {
 
-                    menu.get(2).setIcon(R.drawable.book_fill_24px)
+                    menu.get(2).setIcon(R.drawable.extension_fill_24px)
 
                 }
             }
@@ -206,13 +206,13 @@ class MainActivity : AppCompatActivity() {
 
 
     fun saveStringList(context: Context, key: String, list: List<String>) {
-        val prefs = context.getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE)
+        val prefs = context.getSharedPreferences("MyAppPrefs", MODE_WORLD_READABLE)
         val serialized = list.joinToString(",")
         prefs.edit { putString(key, serialized) }
     }
 
     fun getStringList(context: Context, key: String): MutableList<String> {
-        val prefs = context.getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE)
+        val prefs = context.getSharedPreferences("MyAppPrefs", MODE_WORLD_READABLE)
         val serialized = prefs.getString(key, "") ?: ""
         return if (serialized.isNotEmpty()) {
             serialized.split(",").toMutableList()
