@@ -1,5 +1,6 @@
 import android.content.pm.PackageManager
 import com.kulipai.luahook.util.d
+import com.kulipai.luahook.util.e
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
@@ -344,9 +345,12 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
                 val paramTypes = mutableListOf<Class<*>>()
 
                 for (i in 2..args.narg()) {
-                    val typeName = args.checkjstring(i)
                     try {
-                        val type = parseType(typeName)
+                        if (args.arg(i).isstring()) {
+
+
+                            val typeName = args.checkjstring(i)
+                            val type = parseType(typeName, lpparam.classLoader)
 //                        val type = when (typeName) {
 //                            "int" -> Int::class.javaPrimitiveType
 //                            "boolean" -> Boolean::class.javaPrimitiveType
@@ -358,9 +362,15 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
 //                            "short" -> Short::class.javaPrimitiveType
 //                            else -> Class.forName(typeName)
 //                        }
-                        paramTypes.add(type as Class<*>)
+
+                            paramTypes.add(type as Class<*>)
+
+                        } else if (args.arg(i).isuserdata(Class::class.java)) {
+                            paramTypes.add(args.arg(i) as Class<*>)
+                        }
                     } catch (_: ClassNotFoundException) {
-                        return error("Class not found: $typeName")
+                        "getConstructor:参数错误".e()
+                        return error("getConstructor:参数错误")
                     }
                 }
 
@@ -522,7 +532,9 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
                     val classNameOrClassOrMethod = args.arg(1)
                     val classLoader: ClassLoader? = null
                     val methodName: String
+
                     if (classNameOrClassOrMethod.isstring()) { /////////string,
+
                         val classLoader =
                             args.optuserdata(2, lpparam.javaClass.classLoader) as ClassLoader
 //                        classLoader.toString().d()
@@ -530,9 +542,11 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
                         val className = classNameOrClassOrMethod.tojstring()
                         methodName = args.checkjstring(3)
 
+
                         // 动态处理参数类型
                         val paramTypes = mutableListOf<Class<*>>()
                         val luaParams = mutableListOf<LuaValue>()
+
 
                         // 收集参数类型
                         for (i in 4 until args.narg() - 1) {
@@ -541,7 +555,9 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
                                 param.isstring() -> {
                                     // 支持更多类型转换
                                     val typeStr = param.tojstring()
-                                    val type = parseType(typeStr)
+
+                                    val type = parseType(typeStr, classLoader)
+
 
 //                                    val type = when (typeStr) {
 //                                        "int" -> Int::class.javaPrimitiveType
@@ -618,99 +634,103 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
                         )
 
 
-                    } else if (classNameOrClassOrMethod.isuserdata(Class::class.java)) {   ///classs
-                        var hookClass =
-                            classNameOrClassOrMethod.touserdata(Class::class.java) as Class<*>
-                        methodName = args.checkjstring(2)
+                    }
 
-                        // 动态处理参数类型
-                        val paramTypes = mutableListOf<Class<*>>()
-                        val luaParams = mutableListOf<LuaValue>()
-
-                        // 收集参数类型
-                        for (i in 3 until args.narg() - 1) {
-                            val param = args.arg(i)
-                            when {
-                                param.isstring() -> {
-                                    // 支持更多类型转换
-                                    val typeStr = param.tojstring()
-                                    val type = parseType(typeStr)
-
-//                                    val type = when (typeStr) {
-//                                        "int" -> Int::class.javaPrimitiveType
-//                                        "long" -> Long::class.javaPrimitiveType
-//                                        "boolean" -> Boolean::class.javaPrimitiveType
-//                                        "double" -> Double::class.javaPrimitiveType
-//                                        "float" -> Float::class.javaPrimitiveType
-//                                        "String" -> String::class.java
-//                                        "int[]" -> FloatArray::class.java
-//                                        else -> Class.forName(typeStr, true, classLoader)
+                    //todo 删除或者解决不传入classloader也能加载类的问题
+//                    else if (classNameOrClassOrMethod.isuserdata(Class::class.java)) {   ///classs
+//                        var hookClass =
+//                            classNameOrClassOrMethod.touserdata(Class::class.java) as Class<*>
+//                        methodName = args.checkjstring(2)
+//
+//                        // 动态处理参数类型
+//                        val paramTypes = mutableListOf<Class<*>>()
+//                        val luaParams = mutableListOf<LuaValue>()
+//
+//                        // 收集参数类型
+//                        for (i in 3 until args.narg() - 1) {
+//                            val param = args.arg(i)
+//                            when {
+//                                param.isstring() -> {
+//                                    // 支持更多类型转换
+//                                    val typeStr = param.tojstring()
+//                                    val type = parseType(typeStr)
+//
+////                                    val type = when (typeStr) {
+////                                        "int" -> Int::class.javaPrimitiveType
+////                                        "long" -> Long::class.javaPrimitiveType
+////                                        "boolean" -> Boolean::class.javaPrimitiveType
+////                                        "double" -> Double::class.javaPrimitiveType
+////                                        "float" -> Float::class.javaPrimitiveType
+////                                        "String" -> String::class.java
+////                                        "int[]" -> FloatArray::class.java
+////                                        else -> Class.forName(typeStr, true, classLoader)
+////                                    }
+//                                    paramTypes.add(type!!)
+//                                    luaParams.add(param)
+//                                }
+//                                // 可以扩展更多类型的处理
+//                                else -> {
+//                                    throw IllegalArgumentException("Unsupported parameter type: ${param.type()}")
+//                                }
+//                            }
+//                        }
+//
+//                        val beforeFunc = args.optfunction(args.narg() - 1, null)
+//                        val afterFunc = args.optfunction(args.narg(), null)
+//
+//                        XposedHelpers.findAndHookMethod(
+//                            hookClass,
+//                            methodName,
+//                            *paramTypes.toTypedArray(),
+//                            object : XC_MethodHook() {
+//                                override fun beforeHookedMethod(param: MethodHookParam?) {
+//                                    beforeFunc?.let { func ->
+//                                        val luaParam = CoerceJavaToLua.coerce(param)
+//
+//                                        // 允许在Lua中修改参数
+//                                        val modifiedParam = func.call(luaParam)
+//
+//                                        // 如果Lua函数返回了修改后的参数，则替换原参数
+//                                        if (!modifiedParam.isnil()) {
+//                                            // 假设返回的是一个表，包含修改后的参数
+//                                            if (modifiedParam.istable()) {
+//                                                val table = modifiedParam.checktable()
+//                                                val argsTable = table.get("args")
+//
+//                                                if (argsTable.istable()) {
+//                                                    val argsModified = argsTable.checktable()
+//                                                    for (i in 1..argsModified.length()) {
+//                                                        // 将Lua的参数转换回Java类型
+//                                                        param?.args?.set(
+//                                                            i - 1,
+//                                                            fromLuaValue(argsModified.get(i))
+//                                                        )
+//                                                    }
+//                                                }
+//                                            }
+//                                        }
 //                                    }
-                                    paramTypes.add(type!!)
-                                    luaParams.add(param)
-                                }
-                                // 可以扩展更多类型的处理
-                                else -> {
-                                    throw IllegalArgumentException("Unsupported parameter type: ${param.type()}")
-                                }
-                            }
-                        }
-
-                        val beforeFunc = args.optfunction(args.narg() - 1, null)
-                        val afterFunc = args.optfunction(args.narg(), null)
-
-                        XposedHelpers.findAndHookMethod(
-                            hookClass,
-                            methodName,
-                            *paramTypes.toTypedArray(),
-                            object : XC_MethodHook() {
-                                override fun beforeHookedMethod(param: MethodHookParam?) {
-                                    beforeFunc?.let { func ->
-                                        val luaParam = CoerceJavaToLua.coerce(param)
-
-                                        // 允许在Lua中修改参数
-                                        val modifiedParam = func.call(luaParam)
-
-                                        // 如果Lua函数返回了修改后的参数，则替换原参数
-                                        if (!modifiedParam.isnil()) {
-                                            // 假设返回的是一个表，包含修改后的参数
-                                            if (modifiedParam.istable()) {
-                                                val table = modifiedParam.checktable()
-                                                val argsTable = table.get("args")
-
-                                                if (argsTable.istable()) {
-                                                    val argsModified = argsTable.checktable()
-                                                    for (i in 1..argsModified.length()) {
-                                                        // 将Lua的参数转换回Java类型
-                                                        param?.args?.set(
-                                                            i - 1,
-                                                            fromLuaValue(argsModified.get(i))
-                                                        )
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-
-                                override fun afterHookedMethod(param: MethodHookParam?) {
-                                    afterFunc?.let { func ->
-                                        val luaParam = CoerceJavaToLua.coerce(param)
-
-                                        // 允许在Lua中修改返回值
-                                        val modifiedResult = func.call(luaParam)
-
-                                        // 如果Lua函数返回了修改后的结果，则替换原返回值
-                                        if (!modifiedResult.isnil()) {
-
-                                            param?.result = fromLuaValue(modifiedResult)
-                                        }
-                                    }
-                                }
-                            }
-                        )
-
-                    } else if (classNameOrClassOrMethod.isuserdata(Method::class.java)) {   ///method
+//                                }
+//
+//                                override fun afterHookedMethod(param: MethodHookParam?) {
+//                                    afterFunc?.let { func ->
+//                                        val luaParam = CoerceJavaToLua.coerce(param)
+//
+//                                        // 允许在Lua中修改返回值
+//                                        val modifiedResult = func.call(luaParam)
+//
+//                                        // 如果Lua函数返回了修改后的结果，则替换原返回值
+//                                        if (!modifiedResult.isnil()) {
+//
+//                                            param?.result = fromLuaValue(modifiedResult)
+//                                        }
+//                                    }
+//                                }
+//                            }
+//                        )
+//
+//                    }
+                    else if (classNameOrClassOrMethod.isuserdata(Method::class.java)) {   ///method
 
 
                         val method = args.arg(1).touserdata(Method::class.java) as Method
@@ -851,7 +871,6 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
 //        }
 
 
-
         globals["hookAll"] = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
                 try {
@@ -928,7 +947,7 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
 
 
 
-            globals["hookcotr"] = object : VarArgFunction() {
+        globals["hookcotr"] = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
                 try {
                     val classNameOrClass = args.arg(1)
@@ -949,7 +968,7 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
                                 param.isstring() -> {
                                     // Support various type conversions
                                     val typeStr = param.tojstring()
-                                    val type = parseType(typeStr)
+                                    val type = parseType(typeStr, classLoader)
 
 //                                    val type = when (typeStr) {
 //                                        "int" -> Int::class.javaPrimitiveType
@@ -1021,90 +1040,93 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
                             }
                         )
 
-                    } else if (classNameOrClass.isuserdata(Class::class.java)) { // If first arg is a Class object
-                        val hookClass = classNameOrClass.touserdata(Class::class.java) as Class<*>
-
-                        // Dynamic parameter type handling
-                        val paramTypes = mutableListOf<Class<*>>()
-
-                        // Collect parameter types (starting from index 2)
-                        for (i in 2 until args.narg() - 1) {
-                            val param = args.arg(i)
-                            when {
-                                param.isstring() -> {
-                                    // Support various type conversions
-                                    val typeStr = param.tojstring()
-                                    val type = parseType(typeStr)
-
-//                                    val type = when (typeStr) {
-//                                        "int" -> Int::class.javaPrimitiveType
-//                                        "long" -> Long::class.javaPrimitiveType
-//                                        "boolean" -> Boolean::class.javaPrimitiveType
-//                                        "double" -> Double::class.javaPrimitiveType
-//                                        "float" -> Float::class.javaPrimitiveType
-//                                        "String" -> String::class.java
-//                                        else -> Class.forName(typeStr, true, classLoader)
-//                                    }
-                                    paramTypes.add(type!!)
-                                }
-                                // Can expand more type handling here
-                                else -> {
-                                    throw IllegalArgumentException("Unsupported parameter type: ${param.type()}")
-                                }
-                            }
-                        }
-
-                        val beforeFunc = args.optfunction(args.narg() - 1, null)
-                        val afterFunc = args.optfunction(args.narg(), null)
-
-                        XposedHelpers.findAndHookConstructor(
-                            hookClass,
-                            *paramTypes.toTypedArray(),
-                            object : XC_MethodHook() {
-                                override fun beforeHookedMethod(param: MethodHookParam?) {
-                                    beforeFunc?.let { func ->
-                                        val luaParam = CoerceJavaToLua.coerce(param)
-
-                                        // Allow parameter modification in Lua
-                                        val modifiedParam = func.call(luaParam)
-
-                                        // Replace original parameters if modified
-                                        if (!modifiedParam.isnil()) {
-                                            if (modifiedParam.istable()) {
-                                                val table = modifiedParam.checktable()
-                                                val argsTable = table.get("args")
-
-                                                if (argsTable.istable()) {
-                                                    val argsModified = argsTable.checktable()
-                                                    for (i in 1..argsModified.length()) {
-                                                        // Convert Lua parameters back to Java types
-                                                        param?.args?.set(
-                                                            i - 1,
-                                                            fromLuaValue(argsModified.get(i))
-                                                        )
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-
-                                override fun afterHookedMethod(param: MethodHookParam?) {
-                                    afterFunc?.let { func ->
-                                        val luaParam = CoerceJavaToLua.coerce(param)
-
-                                        // Allow modification of return value in Lua
-                                        val modifiedResult = func.call(luaParam)
-
-                                        // Replace original return value if modified
-                                        if (!modifiedResult.isnil()) {
-                                            param?.result = fromLuaValue(modifiedResult)
-                                        }
-                                    }
-                                }
-                            }
-                        )
                     }
+
+                    //todo 和hook一样解决参数类型无classloader找不到类的问题
+//                    else if (classNameOrClass.isuserdata(Class::class.java)) { // If first arg is a Class object
+//                        val hookClass = classNameOrClass.touserdata(Class::class.java) as Class<*>
+//
+//                        // Dynamic parameter type handling
+//                        val paramTypes = mutableListOf<Class<*>>()
+//
+//                        // Collect parameter types (starting from index 2)
+//                        for (i in 2 until args.narg() - 1) {
+//                            val param = args.arg(i)
+//                            when {
+//                                param.isstring() -> {
+//                                    // Support various type conversions
+//                                    val typeStr = param.tojstring()
+//                                    val type = parseType(typeStr)
+//
+////                                    val type = when (typeStr) {
+////                                        "int" -> Int::class.javaPrimitiveType
+////                                        "long" -> Long::class.javaPrimitiveType
+////                                        "boolean" -> Boolean::class.javaPrimitiveType
+////                                        "double" -> Double::class.javaPrimitiveType
+////                                        "float" -> Float::class.javaPrimitiveType
+////                                        "String" -> String::class.java
+////                                        else -> Class.forName(typeStr, true, classLoader)
+////                                    }
+//                                    paramTypes.add(type!!)
+//                                }
+//                                // Can expand more type handling here
+//                                else -> {
+//                                    throw IllegalArgumentException("Unsupported parameter type: ${param.type()}")
+//                                }
+//                            }
+//                        }
+//
+//                        val beforeFunc = args.optfunction(args.narg() - 1, null)
+//                        val afterFunc = args.optfunction(args.narg(), null)
+//
+//                        XposedHelpers.findAndHookConstructor(
+//                            hookClass,
+//                            *paramTypes.toTypedArray(),
+//                            object : XC_MethodHook() {
+//                                override fun beforeHookedMethod(param: MethodHookParam?) {
+//                                    beforeFunc?.let { func ->
+//                                        val luaParam = CoerceJavaToLua.coerce(param)
+//
+//                                        // Allow parameter modification in Lua
+//                                        val modifiedParam = func.call(luaParam)
+//
+//                                        // Replace original parameters if modified
+//                                        if (!modifiedParam.isnil()) {
+//                                            if (modifiedParam.istable()) {
+//                                                val table = modifiedParam.checktable()
+//                                                val argsTable = table.get("args")
+//
+//                                                if (argsTable.istable()) {
+//                                                    val argsModified = argsTable.checktable()
+//                                                    for (i in 1..argsModified.length()) {
+//                                                        // Convert Lua parameters back to Java types
+//                                                        param?.args?.set(
+//                                                            i - 1,
+//                                                            fromLuaValue(argsModified.get(i))
+//                                                        )
+//                                                    }
+//                                                }
+//                                            }
+//                                        }
+//                                    }
+//                                }
+//
+//                                override fun afterHookedMethod(param: MethodHookParam?) {
+//                                    afterFunc?.let { func ->
+//                                        val luaParam = CoerceJavaToLua.coerce(param)
+//
+//                                        // Allow modification of return value in Lua
+//                                        val modifiedResult = func.call(luaParam)
+//
+//                                        // Replace original return value if modified
+//                                        if (!modifiedResult.isnil()) {
+//                                            param?.result = fromLuaValue(modifiedResult)
+//                                        }
+//                                    }
+//                                }
+//                            }
+//                        )
+//                    }
 
                     return NIL
 
@@ -1485,7 +1507,10 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
     }
 
 
-    fun parseType(typeStr: String, classLoader: ClassLoader = Thread.currentThread().contextClassLoader): Class<*>? {
+    fun parseType(
+        typeStr: String,
+        classLoader: ClassLoader = Thread.currentThread().contextClassLoader
+    ): Class<*>? {
         val typeMap = mapOf(
             "int" to Int::class.javaPrimitiveType,
             "long" to Long::class.javaPrimitiveType,
@@ -1508,9 +1533,9 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
         }
 
         val baseClass = typeMap[baseType] ?: try {
-            Class.forName(baseType, true, classLoader)
+            XposedHelpers.findClass(baseType, classLoader)
         } catch (e: ClassNotFoundException) {
-            e.printStackTrace()
+            "参数错误".d()
             return null
         }
 
@@ -1522,7 +1547,6 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
 
         return resultClass
     }
-
 
 
     class LuaInvocationHandler(private val luaTable: LuaTable) : InvocationHandler {

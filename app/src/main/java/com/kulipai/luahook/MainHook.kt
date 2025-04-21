@@ -26,6 +26,8 @@ import top.sacz.xphelper.XpHelper
 import top.sacz.xphelper.dexkit.DexFinder
 import java.io.File
 
+
+import top.sacz.xphelper.dexkit.bean.MethodInfo
 import org.luckypray.dexkit.query.matchers.MethodMatcher
 //
 

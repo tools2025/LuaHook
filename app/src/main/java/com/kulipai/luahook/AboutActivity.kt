@@ -52,6 +52,7 @@ class AboutActivity : AppCompatActivity() {
 //    private val cardLicense: MaterialCardView by lazy { findViewById(R.id.card_license) }
 
     private val developerKuliPaiRow: MaterialCardView by lazy { findViewById(R.id.developer_kuli_pai_row) }
+    private val padi: MaterialCardView by lazy { findViewById(R.id.padi) }
     private val developerAnotherRow: MaterialCardView by lazy { findViewById(R.id.developer_another_row) }
 
     private val cardCheckUpdate: MaterialCardView by lazy { findViewById(R.id.card_check_update) }
@@ -99,9 +100,11 @@ class AboutActivity : AppCompatActivity() {
 
         // --- 开发者卡片点击事件 ---
         val kuliPaiGithubUrl = "https://github.com/KuLiPai"
-        val anotherDeveloperGithubUrl = "https://github.com/Samzhaohx" // 替换为实际的GitHub主页URL
+        val anotherDeveloperGithubUrl = "https://github.com/Samzhaohx"
+        val padiGithub = "https://github.com/paditianxiu"
         developerKuliPaiRow.setOnClickListener { openGithubUrl(kuliPaiGithubUrl) }
         developerAnotherRow.setOnClickListener { openGithubUrl(anotherDeveloperGithubUrl) }
+        padi.setOnClickListener { openGithubUrl(padiGithub) }
 
         // --- 许可协议卡片功能 ---
 //        cardLicense.setOnClickListener {

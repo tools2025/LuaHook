@@ -80,7 +80,8 @@ class LuaJson : OneArgFunction() {
             else toMap(v.checktable())
         }
         v.isboolean() -> v.toboolean()
-        v.isnumber() -> v.todouble()
+        // 检查值是否真的是数字类型，而不是一个字符串
+        v.type() == LuaValue.TNUMBER -> v.todouble()
         v.isstring() -> v.tojstring()
         else -> null
     }

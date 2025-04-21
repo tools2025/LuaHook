@@ -14,8 +14,8 @@ android {
         applicationId = "com.kulipai.luahook"
         minSdk = 28
         targetSdk = 35
-        versionCode = 11
-        versionName = "2.99-beta"
+        versionCode = 12
+        versionName = "3.0-beta"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
