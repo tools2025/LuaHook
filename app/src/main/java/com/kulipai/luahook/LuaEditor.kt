@@ -134,6 +134,7 @@ class LuaEditor : FreeScrollingTextField {
 //            "hookm",
             "hookAll",
             "arrayOf",
+            "callMethod"
 //            "arrayOfType"
         )
         //String[] Names = {"hook","Xposed","log","setField","getField","invoke"};
@@ -172,7 +173,7 @@ class LuaEditor : FreeScrollingTextField {
 
     fun setDark(isDark: Boolean) {
         if (isDark) colorScheme = ColorSchemeDark()
-        else colorScheme =ColorSchemeLight()
+        else colorScheme = ColorSchemeLight()
     }
 
     fun addNames(names: Array<String?>) {
@@ -478,6 +479,7 @@ class LuaEditor : FreeScrollingTextField {
         setDocumentProvider(DocumentProvider(doc))
         //doc.analyzeWordWrap();
     }
+
     var text: DocumentProvider
         get() = createDocumentProvider()
         set(c) {
@@ -521,7 +523,7 @@ class LuaEditor : FreeScrollingTextField {
         val newPosition = doc.undo()
 
         if (newPosition >= 0) {
-            isEdited=true
+            isEdited = true
             respan()
             selectText(false)
             moveCaret(newPosition)
@@ -534,7 +536,7 @@ class LuaEditor : FreeScrollingTextField {
         val newPosition = doc.redo()
 
         if (newPosition >= 0) {
-            isEdited =true
+            isEdited = true
 
             respan()
             selectText(false)

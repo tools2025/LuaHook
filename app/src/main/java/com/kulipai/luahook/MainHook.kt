@@ -74,7 +74,7 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
     private fun canHook(lpparam: LoadPackageParam) {
         if (lpparam.packageName == MODULE_PACKAGE) {
             XposedHelpers.findAndHookMethod(
-                "com.kulipai.luahook.fragment.HomeFragment",
+                "com.kulipai.luahook.fragment.HomeFragmentKt",
                 lpparam.classLoader,
                 "canHook",
                 object : XC_MethodHook() {

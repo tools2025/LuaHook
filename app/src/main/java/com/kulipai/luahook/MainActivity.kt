@@ -1,13 +1,11 @@
 package com.kulipai.luahook
 
 import LanguageUtil
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
 import android.view.Menu
-import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -22,15 +20,14 @@ import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.google.android.material.card.MaterialCardView
 import com.kulipai.luahook.fragment.AppsFragment
 import com.kulipai.luahook.fragment.HomeFragment
 import com.kulipai.luahook.fragment.PluginsFragment
+import com.kulipai.luahook.fragment.canHook
 import kotlinx.coroutines.launch
 
 
 class MainActivity : AppCompatActivity() {
-
 
 
     private lateinit var SettingsLauncher: ActivityResultLauncher<Intent>
@@ -42,7 +39,6 @@ class MainActivity : AppCompatActivity() {
     private val bottomBar: BottomNavigationView by lazy { findViewById(R.id.bottomBar) }
     private val toolbar: MaterialToolbar by lazy { findViewById(R.id.toolbar) }
     private val viewPager2: ViewPager2 by lazy { findViewById(R.id.viewPager2) }
-
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -64,54 +60,54 @@ class MainActivity : AppCompatActivity() {
         }
 
         //setting
-        toolbar.menu.add(0,1,0,"Setting").setIcon(R.drawable.settings_24px).setShowAsAction(1)
+        toolbar.menu.add(0, 1, 0, "Setting").setIcon(R.drawable.settings_24px).setShowAsAction(1)
 
         toolbar.setOnMenuItemClickListener {
-            when(it.itemId) {
-                1-> {
-                    val itent = Intent(this,SettingsActivity::class.java)
+            when (it.itemId) {
+                1 -> {
+                    val itent = Intent(this, SettingsActivity::class.java)
                     SettingsLauncher.launch(itent)
                     true
                 }
+
                 else -> true
             }
         }
 
         //状态检查
         val prefs = getSharedPreferences("status", MODE_PRIVATE)
-        val current = prefs.getString("current","null")
-        if(current == "null") {
+        val current = prefs.getString("current", "null")
+        if (current == "null") {
 
         } else if (current == "apps") {
             val intent = Intent(this, AppsEdit::class.java)
-            intent.putExtra("packageName", prefs.getString("packageName",""))
-            intent.putExtra("appName", prefs.getString("appName",""))
+            intent.putExtra("packageName", prefs.getString("packageName", ""))
+            intent.putExtra("appName", prefs.getString("appName", ""))
             startActivity(intent)
             prefs.edit {
-                putString("current","null")
+                putString("current", "null")
             }
         } else if (current == "global") {
             val intent = Intent(this, EditActivity::class.java)
             startActivity(intent)
             prefs.edit {
-                putString("current","null")
+                putString("current", "null")
             }
         }
-
-
 
 
         // 可以选择在这里观察是否加载完（调试用）
         val app = application as MyApplication
         lifecycleScope.launch {
             val apps = app.getAppListAsync()
-
-            val savedList = getStringList(this@MainActivity, "selectApps")
-            if (savedList.isEmpty()) {
-                // 列表为空的逻辑
-            } else {
-                val appInfoList = MyApplication.instance.getAppInfoList(savedList)
-                // 加载 appInfoList
+            if (canHook()) {
+                val savedList = getStringList(this@MainActivity, "selectApps")
+                if (savedList.isEmpty()) {
+                    // 列表为空的逻辑
+                } else {
+                    val appInfoList = MyApplication.instance.getAppInfoList(savedList)
+                    // 加载 appInfoList
+                }
             }
 
 
@@ -144,7 +140,7 @@ class MainActivity : AppCompatActivity() {
             HomeFragment(),
             AppsFragment(),
             PluginsFragment(),
-            )
+        )
 
         // 创建 FragmentStateAdapter
         val adapter = object : FragmentStateAdapter(this) {
@@ -203,8 +199,6 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-
-
     fun saveStringList(context: Context, key: String, list: List<String>) {
         val prefs = context.getSharedPreferences("MyAppPrefs", MODE_WORLD_READABLE)
         val serialized = list.joinToString(",")
@@ -220,7 +214,6 @@ class MainActivity : AppCompatActivity() {
             mutableListOf()
         }
     }
-
 
 
 }

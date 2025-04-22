@@ -6,17 +6,17 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Rect
-import android.graphics.drawable.Drawable
 import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.content.edit
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
@@ -37,7 +37,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import android.view.inputmethod.InputMethodManager
 
 data class AppInfo(
     val appName: String,
@@ -107,12 +106,14 @@ class AppsFragment : Fragment() {
 
             // 在处理 Fragment 视图相关的操作时，使用 viewLifecycleOwner.lifecycleScope 更安全
             lifecycleScope.launch {
-                val savedList = getStringList(requireContext(), "selectApps")
-                if (savedList.isEmpty()) {
-                    // 列表为空的逻辑
-                } else {
-                    val appInfoList = MyApplication.Companion.instance.getAppInfoList(savedList)
-                    adapter.updateData(appInfoList)
+                if (canHook()) {
+                    val savedList = getStringList(requireContext(), "selectApps")
+                    if (savedList.isEmpty()) {
+                        // 列表为空的逻辑
+                    } else {
+                        val appInfoList = MyApplication.Companion.instance.getAppInfoList(savedList)
+                        adapter.updateData(appInfoList)
+                    }
                 }
             }
         }
@@ -151,25 +152,25 @@ class AppsFragment : Fragment() {
 
 
         lifecycleScope.launch {
-
-            val savedList = getStringList(requireContext(), "selectApps")
-            if (savedList.isEmpty()) {
-                // 列表为空的逻辑
-            } else {
-                appInfoList = MyApplication.Companion.instance.getAppInfoList(savedList)
-                adapter.updateData(appInfoList)
+            if (canHook()) {
+                val savedList = getStringList(requireContext(), "selectApps")
+                if (savedList.isEmpty()) {
+                    // 列表为空的逻辑
+                } else {
+                    appInfoList = MyApplication.Companion.instance.getAppInfoList(savedList)
+                    adapter.updateData(appInfoList)
+                }
             }
-
 
         }
 
         searchbar.setOnClickListener {
             searchEdit.requestFocus()
             // 显示软键盘
-            val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            val imm =
+                requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
             imm.showSoftInput(searchEdit, InputMethodManager.SHOW_IMPLICIT)
         }
-
 
 
         //搜索
@@ -178,7 +179,7 @@ class AppsFragment : Fragment() {
             searchJob?.cancel()
             searchJob = CoroutineScope(Dispatchers.Main).launch {
                 delay(100) // 延迟300ms
-                filterAppList(s.toString().trim(),clearImage)
+                filterAppList(s.toString().trim(), clearImage)
             }
         }
 
@@ -203,15 +204,24 @@ class AppsFragment : Fragment() {
 
         //fab添加app
         fab.setOnClickListener {
-            val intent = Intent(requireContext(), SelectApps::class.java)
-            launcher.launch(intent)
+            if (canHook()) {
+
+
+                val intent = Intent(requireContext(), SelectApps::class.java)
+                launcher.launch(intent)
+            } else {
+                Toast.makeText(requireContext(), "未激活模块", Toast.LENGTH_SHORT).show()
+                
+            }
+
         }
         return view
     }
 
 
     fun saveStringList(context: Context, key: String, list: MutableList<String>) {
-        val sharedPreferences = context.getSharedPreferences("MyAppPrefs", Context.MODE_WORLD_READABLE)
+        val sharedPreferences =
+            context.getSharedPreferences("MyAppPrefs", Context.MODE_WORLD_READABLE)
         val serializedList = list.joinToString(",") // 使用逗号作为分隔符
         sharedPreferences.edit {
             putString(key, serializedList)
@@ -219,7 +229,8 @@ class AppsFragment : Fragment() {
     }
 
     fun getStringList(context: Context, key: String): MutableList<String> {
-        val sharedPreferences = context.getSharedPreferences("MyAppPrefs", Context.MODE_WORLD_READABLE)
+        val sharedPreferences =
+            context.getSharedPreferences("MyAppPrefs", Context.MODE_WORLD_READABLE)
         val serializedList = sharedPreferences.getString(key, "") ?: ""
         return if (serializedList.isNotEmpty()) {
             serializedList.split(",").toMutableList()
@@ -228,7 +239,7 @@ class AppsFragment : Fragment() {
         }
     }
 
-    private fun filterAppList(query: String,clearImage: ImageView) {
+    private fun filterAppList(query: String, clearImage: ImageView) {
         val filteredList = if (query.isEmpty()) {
             clearImage.visibility = View.INVISIBLE
             appInfoList // 显示全部

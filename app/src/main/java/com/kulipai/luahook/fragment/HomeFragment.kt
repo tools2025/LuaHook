@@ -11,6 +11,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.annotation.AttrRes
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -18,12 +19,15 @@ import com.google.android.material.card.MaterialCardView
 import com.kulipai.luahook.EditActivity
 import com.kulipai.luahook.R
 
+
+
+fun canHook(): Boolean {
+    return false
+}
+
 class HomeFragment : Fragment() {
 
 
-    fun canHook(): Boolean {
-        return false
-    }
 
     private fun getAppVersionName(context: Context): String {
         return try {
@@ -83,8 +87,12 @@ class HomeFragment : Fragment() {
 
 
         card1.setOnClickListener{
-            val intent = Intent(requireActivity(), EditActivity::class.java)
-            startActivity(intent)
+            if (canHook()) {
+                val intent = Intent(requireActivity(), EditActivity::class.java)
+                startActivity(intent)
+            }else{
+                Toast.makeText(requireContext(), "未激活模块", Toast.LENGTH_SHORT).show()
+            }
         }
 
         return view

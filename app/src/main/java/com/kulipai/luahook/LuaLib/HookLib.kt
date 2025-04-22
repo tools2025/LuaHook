@@ -18,6 +18,7 @@ import java.lang.reflect.Constructor
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
+import java.lang.reflect.Modifier
 import java.lang.reflect.Proxy
 
 class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
@@ -520,6 +521,138 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
                 } catch (e: Exception) {
                     println("newInstance error: An unexpected error occurred: ${e.message}")
                     e.toString().d()
+                    return NIL
+                }
+            }
+        }
+
+
+
+//        globals["callMethod"] = object : VarArgFunction() {
+//            override fun invoke(args: Varargs): LuaValue {
+//                try {
+//                    if (args.narg() < 1 || !args.arg(1).isuserdata()) {
+//                        throw IllegalArgumentException("First argument must be a Method object")
+//                    }
+//
+//                    // Extract the Method object from the JavaInstance wrapper
+//                    val methodArg = args.arg(1)
+//                    val methodObj = methodArg.touserdata()
+//                    val method: Method
+//
+//                    // Handle different ways the Method might be wrapped
+//                    if (methodObj is Method) {
+//                        method = methodObj
+//                    } else {
+//                        ("Object is not a Method: ${methodObj?.javaClass?.name}").e()
+//                        return NIL
+//                    }
+//
+//                    // Get method information
+//                    val isStatic = Modifier.isStatic(method.modifiers)
+//                    val declaringClass = method.declaringClass
+//                    val methodName = method.name
+//
+//                    // Convert parameters to Java objects
+//                    val paramValues = if (isStatic) {
+//                        // For static methods, all arguments after the method are parameters
+//                        Array<Any?>(args.narg() - 1) { i ->
+//                            fromLuaValue(args.arg(i + 2))
+//                        }
+//                    } else {
+//                        // For instance methods, need at least one more argument for the instance
+//                        if (args.narg() < 2) {
+//                            "callMethod param1 is not method".e()
+//                            return NIL
+//                        }
+//
+//                        // First argument after method is the object instance
+//                        val instance = fromLuaValue(args.arg(2))
+//
+//                        // Remaining arguments are method parameters
+//                        val params = Array<Any?>(args.narg() - 2) { i ->
+//                            fromLuaValue(args.arg(i + 3))
+//                        }
+//
+//                        // Use XposedHelpers.callMethod
+//                        val result = XposedHelpers.callMethod(instance, methodName, *params)
+//                        return CoerceJavaToLua.coerce(result)
+//                    }
+//
+//                    // Call static method using XposedHelpers
+//                    val result = XposedHelpers.callStaticMethod(declaringClass, methodName, *paramValues)
+//                    return CoerceJavaToLua.coerce(result)
+//
+//                } catch (e: Exception) {
+//                    ("callMethod error: ${e.message}").e()
+////                    e.printStackTrace()
+//                    return NIL
+//                }
+//            }
+//        }
+
+
+        globals["callMethod"] = object : VarArgFunction() {
+            override fun invoke(args: Varargs): LuaValue {
+                try {
+                    if (args.narg() < 1 || !args.arg(1).isuserdata()) {
+                        throw IllegalArgumentException("First argument must be a Method object")
+                    }
+
+                    // Extract the Method object from the JavaInstance wrapper
+                    val methodArg = args.arg(1)
+                    val methodObj = methodArg.touserdata()
+                    val method: Method
+
+                    // Handle different ways the Method might be wrapped
+                    if (methodObj is Method) {
+                        method = methodObj
+
+                    } else {
+                        "callMethod param1 is not method".e()
+                        return NIL
+                    }
+
+                    // Check if the method is static
+                    val isStatic = Modifier.isStatic(method.modifiers)
+
+                    // For static methods, we can call directly with all arguments
+                    // For instance methods, the second argument should be the instance
+
+                    val result: Any?
+
+                    if (isStatic) {
+                        // Convert all Lua arguments to Java objects
+                        val javaArgs = Array<Any?>(args.narg() - 1) { i ->
+                            fromLuaValue(args.arg(i + 2))
+                        }
+
+                        // Call the static method
+                        result = method.invoke(null, *javaArgs)
+                    } else {
+                        // Need at least 2 arguments for instance methods
+                        if (args.narg() < 2) {
+                            ("Instance method requires an object instance as second parameter").e()
+                            return NIL
+                        }
+
+                        // Get the instance object
+                        val instance = fromLuaValue(args.arg(2))
+
+                        // Convert remaining Lua arguments to Java objects
+                        val javaArgs = Array<Any?>(args.narg() - 2) { i ->
+                            fromLuaValue(args.arg(i + 3))
+                        }
+
+                        // Call the instance method
+                        result = method.invoke(instance, *javaArgs)
+                    }
+
+                    // Convert the result back to Lua
+                    return CoerceJavaToLua.coerce(result)
+
+                } catch (e: Exception) {
+                    ("callMethod error: ${e.message}").e()
                     return NIL
                 }
             }
