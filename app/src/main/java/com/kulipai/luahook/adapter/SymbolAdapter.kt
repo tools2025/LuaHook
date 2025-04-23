@@ -5,8 +5,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.androlua.LuaEditor
 import com.google.android.material.card.MaterialCardView
-import com.kulipai.luahook.LuaEditor
 import com.kulipai.luahook.R
 
 class SymbolAdapter(private val symbols: List<String>, private val editor: LuaEditor) :
