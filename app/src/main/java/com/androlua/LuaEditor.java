@@ -129,7 +129,7 @@ public class LuaEditor extends FreeScrollingTextField {
                 addNames(cls);
             }
         }.execute();*/
-        PackageUtil.load(context);
+//        PackageUtil.load(context);
     }
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {

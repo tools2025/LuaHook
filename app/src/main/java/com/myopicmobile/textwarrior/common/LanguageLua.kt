@@ -15,7 +15,9 @@ class LanguageLua private constructor() : Language() {
     init {
         super.setOperators(LUA_OPERATORS)
         super.setKeywords(Companion.keywords)
+
         super.setNames(Companion.names)
+        super.setNames(Companion.luaHookKey)
         super.addBasePackage(
             "io",
             package_io.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
@@ -56,7 +58,8 @@ class LanguageLua private constructor() : Language() {
         )
         super.addBasePackage(
             "DexKitBridge",
-            package_DexKitBridge.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+            package_DexKitBridge.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }
+                .toTypedArray()
         )
         super.addBasePackage(
             "DexFinder",
@@ -78,7 +81,6 @@ class LanguageLua private constructor() : Language() {
             "json",
             package_json.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
         )
-
 
 
     }
@@ -151,15 +153,14 @@ class LanguageLua private constructor() : Language() {
             "byte|char|charpattern|charpos|codepoint|codes|escape|find|fold|gfind|gmatch|gsub|insert|len|lower|match|ncasecmp|next|offset|remove|reverse|sub|title|upper|width|widthindex"
 
 
-
-
         private const val package_lpparam =
             "packageName|classLoader|appInfo|isFirstApplication|processName"
         private const val package_http = "get|post"
         private const val package_DexKitBridge =
             "close|initFullCache|setThreadNum|getDexNum|exportDexFile|batchFindClassUsingStrings|batchFindMethodUsingStrings|findClass|findMethod|findField|getClassData|getMethodData|getFieldData|getCallMethods|getInvokeMethods|create"
         private const val package_json = "encode|decode"
-        private const val package_DexFinder = "setAutoCloseTime|create|getDexKitBridge|findMethod|findField|findClass|clearCache|resetTimer|close"
+        private const val package_DexFinder =
+            "setAutoCloseTime|create|getDexKitBridge|findMethod|findField|findClass|clearCache|resetTimer|close"
         private const val package_res = "getRConstants|getColor|getString|getResourceId|getDrawable"
         private const val package_file =
             "isFile|isDir|isExists|read|readBytes|write|writeBytes|append|appendBytes|copy|move|rename|delete|getName|getSize"
@@ -170,18 +171,56 @@ class LanguageLua private constructor() : Language() {
         private val functionTarget: String =
             globalTarget + "|" + extFunctionTarget + "|" + packageName
         private val keywords: Array<String?> =
-            keywordTarget.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+            keywordTarget.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }
+                .toTypedArray()
 
-        private val names: Array<String?> =
-            functionTarget.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        val luaHookKey = arrayOf(
+            "hook",
+            "Xposed",
+            "log",
+            "setField",
+            "getField",
+            "invoke",
+            "file",
+            "lpparam",
+            "http",
+            "File",
+            "json",
+            "import",
+            "new",
+            "newInstance",
+            "getConstructor",
+            "clearDrawableCache",
+            "loadDrawableFromFile",
+            "loadDrawableAsync",
+            "loadDrawableSync",
+            "resources",
+            "hookcotr",
+            "XposedBridge",
+            "XposedHelpers",
+            "createProxy",
+            "DexKitBridge",
+            "findClass",
+            "DexFinder",
+//            "hookm",
+            "hookAll",
+            "arrayOf",
+            "callMethod"
+        )
 
-        private val LUA_OPERATORS = charArrayOf(
+        val names: Array<String?> =
+            functionTarget.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }
+                .toTypedArray()
+
+        private
+        val LUA_OPERATORS = charArrayOf(
             '(', ')', '{', '}', ',', ';', '=', '+', '-',
             '/', '*', '&', '!', '|', ':', '[', ']', '<', '>',
             '?', '~', '%', '^'
         )
+
         @JvmStatic
-		val instance: Language
+        val instance: Language
             get() {
                 if (_theOne == null) {
                     _theOne = LanguageLua()

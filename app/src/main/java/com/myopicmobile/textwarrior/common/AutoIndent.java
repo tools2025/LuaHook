@@ -189,13 +189,14 @@ public class AutoIndent {
                 if (type == null)
                     break;
                 if(type==NAME){
-                    ArrayList<String> cs = PackageUtil.fix(lexer.yytext());
-                    if(cs!=null){
-                        for (String c : cs) {
-                            if(!ret.contains(c))
-                                ret.add(c);
-                        }
-                    }
+//                    ArrayList<String> cs = PackageUtil.fix(lexer.yytext());
+//                    ArrayList<String> cs = null;
+//                    if(cs!=null){
+//                        for (String c : cs) {
+//                            if(!ret.contains(c))
+//                                ret.add(c);
+//                        }
+//                    }
                 }
             } catch (IOException e) {
                 e.printStackTrace();

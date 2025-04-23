@@ -25,7 +25,7 @@ import com.myopicmobile.textwarrior.common.Language;
 import com.myopicmobile.textwarrior.common.LanguageNonProg;
 import com.myopicmobile.textwarrior.common.Lexer;
 import com.myopicmobile.textwarrior.common.LuaParser;
-import com.myopicmobile.textwarrior.common.PackageUtil;
+//import com.myopicmobile.textwarrior.common.PackageUtil;
 
 import java.util.ArrayList;
 
@@ -337,7 +337,7 @@ public class AutoCompletePanel {
                         }
                     }
 
-                    buf.addAll(PackageUtil.filter(key));
+//                    buf.addAll(PackageUtil.filter(key));
                     FilterResults filterResults = new FilterResults();
                     filterResults.values = buf;   // results是上面的过滤结果
                     filterResults.count = buf.size();  // 结果数量
