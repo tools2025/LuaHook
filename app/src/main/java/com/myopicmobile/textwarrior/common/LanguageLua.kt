@@ -50,6 +50,37 @@ class LanguageLua private constructor() : Language() {
             "debug",
             package_debug.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
         )
+        super.addBasePackage(
+            "lpparam",
+            package_lpparam.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        )
+        super.addBasePackage(
+            "DexKitBridge",
+            package_DexKitBridge.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        )
+        super.addBasePackage(
+            "DexFinder",
+            package_DexFinder.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        )
+        super.addBasePackage(
+            "http",
+            package_http.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        )
+        super.addBasePackage(
+            "resources",
+            package_res.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        )
+        super.addBasePackage(
+            "file",
+            package_file.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        )
+        super.addBasePackage(
+            "json",
+            package_json.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        )
+
+
+
     }
 
     /**
@@ -118,6 +149,21 @@ class LanguageLua private constructor() : Language() {
             "clear|clone|concat|const|find|foreach|foreachi|gfind|insert|maxn|move|pack|remove|size|sort|unpack"
         private const val package_utf8 =
             "byte|char|charpattern|charpos|codepoint|codes|escape|find|fold|gfind|gmatch|gsub|insert|len|lower|match|ncasecmp|next|offset|remove|reverse|sub|title|upper|width|widthindex"
+
+
+
+
+        private const val package_lpparam =
+            "packageName|classLoader|appInfo|isFirstApplication|processName"
+        private const val package_http = "get|post"
+        private const val package_DexKitBridge =
+            "close|initFullCache|setThreadNum|getDexNum|exportDexFile|batchFindClassUsingStrings|batchFindMethodUsingStrings|findClass|findMethod|findField|getClassData|getMethodData|getFieldData|getCallMethods|getInvokeMethods|create"
+        private const val package_json = "encode|decode"
+        private const val package_DexFinder = "setAutoCloseTime|create|getDexKitBridge|findMethod|findField|findClass|clearCache|resetTimer|close"
+        private const val package_res = "getRConstants|getColor|getString|getResourceId|getDrawable"
+        private const val package_file =
+            "isFile|isDir|isExists|read|readBytes|write|writeBytes|append|appendBytes|copy|move|rename|delete|getName|getSize"
+
 
         //	private final static String extFunctionTarget="activity|call|compile|dump|each|enum|import|loadbitmap|loadlayout|loadmenu|service|set|task|thread|timer";
         private const val extFunctionTarget = "import"
