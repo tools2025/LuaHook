@@ -345,6 +345,9 @@ class EditActivity : AppCompatActivity() {
             bottomSymbolBar.translationY = -imeInsets.bottom.toFloat()
             fab.translationY = -imeInsets.bottom.toFloat()
 
+            editor.setPadding(0,0,0, navigationBarInsets.bottom)
+            
+
             // 设置根布局的底部内边距
             if (imeInsets.bottom > 0) {
                 // 输入法可见时，不需要额外的底部内边距来避免被导航栏遮挡，
