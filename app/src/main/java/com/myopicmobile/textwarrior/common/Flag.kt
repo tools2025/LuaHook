@@ -6,20 +6,20 @@
  *
  * This software is provided "as is". Use at your own risk.
  */
-package com.myopicmobile.textwarrior.common;
+package com.myopicmobile.textwarrior.common
 
-public class Flag {
-	private boolean state = false;
-	
-	synchronized public final void set(){
-		state = true;
-	}
-	
-	synchronized public final void clear(){
-		state = false;
-	}
-	
-	synchronized public final boolean isSet(){
-		return state;
-	}
+class Flag {
+    @get:Synchronized
+    var isSet: Boolean = false
+        private set
+
+    @Synchronized
+    fun set() {
+        this.isSet = true
+    }
+
+    @Synchronized
+    fun clear() {
+        this.isSet = false
+    }
 }

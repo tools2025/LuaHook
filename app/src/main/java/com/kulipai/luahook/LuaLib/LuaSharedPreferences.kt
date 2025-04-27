@@ -56,7 +56,7 @@ class LuaSharedPreferences(
                 }
 
                 editor.apply()
-                return LuaValue.TRUE
+                return TRUE
             }
         }
 

@@ -166,7 +166,7 @@ class LanguageLua private constructor() : Language() {
 
         private const val package_lpparam =
             "packageName|classLoader|appInfo|isFirstApplication|processName"
-        private const val package_http = "get|post|upload|delete|put|postJson|head"
+        private const val package_http = "get|post|upload|delete|put|postJson|head|download"
         private const val package_sp = "clear|getAll|remove|contains|get|set"
         private const val package_xsp = "getAll|contains|get|reload"
         private const val package_DexKitBridge =
