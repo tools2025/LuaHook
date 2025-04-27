@@ -21,6 +21,7 @@ import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import java.lang.reflect.Proxy
 
+
 class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
 
     override fun call(globals: LuaValue): LuaValue {
@@ -334,6 +335,137 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
 //            }
 //        }
 
+//
+//        // 封装获取构造函数的 Lua 函数
+//        globals["getConstructor"] = object : VarArgFunction() {
+//            override fun invoke(args: Varargs): LuaValue {
+//                if (args.narg() < 1 || !args.arg(1).isuserdata(Class::class.java)) {
+//                    return error("Usage: getConstructor(class, argType1, argType2, ...)")
+//                }
+//
+//
+//                val clazz = args.arg(1).touserdata(Class::class.java) as Class<*>
+//
+//                val paramTypes = mutableListOf<Class<*>>()
+//
+//                for (i in 2..args.narg()) {
+//                    try {
+//                        (args.arg(i).touserdata() is Class<*>).toString().d()
+//
+//                        if (args.arg(i).isstring()) {
+//
+//
+//                            val typeName = args.checkjstring(i)
+//                            val type = parseType(typeName, lpparam.classLoader)
+////                        val type = when (typeName) {
+////                            "int" -> Int::class.javaPrimitiveType
+////                            "boolean" -> Boolean::class.javaPrimitiveType
+////                            "float" -> Float::class.javaPrimitiveType
+////                            "double" -> Double::class.javaPrimitiveType
+////                            "long" -> Long::class.javaPrimitiveType
+////                            "char" -> Char::class.javaPrimitiveType
+////                            "byte" -> Byte::class.javaPrimitiveType
+////                            "short" -> Short::class.javaPrimitiveType
+////                            else -> Class.forName(typeName)
+////
+//                            paramTypes.add(type as Class<*>)
+//
+//
+//                        } else if (args.arg(i).isuserdata(Class::class.java)) {
+//                            paramTypes.add(args.arg(i) as Class<*>)
+//                        } else {
+//
+//                        }
+//                    } catch (_: ClassNotFoundException) {
+//                        "getConstructor:参数错误".e()
+//                        return error("getConstructor:参数错误")
+//                    } catch (e: Exception) {
+//                        e.toString().e()
+//                    }
+//                }
+//
+//                return try {
+//                    val constructor = clazz.getConstructor(*paramTypes.toTypedArray())
+//                    CoerceJavaToLua.coerce(constructor)
+//                } catch (_: NoSuchMethodException) {
+//                    NIL
+//                }
+//            }
+//        }
+
+
+
+        /**
+         * 安全地将 LuaValue 转换为 Java Class 对象
+         * 处理普通 Class 和 JavaClass（接口或类）的情况
+         */
+        fun safeToJavaClass(luaValue: LuaValue): Class<*>? {
+            if (!luaValue.isuserdata()) return null
+
+            val userData = luaValue.touserdata()
+
+            // 直接是 Class 类型的情况
+            if (userData is Class<*>) {
+                return userData
+            }
+
+            // JavaClass 或其他包装类型的情况
+            return try {
+                // 尝试获取内部字段
+                val possibleFields = listOf("clazz", "class", "jclass", "classObject")
+                for (fieldName in possibleFields) {
+                    try {
+                        val field = userData.javaClass.getDeclaredField(fieldName)
+                        field.isAccessible = true
+                        val fieldValue = field.get(userData)
+                        if (fieldValue is Class<*>) {
+                            return fieldValue
+                        }
+                    } catch (e: NoSuchFieldException) {
+                        // 继续尝试下一个字段
+                    }
+                }
+
+                // 尝试调用可能的方法
+                val possibleMethods = listOf("getClassObject", "toClass", "asClass", "getJavaClass")
+                for (methodName in possibleMethods) {
+                    try {
+                        val method = userData.javaClass.getMethod(methodName)
+                        val result = method.invoke(userData)
+                        if (result is Class<*>) {
+                            return result
+                        }
+                    } catch (e: NoSuchMethodException) {
+                        // 继续尝试下一个方法
+                    }
+                }
+
+                // 记录反射信息以便调试
+                "无法转换 ${userData.javaClass.name} 为 Class 对象".d()
+
+                // 最后尝试通过名称获取
+                try {
+                    // 尝试获取类名
+                    val nameMethod = userData.javaClass.getMethod("getName")
+                    val className = nameMethod.invoke(userData) as? String
+                    if (className != null) {
+                        return Class.forName(className)
+                    }
+                } catch (e: Exception) {
+                    // 忽略并返回 null
+                }
+
+                null
+            } catch (t: Throwable) {
+                t.toString().e()
+                null
+            }
+        }
+
+
+
+
+
 
         // 封装获取构造函数的 Lua 函数
         globals["getConstructor"] = object : VarArgFunction() {
@@ -348,41 +480,45 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
                 for (i in 2..args.narg()) {
                     try {
                         if (args.arg(i).isstring()) {
-
-
                             val typeName = args.checkjstring(i)
                             val type = parseType(typeName, lpparam.classLoader)
-//                        val type = when (typeName) {
-//                            "int" -> Int::class.javaPrimitiveType
-//                            "boolean" -> Boolean::class.javaPrimitiveType
-//                            "float" -> Float::class.javaPrimitiveType
-//                            "double" -> Double::class.javaPrimitiveType
-//                            "long" -> Long::class.javaPrimitiveType
-//                            "char" -> Char::class.javaPrimitiveType
-//                            "byte" -> Byte::class.javaPrimitiveType
-//                            "short" -> Short::class.javaPrimitiveType
-//                            else -> Class.forName(typeName)
-//                        }
-
                             paramTypes.add(type as Class<*>)
-
-                        } else if (args.arg(i).isuserdata(Class::class.java)) {
-                            paramTypes.add(args.arg(i) as Class<*>)
+                        } else if (args.arg(i).isuserdata()) {
+                            // 使用安全的转换方法替代直接 as 转换
+                            val classObj = safeToJavaClass(args.arg(i))
+                            if (classObj != null) {
+                                paramTypes.add(classObj)
+                            } else {
+                                "getConstructor: 无法将参数 $i 转换为 Class".e()
+                                return error("getConstructor: 无法将参数 $i 转换为 Class")
+                            }
+                        } else {
+                            "getConstructor: 参数 $i 类型不支持".e()
+                            return error("getConstructor: 参数类型不支持")
                         }
-                    } catch (_: ClassNotFoundException) {
-                        "getConstructor:参数错误".e()
-                        return error("getConstructor:参数错误")
+                    } catch (e: ClassNotFoundException) {
+                        "getConstructor: 参数错误".e()
+                        return error("getConstructor: 参数错误")
+                    } catch (e: Exception) {
+                        e.toString().e()
+                        return error("getConstructor: ${e.message}")
                     }
                 }
 
                 return try {
                     val constructor = clazz.getConstructor(*paramTypes.toTypedArray())
                     CoerceJavaToLua.coerce(constructor)
-                } catch (_: NoSuchMethodException) {
+                } catch (e: NoSuchMethodException) {
                     NIL
+                } catch (e: Exception) {
+                    e.toString().e()
+                    error("getConstructor: ${e.message}")
                 }
             }
         }
+
+
+
 
         // 封装创建新实例的 Lua 函数
         globals["newInstance"] = object : VarArgFunction() {
@@ -525,7 +661,6 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
                 }
             }
         }
-
 
 
 //        globals["callMethod"] = object : VarArgFunction() {
