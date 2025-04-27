@@ -7,6 +7,7 @@ import LuaHttp
 import LuaImport
 import LuaJson
 import LuaResourceBridge
+import LuaSharedPreferences
 import Luafile
 import com.kulipai.luahook.util.d
 import de.robv.android.xposed.IXposedHookLoadPackage
@@ -26,9 +27,6 @@ import top.sacz.xphelper.XpHelper
 import top.sacz.xphelper.dexkit.DexFinder
 import java.io.File
 
-
-import top.sacz.xphelper.dexkit.bean.MethodInfo
-import org.luckypray.dexkit.query.matchers.MethodMatcher
 //
 
 
@@ -70,7 +68,6 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
     }
 
 
-
     private fun canHook(lpparam: LoadPackageParam) {
         if (lpparam.packageName == MODULE_PACKAGE) {
             XposedHelpers.findAndHookMethod(
@@ -95,7 +92,6 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
     override fun handleLoadPackage(lpparam: LoadPackageParam) {
 
 
-
         SelectAppsString = selectApps.getString("selectApps", "").toString()
 
         if (SelectAppsString.isNotEmpty()) {
@@ -111,7 +107,7 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
 
         //加载Lua模块
         globals["XpHelper"] = CoerceJavaToLua.coerce(XpHelper::class.java)
-        globals["DexFinder"]= CoerceJavaToLua.coerce(DexFinder::class.java)
+        globals["DexFinder"] = CoerceJavaToLua.coerce(DexFinder::class.java)
         globals["XposedHelpers"] = CoerceJavaToLua.coerce(XposedHelpers::class.java)
         globals["XposedBridge"] = CoerceJavaToLua.coerce(XposedBridge::class.java)
         globals["DexKitBridge"] = CoerceJavaToLua.coerce(DexKitBridge::class.java)
@@ -120,18 +116,8 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
         LuaJson().call(globals)
         LuaHttp().call(globals)
         Luafile().call(globals)
-        globals["import"] = LuaImport(lpparam.classLoader,this::class.java.classLoader!!, globals)
-
-
-        val LuaFile = object : OneArgFunction() {
-            override fun call(arg: LuaValue): LuaValue {
-                val path = arg.checkjstring()
-                val file = File(path)
-                return CoerceJavaToLua.coerce(file)
-            }
-        }
-
-        globals["File"] = LuaFile
+        LuaSharedPreferences().call(globals)
+        globals["import"] = LuaImport(lpparam.classLoader, this::class.java.classLoader!!, globals)
 
         LuaResourceBridge().registerTo(globals)
 

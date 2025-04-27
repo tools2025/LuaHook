@@ -82,6 +82,17 @@ class LanguageLua private constructor() : Language() {
             package_json.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
         )
 
+        super.addBasePackage(
+            "sp",
+            package_sp.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        )
+
+
+        super.addBasePackage(
+            "xsp",
+            package_xsp.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        )
+
 
     }
 
@@ -155,7 +166,9 @@ class LanguageLua private constructor() : Language() {
 
         private const val package_lpparam =
             "packageName|classLoader|appInfo|isFirstApplication|processName"
-        private const val package_http = "get|post"
+        private const val package_http = "get|post|upload|delete|put|postJson|head"
+        private const val package_sp = "clear|getAll|remove|contains|get|set"
+        private const val package_xsp = "getAll|contains|get|reload"
         private const val package_DexKitBridge =
             "close|initFullCache|setThreadNum|getDexNum|exportDexFile|batchFindClassUsingStrings|batchFindMethodUsingStrings|findClass|findMethod|findField|getClassData|getMethodData|getFieldData|getCallMethods|getInvokeMethods|create"
         private const val package_json = "encode|decode"
@@ -182,9 +195,11 @@ class LanguageLua private constructor() : Language() {
             "getField",
             "invoke",
             "file",
-            "lpparam",
             "http",
-            "File",
+            "sp",
+            "xsp",
+            "lpparam",
+//            "File",
             "json",
             "import",
             "new",
@@ -206,6 +221,7 @@ class LanguageLua private constructor() : Language() {
             "hookAll",
             "arrayOf",
             "callMethod"
+
         )
 
         val names: Array<String?> =
