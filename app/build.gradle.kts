@@ -14,8 +14,8 @@ android {
         applicationId = "com.kulipai.luahook"
         minSdk = 28
         targetSdk = 35
-        versionCode = 15
-        versionName = "3.3-beta"
+        versionCode = 16
+        versionName = "3.4444444444444-luaj++"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -31,14 +31,14 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
 
 //        isCoreLibraryDesugaringEnabled = true
 
     }
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "17"
     }
     aaptOptions {
         additionalParameters += listOf("--package-id", "0x69", "--allow-reserved-package-id")

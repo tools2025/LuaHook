@@ -17,11 +17,11 @@ import de.robv.android.xposed.XSharedPreferences
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
-import org.luaj.vm2.Globals
-import org.luaj.vm2.LuaValue
-import org.luaj.vm2.lib.OneArgFunction
-import org.luaj.vm2.lib.jse.CoerceJavaToLua
-import org.luaj.vm2.lib.jse.JsePlatform
+import org.luaj.Globals
+import org.luaj.LuaValue
+import org.luaj.lib.OneArgFunction
+import org.luaj.lib.jse.CoerceJavaToLua
+import org.luaj.lib.jse.JsePlatform
 import org.luckypray.dexkit.DexKitBridge
 import top.sacz.xphelper.XpHelper
 import top.sacz.xphelper.dexkit.DexFinder
@@ -117,7 +117,7 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
         LuaHttp().call(globals)
         Luafile().call(globals)
         LuaSharedPreferences().call(globals)
-        globals["import"] = LuaImport(lpparam.classLoader, this::class.java.classLoader!!, globals)
+        globals["imports"] = LuaImport(lpparam.classLoader, this::class.java.classLoader!!, globals)
 
         LuaResourceBridge().registerTo(globals)
 

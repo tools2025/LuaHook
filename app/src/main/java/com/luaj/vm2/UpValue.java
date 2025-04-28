@@ -22,7 +22,7 @@
 package com.luaj.vm2;
 
 
-import org.luaj.vm2.LuaClosure;
+import org.luaj.LuaClosure;
 import com.luaj.vm2.LuaValue;
 import com.luaj.vm2.Prototype;
 

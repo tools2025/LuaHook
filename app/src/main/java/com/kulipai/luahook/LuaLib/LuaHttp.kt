@@ -8,8 +8,8 @@ import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
-import org.luaj.vm2.*
-import org.luaj.vm2.lib.*
+import org.luaj.*
+import org.luaj.lib.*
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException

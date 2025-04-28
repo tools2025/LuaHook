@@ -7,9 +7,9 @@ import okhttp3.RequestBody
 import okhttp3.Response
 import org.json.JSONObject
 import org.json.JSONArray
-import org.luaj.vm2.*
-import org.luaj.vm2.lib.*
-import org.luaj.vm2.lib.VarArgFunction
+import org.luaj.*
+import org.luaj.lib.*
+import org.luaj.lib.VarArgFunction
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
@@ -68,7 +68,7 @@ class Luafile : OneArgFunction() {
 
         file["writeBytes"] =  object : TwoArgFunction() {
             override fun call(path: LuaValue, content: LuaValue): LuaValue = try {
-                Files.write(Paths.get(path.checkjstring()), content.checkstring().m_bytes)
+                Files.write(Paths.get(path.checkjstring()), content.checkstring().c)
                 LuaValue.TRUE
             } catch (e: Exception) {
                 LuaValue.FALSE
@@ -93,7 +93,7 @@ class Luafile : OneArgFunction() {
             override fun call(path: LuaValue, content: LuaValue): LuaValue = try {
                 Files.write(
                     Paths.get(path.checkjstring()),
-                    content.checkstring().m_bytes,
+                    content.checkstring().c,
                     StandardOpenOption.CREATE,
                     StandardOpenOption.APPEND
                 )

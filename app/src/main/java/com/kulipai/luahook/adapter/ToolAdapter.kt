@@ -10,8 +10,6 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 import com.androlua.LuaEditor
-import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
@@ -219,6 +217,478 @@ class ToolAdapter(
                             }
                             .show()
                         view.findViewById<TextInputEditText>(R.id.input).setText(getClipboardText())
+                    }
+
+                    3 -> {
+
+                        /**
+                         * 判断当前位置的冒号是否是方法调用的冒号
+                         */
+                        fun isMethodCallContext(code: String, colonIndex: Int): Boolean {
+                            // 冒号前必须是有效的标识符或右括号/右方括号结尾
+                            if (colonIndex <= 0) return false
+
+                            // 检查冒号后是否有标识符
+                            var hasIdentifierAfterColon = false
+                            var j = colonIndex + 1
+                            while (j < code.length && (code[j].isWhitespace() || code[j] == '\n')) {
+                                j++
+                            }
+
+                            // 冒号后必须是有效的标识符开头
+                            if (j < code.length && (code[j].isLetterOrDigit() || code[j] == '_')) {
+                                hasIdentifierAfterColon = true
+                            } else {
+                                return false
+                            }
+
+                            // 检查冒号前是否有有效的对象引用（标识符、闭合的括号或方括号）
+                            var i = colonIndex - 1
+                            // 跳过空白字符
+                            while (i >= 0 && (code[i].isWhitespace() || code[i] == '\n')) {
+                                i--
+                            }
+
+                            if (i < 0) return false
+
+                            // 如果是右括号，判断是否是闭合的
+                            if (code[i] == ')') {
+                                var parenCount = 1
+                                i--
+                                while (i >= 0 && parenCount > 0) {
+                                    if (code[i] == ')') parenCount++
+                                    if (code[i] == '(') parenCount--
+                                    i--
+                                }
+                                return parenCount == 0 && hasIdentifierAfterColon
+                            }
+
+                            // 如果是右方括号，判断是否是闭合的
+                            if (code[i] == ']') {
+                                var bracketCount = 1
+                                i--
+                                while (i >= 0 && bracketCount > 0) {
+                                    if (code[i] == ']') bracketCount++
+                                    if (code[i] == '[') bracketCount--
+                                    i--
+                                }
+                                return bracketCount == 0 && hasIdentifierAfterColon
+                            }
+
+                            // 如果是标识符的一部分
+                            if (code[i].isLetterOrDigit() || code[i] == '_') {
+                                // 回溯到整个标识符的开头
+                                while (i >= 0 && (code[i].isLetterOrDigit() || code[i] == '_')) {
+                                    i--
+                                }
+                                return hasIdentifierAfterColon
+                            }
+
+                            return false
+                        }
+
+                        /**
+                         * 将Lua代码中的冒号调用转换为点调用
+                         */
+                        fun convertLuaColonToDot(code: String): String {
+                            val result = StringBuilder()
+                            var i = 0
+                            val length = code.length
+
+                            var inSingleLineComment = false
+                            var inMultiLineComment = false
+                            var inSingleQuoteString = false
+                            var inDoubleQuoteString = false
+                            var inMultiLineString = false
+                            var multiLineStringLevel = 0
+
+                            while (i < length) {
+                                // 处理字符串的开始和结束
+                                if (!inSingleLineComment && !inMultiLineComment) {
+                                    // 处理单引号字符串
+                                    if (code[i] == '\'' && (i == 0 || code[i - 1] != '\\') && !inDoubleQuoteString && !inMultiLineString) {
+                                        inSingleQuoteString = !inSingleQuoteString
+                                    }
+
+                                    // 处理双引号字符串
+                                    if (code[i] == '"' && (i == 0 || code[i - 1] != '\\') && !inSingleQuoteString && !inMultiLineString) {
+                                        inDoubleQuoteString = !inDoubleQuoteString
+                                    }
+
+                                    // 处理多行字符串开始 [[
+                                    if (i < length - 1 && code[i] == '[' && code[i + 1] == '[' && !inSingleQuoteString && !inDoubleQuoteString && !inMultiLineString) {
+                                        inMultiLineString = true
+                                        multiLineStringLevel = 0
+                                        result.append(code[i])
+                                        i++
+                                        result.append(code[i])
+                                        i++
+                                        continue
+                                    }
+
+                                    // 处理多行字符串结束 ]]
+                                    if (i < length - 1 && code[i] == ']' && code[i + 1] == ']' && inMultiLineString) {
+                                        inMultiLineString = false
+                                        result.append(code[i])
+                                        i++
+                                        result.append(code[i])
+                                        i++
+                                        continue
+                                    }
+                                }
+
+                                // 处理注释
+                                if (!inSingleQuoteString && !inDoubleQuoteString && !inMultiLineString && !inSingleLineComment && !inMultiLineComment) {
+                                    // 单行注释
+                                    if (i < length - 1 && code[i] == '-' && code[i + 1] == '-') {
+                                        inSingleLineComment = true
+                                        result.append(code[i])
+                                        i++
+                                        result.append(code[i])
+                                        i++
+
+                                        // 检查是否是多行注释的开始 --[[
+                                        if (i < length - 2 && code[i] == '[' && code[i + 1] == '[') {
+                                            inMultiLineComment = true
+                                            inSingleLineComment = false
+                                        }
+
+                                        continue
+                                    }
+                                }
+
+                                // 结束单行注释
+                                if (inSingleLineComment && code[i] == '\n') {
+                                    inSingleLineComment = false
+                                }
+
+                                // 结束多行注释
+                                if (inMultiLineComment && i < length - 1 && code[i] == ']' && code[i + 1] == ']') {
+                                    inMultiLineComment = false
+                                    result.append(code[i])
+                                    i++
+                                    result.append(code[i])
+                                    i++
+                                    continue
+                                }
+
+                                // 在字符串或注释中，直接复制字符
+                                if (inSingleQuoteString || inDoubleQuoteString || inMultiLineString || inSingleLineComment || inMultiLineComment) {
+                                    result.append(code[i])
+                                    i++
+                                    continue
+                                }
+
+                                // 处理冒号调用
+                                if (i < length - 1 && code[i] == ':' && isMethodCallContext(
+                                        code,
+                                        i
+                                    )
+                                ) {
+                                    result.append('.')
+                                } else {
+                                    result.append(code[i])
+                                }
+
+                                i++
+                            }
+
+                            return result.toString()
+                        }
+
+
+                        /**
+                         * 判断当前位置的import是否是一个导入语句
+                         * 匹配以下形式：
+                         * - import "module"
+                         * - import("module")
+                         * - import"module"
+                         */
+                        fun isImportStatement(code: String, importIndex: Int): Boolean {
+                            // 检查import前面是否是标识符的一部分
+                            if (importIndex > 0) {
+                                val prevChar = code[importIndex - 1]
+                                if (prevChar.isLetterOrDigit() || prevChar == '_') {
+                                    return false // 如果前面是标识符的一部分，则不是独立的import语句
+                                }
+                            }
+
+                            // 检查import后面的内容
+                            var j = importIndex + 6
+
+                            // 跳过空白字符
+                            while (j < code.length && code[j].isWhitespace()) {
+                                j++
+                            }
+
+                            if (j >= code.length) {
+                                return false
+                            }
+
+                            // 检查是否是 import "module" 或 import("module") 或 import"module" 格式
+                            return code[j] == '"' || code[j] == '(' || code[j] == '\''
+                        }
+
+
+                        /**
+                         * 将Lua代码中的import语句转换为imports
+                         */
+                        fun convertImportToImports(code: String): String {
+                            val result = StringBuilder()
+                            var i = 0
+                            val length = code.length
+
+                            var inSingleLineComment = false
+                            var inMultiLineComment = false
+                            var inSingleQuoteString = false
+                            var inDoubleQuoteString = false
+                            var inMultiLineString = false
+
+                            while (i < length) {
+                                // 处理字符串的开始和结束
+                                if (!inSingleLineComment && !inMultiLineComment) {
+                                    // 处理单引号字符串
+                                    if (code[i] == '\'' && (i == 0 || code[i - 1] != '\\') && !inDoubleQuoteString && !inMultiLineString) {
+                                        inSingleQuoteString = !inSingleQuoteString
+                                    }
+
+                                    // 处理双引号字符串
+                                    if (code[i] == '"' && (i == 0 || code[i - 1] != '\\') && !inSingleQuoteString && !inMultiLineString) {
+                                        inDoubleQuoteString = !inDoubleQuoteString
+                                    }
+
+                                    // 处理多行字符串开始 [[
+                                    if (i < length - 1 && code[i] == '[' && code[i + 1] == '[' && !inSingleQuoteString && !inDoubleQuoteString && !inMultiLineString) {
+                                        inMultiLineString = true
+                                        result.append(code[i])
+                                        i++
+                                        result.append(code[i])
+                                        i++
+                                        continue
+                                    }
+
+                                    // 处理多行字符串结束 ]]
+                                    if (i < length - 1 && code[i] == ']' && code[i + 1] == ']' && inMultiLineString) {
+                                        inMultiLineString = false
+                                        result.append(code[i])
+                                        i++
+                                        result.append(code[i])
+                                        i++
+                                        continue
+                                    }
+                                }
+
+                                // 处理注释
+                                if (!inSingleQuoteString && !inDoubleQuoteString && !inMultiLineString && !inSingleLineComment && !inMultiLineComment) {
+                                    // 单行注释
+                                    if (i < length - 1 && code[i] == '-' && code[i + 1] == '-') {
+                                        inSingleLineComment = true
+                                        result.append(code[i])
+                                        i++
+                                        result.append(code[i])
+                                        i++
+
+                                        // 检查是否是多行注释的开始 --[[
+                                        if (i < length - 2 && code[i] == '[' && code[i + 1] == '[') {
+                                            inMultiLineComment = true
+                                            inSingleLineComment = false
+                                        }
+
+                                        continue
+                                    }
+                                }
+
+                                // 结束单行注释
+                                if (inSingleLineComment && code[i] == '\n') {
+                                    inSingleLineComment = false
+                                }
+
+                                // 结束多行注释
+                                if (inMultiLineComment && i < length - 1 && code[i] == ']' && code[i + 1] == ']') {
+                                    inMultiLineComment = false
+                                    result.append(code[i])
+                                    i++
+                                    result.append(code[i])
+                                    i++
+                                    continue
+                                }
+
+                                // 在字符串或注释中，直接复制字符
+                                if (inSingleQuoteString || inDoubleQuoteString || inMultiLineString || inSingleLineComment || inMultiLineComment) {
+                                    result.append(code[i])
+                                    i++
+                                    continue
+                                }
+
+                                // 检查并替换import语句
+                                if (i + 6 < length && code.substring(
+                                        i,
+                                        i + 6
+                                    ) == "import" && isImportStatement(code, i)
+                                ) {
+                                    result.append("imports")
+                                    i += 6
+                                } else {
+                                    result.append(code[i])
+                                    i++
+                                }
+                            }
+
+                            return result.toString()
+                        }
+
+
+                        /**
+                         * 将代码中的 it.args[index] 转换为 it.args[index-1]
+                         * 如果 index 已经是 index-1 形式，则保持不变
+                         */
+                        fun convertItArgsIndex(code: String): String {
+                            val result = StringBuilder()
+                            var i = 0
+                            val length = code.length
+
+                            var inSingleLineComment = false
+                            var inMultiLineComment = false
+                            var inSingleQuoteString = false
+                            var inDoubleQuoteString = false
+                            var inMultiLineString = false
+
+                            while (i < length) {
+                                // 处理字符串的开始和结束
+                                if (!inSingleLineComment && !inMultiLineComment) {
+                                    // 处理单引号字符串
+                                    if (code[i] == '\'' && (i == 0 || code[i - 1] != '\\') && !inDoubleQuoteString && !inMultiLineString) {
+                                        inSingleQuoteString = !inSingleQuoteString
+                                    }
+
+                                    // 处理双引号字符串
+                                    if (code[i] == '"' && (i == 0 || code[i - 1] != '\\') && !inSingleQuoteString && !inMultiLineString) {
+                                        inDoubleQuoteString = !inDoubleQuoteString
+                                    }
+
+                                    // 处理多行字符串开始 [[
+                                    if (i < length - 1 && code[i] == '[' && code[i + 1] == '[' && !inSingleQuoteString && !inDoubleQuoteString && !inMultiLineString) {
+                                        inMultiLineString = true
+                                        result.append(code[i])
+                                        i++
+                                        result.append(code[i])
+                                        i++
+                                        continue
+                                    }
+
+                                    // 处理多行字符串结束 ]]
+                                    if (i < length - 1 && code[i] == ']' && code[i + 1] == ']' && inMultiLineString) {
+                                        inMultiLineString = false
+                                        result.append(code[i])
+                                        i++
+                                        result.append(code[i])
+                                        i++
+                                        continue
+                                    }
+                                }
+
+                                // 处理注释
+                                if (!inSingleQuoteString && !inDoubleQuoteString && !inMultiLineString && !inSingleLineComment && !inMultiLineComment) {
+                                    // 单行注释
+                                    if (i < length - 1 && code[i] == '-' && code[i + 1] == '-') {
+                                        inSingleLineComment = true
+                                        result.append(code[i])
+                                        i++
+                                        result.append(code[i])
+                                        i++
+
+                                        // 检查是否是多行注释的开始 --[[
+                                        if (i < length - 2 && code[i] == '[' && code[i + 1] == '[') {
+                                            inMultiLineComment = true
+                                            inSingleLineComment = false
+                                        }
+
+                                        continue
+                                    }
+                                }
+
+                                // 结束单行注释
+                                if (inSingleLineComment && code[i] == '\n') {
+                                    inSingleLineComment = false
+                                }
+
+                                // 结束多行注释
+                                if (inMultiLineComment && i < length - 1 && code[i] == ']' && code[i + 1] == ']') {
+                                    inMultiLineComment = false
+                                    result.append(code[i])
+                                    i++
+                                    result.append(code[i])
+                                    i++
+                                    continue
+                                }
+
+                                // 在字符串或注释中，直接复制字符
+                                if (inSingleQuoteString || inDoubleQuoteString || inMultiLineString || inSingleLineComment || inMultiLineComment) {
+                                    result.append(code[i])
+                                    i++
+                                    continue
+                                }
+
+                                // 检查是否匹配 it.args[index] 模式
+                                if (i + 8 < length && code.substring(i, i + 8) == "it.args[") {
+                                    result.append("it.args[")
+                                    i += 8
+
+                                    // 记录当前位置，解析索引表达式
+                                    val startPos = i
+                                    var bracketCount = 1
+                                    var hasMinusOne = false
+
+                                    // 找到匹配的右括号
+                                    while (i < length && bracketCount > 0) {
+                                        if (code[i] == '[') bracketCount++
+                                        if (code[i] == ']') bracketCount--
+                                        i++
+                                    }
+
+                                    if (bracketCount == 0) {
+                                        // 提取索引表达式
+                                        val indexExpr = code.substring(startPos, i - 1)
+
+                                        // 检查索引是否已经是 index-1 形式
+                                        hasMinusOne = indexExpr.contains("-") &&
+                                                !indexExpr.contains("--") &&
+                                                (indexExpr.trim().endsWith("-1") ||
+                                                        indexExpr.matches(Regex(".*-\\s*1\\s*")))
+
+                                        // 如果不是 index-1 形式，则转换
+                                        if (!hasMinusOne) {
+                                            result.append("$indexExpr-1")
+                                        } else {
+                                            result.append(indexExpr)
+                                        }
+                                        result.append("]")
+                                    } else {
+                                        // 未找到匹配的右括号，回到原始位置
+                                        i = startPos
+                                        result.append(code[i])
+                                        i++
+                                    }
+                                } else {
+                                    result.append(code[i])
+                                    i++
+                                }
+                            }
+
+                            return result.toString()
+                        }
+
+                        editor.setText(
+                            convertLuaColonToDot(
+                                convertImportToImports(
+                                    convertItArgsIndex(
+                                        editor.text.toString()
+                                    )
+                                )
+                            )
+                        )
+
+
                     }
 
                     else -> {}

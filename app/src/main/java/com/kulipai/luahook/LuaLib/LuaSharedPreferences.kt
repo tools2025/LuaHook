@@ -1,10 +1,10 @@
 import android.content.Context
 import de.robv.android.xposed.XSharedPreferences
-import org.luaj.vm2.LuaTable
-import org.luaj.vm2.LuaValue
-import org.luaj.vm2.Varargs
-import org.luaj.vm2.lib.OneArgFunction
-import org.luaj.vm2.lib.VarArgFunction
+import org.luaj.LuaTable
+import org.luaj.LuaValue
+import org.luaj.Varargs
+import org.luaj.lib.OneArgFunction
+import org.luaj.lib.VarArgFunction
 
 // LuaSharedPreferences 类不再接收 Context 参数
 class LuaSharedPreferences(

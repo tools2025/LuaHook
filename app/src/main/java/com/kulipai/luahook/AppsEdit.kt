@@ -142,7 +142,8 @@ class AppsEdit : AppCompatActivity() {
             listOf(
                 "Hook方法",
                 "Hook构造",
-                "方法签名"
+                "方法签名",
+                "语法转换"
             )
 
         ToolRec.layoutManager =

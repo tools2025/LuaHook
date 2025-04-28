@@ -12,11 +12,11 @@ import okhttp3.Dispatcher
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import org.luaj.vm2.Globals
-import org.luaj.vm2.LuaValue
-import org.luaj.vm2.lib.ThreeArgFunction
-import org.luaj.vm2.lib.TwoArgFunction
-import org.luaj.vm2.lib.jse.CoerceJavaToLua
+import org.luaj.Globals
+import org.luaj.LuaValue
+import org.luaj.lib.ThreeArgFunction
+import org.luaj.lib.TwoArgFunction
+import org.luaj.lib.jse.CoerceJavaToLua
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.IOException

@@ -1,7 +1,7 @@
 import org.json.JSONObject
 import org.json.JSONArray
-import org.luaj.vm2.*
-import org.luaj.vm2.lib.*
+import org.luaj.*
+import org.luaj.lib.*
 
 class LuaJson : OneArgFunction() {
     override fun call(env: LuaValue): LuaValue {

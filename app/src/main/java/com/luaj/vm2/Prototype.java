@@ -21,12 +21,12 @@
 ******************************************************************************/
 package com.luaj.vm2;
 
-import org.luaj.vm2.Globals;
+import org.luaj.Globals;
 import com.luaj.vm2.LocVars;
-import org.luaj.vm2.LuaClosure;
+import org.luaj.LuaClosure;
 import com.luaj.vm2.LuaString;
 import com.luaj.vm2.LuaValue;
-import org.luaj.vm2.Print;
+import org.luaj.Print;
 import com.luaj.vm2.Upvaldesc;
 
 /**

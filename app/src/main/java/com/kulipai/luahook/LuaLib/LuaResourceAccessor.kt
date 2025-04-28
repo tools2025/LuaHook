@@ -1,13 +1,13 @@
 import android.content.Context
 import android.content.res.Resources
 import android.graphics.drawable.Drawable
-import org.luaj.vm2.LuaTable
-import org.luaj.vm2.LuaValue
-import org.luaj.vm2.Varargs
-import org.luaj.vm2.lib.VarArgFunction
-import org.luaj.vm2.lib.jse.CoerceJavaToLua
+import org.luaj.LuaTable
+import org.luaj.LuaValue
+import org.luaj.Varargs
+import org.luaj.lib.VarArgFunction
+import org.luaj.lib.jse.CoerceJavaToLua
 import com.kulipai.luahook.util.d // 假设这是你的日志工具
-import org.luaj.vm2.Globals
+import org.luaj.Globals
 import java.lang.reflect.Modifier
 
 /**
@@ -299,8 +299,8 @@ import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage
 import android.app.Application
 import android.content.Context
-import org.luaj.vm2.Globals
-import org.luaj.vm2.lib.jse.JsePlatform // 或者其他 Lua 环境
+import org.luaj.Globals
+import org.luaj.lib.jse.JsePlatform // 或者其他 Lua 环境
 
 class MyXposedHook : IXposedHookLoadPackage {
 

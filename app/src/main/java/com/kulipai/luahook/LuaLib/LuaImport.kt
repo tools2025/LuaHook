@@ -1,8 +1,8 @@
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.XposedHelpers.ClassNotFoundError
-import org.luaj.vm2.LuaValue
-import org.luaj.vm2.lib.OneArgFunction
-import org.luaj.vm2.lib.jse.CoerceJavaToLua
+import org.luaj.LuaValue
+import org.luaj.lib.OneArgFunction
+import org.luaj.lib.jse.CoerceJavaToLua
 
 class LuaImport(
     private val classLoader: ClassLoader,
