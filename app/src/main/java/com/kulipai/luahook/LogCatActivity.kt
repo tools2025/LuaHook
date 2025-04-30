@@ -1,29 +1,25 @@
 package com.kulipai.luahook
 
-import android.content.Context
-import com.kulipai.luahook.adapter.LogAdapter
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.widget.TextView
-import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.Toolbar
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.transition.Visibility
 import com.google.android.material.appbar.MaterialToolbar
-import com.google.android.material.color.DynamicColors
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.kulipai.luahook.MainActivity
+import com.kulipai.luahook.adapter.LogAdapter
 import com.kulipai.luahook.util.LogcatHelper
 import com.kulipai.luahook.util.RootHelper
 import kotlinx.coroutines.launch
-import org.w3c.dom.Text
+
 
 class LogCatActivity : AppCompatActivity() {
 
@@ -34,6 +30,7 @@ class LogCatActivity : AppCompatActivity() {
     private val reresh: FloatingActionButton by lazy { findViewById<FloatingActionButton>(R.id.fab) }
 
     private lateinit var adapter: LogAdapter
+    private var thisTime: String? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -67,7 +64,7 @@ class LogCatActivity : AppCompatActivity() {
 //        var currentTime = LogcatHelper.getCurrentLogcatTimeFormat()
 
 
-        if(RootHelper.canGetRoot()){
+        if (RootHelper.canGetRoot()) {
             lifecycleScope.launch {
                 var logs = LogcatHelper.getSystemLogsByTagSince("LuaXposed")
                 LogRecyclerView.layoutManager =
@@ -90,4 +87,40 @@ class LogCatActivity : AppCompatActivity() {
 
 
     }//onCreate
+
+
+    //菜单
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+
+        menu?.add(0, 0, 0, "Clear")
+            ?.setIcon(R.drawable.cleaning_services_24px)
+            ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
+
+//        menu?.add(0, 1, 0, "Undo")
+//            ?.setIcon(R.drawable.undo_24px)
+//            ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
+//
+//        menu?.add(0, 2, 0, "Redo")
+//            ?.setIcon(R.drawable.redo_24px)
+//            ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
+//        menu?.add(0, 3, 0, resources.getString(R.string.format))
+//            ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
+//        menu?.add(0, 4, 0, resources.getString(R.string.log))  //LogCat
+//            ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
+//        menu?.add(0, 5, 0, resources.getString(R.string.manual))
+//            ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
+//        menu?.add(0, 9, 0, "搜索")?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            0 -> {
+
+                true
+            }
+
+            else -> false
+        }
+    }
 }

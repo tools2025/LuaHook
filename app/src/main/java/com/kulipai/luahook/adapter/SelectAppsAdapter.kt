@@ -62,6 +62,7 @@ class SelectAppsAdapter(
                 } else {
 
                     card.cardElevation = 30.0.toFloat()
+                    card.elevation = 0.0.toFloat()
                     icon.setImageResource(R.drawable.check_circle_24px)
                     icon.setColorFilter(
                         getDynamicColor(
@@ -93,6 +94,7 @@ class SelectAppsAdapter(
         holder.version.text = apps[position].versionName
         if (apps[position].packageName in selectApps) {
             holder.card.cardElevation = 30.0.toFloat()
+            holder.card.elevation = 0.0.toFloat()
             holder.icon.setImageResource(R.drawable.check_circle_24px)
             holder.icon.setColorFilter(
                 getDynamicColor(

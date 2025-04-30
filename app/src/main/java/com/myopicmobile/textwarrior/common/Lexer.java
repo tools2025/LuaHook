@@ -424,7 +424,7 @@ public class Lexer {
                             if (rowCount > maxRow)
                                 break;
 
-                            if (lastName.equals("require") || lastName.equals("import"))
+                            if (lastName.equals("imports") || lastName.equals("import"))
                                 isModule = true;
 
                             if (isModule)
@@ -501,9 +501,9 @@ public class Lexer {
                                 }
                             }
 
-                            if (lastType == LuaTokenTypes.ASSIGN && name.equals("require")) {
+                            if (lastType == LuaTokenTypes.ASSIGN && name.equals("imports")) {
                                 language.addUserWord(lastName);
-                                LuaParser.addUserWord(lastName + " :require");
+                                LuaParser.addUserWord(lastName + " :imports");
                                 if (lastNameIdx >= 0) {
                                     Pair p = tokens.get(lastNameIdx - 1);
                                     p.setSecond(LITERAL);

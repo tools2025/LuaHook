@@ -201,7 +201,7 @@ class LanguageLua private constructor() : Language() {
             "lpparam",
 //            "File",
             "json",
-            "import",
+            "imports",
             "new",
             "newInstance",
             "getConstructor",
