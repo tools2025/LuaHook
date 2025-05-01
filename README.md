@@ -47,6 +47,7 @@ Alternatively, you can directly submit issues and suggestions on the project's I
 **感谢你的关注和支持！**
 
 **致谢/Thanks**
+
 [DexKit](https://github.com/LuckyPray/DexKit)
 
 [XpHelper](https://github.com/suzhelan/XPHelper)
