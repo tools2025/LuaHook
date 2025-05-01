@@ -32,16 +32,26 @@ This module is still in the early stages of development and may contain various 
 
 **Contact**
 
-Welcome to join our Telegram channel for communication and feedback: [Telegram Channel](https://t.me/LuaXposed)
+Welcome to join our Telegram channel for communication and feedback: [Telegram Channel](https://t.me/LuaXposed)[QQ](https://qm.qq.com/q/Qt3yKDzCeG)
 
 Alternatively, you can directly submit issues and suggestions on the project's Issue page. I will actively respond and do my best to resolve them.
 
 **联系方式**
 
-欢迎加入我们的 Telegram 频道进行交流和反馈：[Telegram频道](https://t.me/LuaXposed)
+欢迎加入我们的 Telegram 频道进行交流和反馈：[Telegram频道](https://t.me/LuaXposed),[QQ](https://qm.qq.com/q/Qt3yKDzCeG)
 
 或者，你也可以直接在本项目的 Issue 页面提交问题和建议，我会积极回复并尽力解决。
 
 **Thank you for your attention and support!**
 
 **感谢你的关注和支持！**
+
+**致谢/Thanks**
+[DexKit](https://github.com/LuckyPray/DexKit)
+
+[XpHelper](https://github.com/suzhelan/XPHelper)
+
+[NeLuaJ](https://github.com/znzsofficial/NeLuaJ)
+
+LuaAppX
+
