@@ -178,8 +178,10 @@ class AppsFragment : Fragment() {
             val input = s.toString()
             searchJob?.cancel()
             searchJob = CoroutineScope(Dispatchers.Main).launch {
-                delay(100) // 延迟300ms
-                filterAppList(s.toString().trim(), clearImage)
+                if (appInfoList.isNotEmpty()) {
+                    delay(100) // 延迟300ms
+                    filterAppList(s.toString().trim(), clearImage)
+                }
             }
         }
 

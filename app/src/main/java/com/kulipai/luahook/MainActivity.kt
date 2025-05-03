@@ -56,7 +56,7 @@ class MainActivity : AppCompatActivity() {
         SettingsLauncher = registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
         ) {
-            recreate()
+//            recreate()
         }
 
         //setting

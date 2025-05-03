@@ -72,11 +72,12 @@ class AppsEdit : AppCompatActivity() {
             bottomSymbolBar.translationY = -imeInsets.bottom.toFloat()
             fab.translationY = -imeInsets.bottom.toFloat()
 
-            editor.setPadding(0,0,0, navigationBarInsets.bottom)
+            editor.setPadding(0,0,0, navigationBarInsets.bottom + bottomSymbolBar.height)
             // 设置根布局的底部内边距
             if (imeInsets.bottom > 0) {
                 // 输入法可见时，不需要额外的底部内边距来避免被导航栏遮挡，
                 // 因为 bottomSymbolBar 已经移动到输入法上方
+                editor.fixX = imeInsets.bottom - navigationBarInsets.bottom
                 view.setPadding(
                     navigationBarInsets.left,
                     statusBarInsets.top,
@@ -85,7 +86,8 @@ class AppsEdit : AppCompatActivity() {
                 )
 
             } else {
-                // 输入法不可见时，设置底部内边距以避免内容被导航栏遮挡
+                editor.fixX = 0
+                        // 输入法不可见时，设置底部内边距以避免内容被导航栏遮挡
                 view.setPadding(
                     navigationBarInsets.left,
                     statusBarInsets.top,
@@ -161,6 +163,8 @@ class AppsEdit : AppCompatActivity() {
             savePrefs(currentPackageName, editor.text.toString())
             Toast.makeText(this, "保存成功", Toast.LENGTH_SHORT).show()
         }
+
+
 
 
     }
