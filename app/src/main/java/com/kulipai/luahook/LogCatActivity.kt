@@ -1,6 +1,5 @@
 package com.kulipai.luahook
 
-import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -19,7 +18,6 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.kulipai.luahook.adapter.LogAdapter
 import com.kulipai.luahook.util.LogcatHelper
 import com.kulipai.luahook.util.RootHelper
-import com.kulipai.luahook.util.d
 import kotlinx.coroutines.launch
 
 

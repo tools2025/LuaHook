@@ -1,8 +1,6 @@
 package com.kulipai.luahook.util
 
 import com.topjohnwu.superuser.Shell
-import com.topjohnwu.superuser.internal.Utils
-import java.util.Locale
 
 object RootHelper {
 

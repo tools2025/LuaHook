@@ -220,8 +220,9 @@ class LanguageLua private constructor() : Language() {
 //            "hookm",
             "hookAll",
             "arrayOf",
-            "callMethod"
-
+            "callMethod",
+            "getStaticField",
+            "setStaticField"
         )
 
         val names: Array<String?> =

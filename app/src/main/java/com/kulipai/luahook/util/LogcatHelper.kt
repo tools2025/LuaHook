@@ -9,8 +9,6 @@ import java.util.Locale
 
 object LogcatHelper {
 
-    private const val TAG = "LogcatHelper"
-
     suspend fun getSystemLogsByTagSince(tag: String, since: String? = null): List<String> {
         val command = if (since.isNullOrEmpty()) {
             "logcat -d $tag:* *:S"
