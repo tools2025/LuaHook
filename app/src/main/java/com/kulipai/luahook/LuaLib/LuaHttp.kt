@@ -4,15 +4,18 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
-import org.luaj.*
-import org.luaj.lib.*
+import org.luaj.LuaTable
+import org.luaj.LuaValue
+import org.luaj.Varargs
+import org.luaj.lib.OneArgFunction
+import org.luaj.lib.VarArgFunction
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import java.util.concurrent.TimeUnit
 
 class LuaHttp : OneArgFunction() {
 
@@ -21,31 +24,41 @@ class LuaHttp : OneArgFunction() {
         val http = LuaTable()
 
 
+
         http["get"] = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
                 val url = args.checkjstring(1)
-                val callback = args.checkfunction(args.narg())
-                val headers = if (args.narg() > 2 && args.istable(2)) args.checktable(2) else null
-                val cookie = if (args.narg() > 3) args.optjstring(3, null) else null
+                val hasTimeout: Boolean = args.isnumber(args.narg())
+                val callback =
+                    if (hasTimeout) args.checkfunction(args.narg() - 1) else args.checkfunction(args.narg())
+                val headers =
+                    if (args.narg() > (if (hasTimeout) 3 else 2) && args.istable(2)) args.checktable(
+                        2
+                    ) else null
+                val cookie =
+                    if (args.narg() > (if (hasTimeout) 4 else 3)) args.optjstring(3, null) else null
+                val timeout =
+                    if (hasTimeout) args.checklong(args.narg()).toLong() else 10000L // Default 10s
+
+                val client = OkHttpClient.Builder()
+                    .connectTimeout(timeout, TimeUnit.MILLISECONDS)
+                    .readTimeout(timeout, TimeUnit.MILLISECONDS)
+                    .writeTimeout(timeout, TimeUnit.MILLISECONDS)
+                    .build()
 
                 val requestBuilder = Request.Builder().url(url)
 
                 // 添加请求头
                 headers?.let {
                     val headerMap = mutableMapOf<String, String>()
-
-                    // 遍历 LuaTable
                     var key: LuaValue = NIL
                     while (true) {
                         val nextPair = headers.next(key)
-                        key = nextPair.arg1()  // 获取下一个键
-                        val value = nextPair.arg(2)  // 获取键对应的值
-
-                        if (key.isnil()) break  // 遍历完所有键，退出循环
-
+                        key = nextPair.arg1()
+                        val value = nextPair.arg(2)
+                        if (key.isnil()) break
                         headerMap[key.tojstring()] = value.tojstring()
                     }
-
                     for ((k, v) in headerMap) {
                         requestBuilder.addHeader(k, v)
                     }
@@ -77,23 +90,32 @@ class LuaHttp : OneArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
                 val url = args.checkjstring(1)
                 val postData = args.checkjstring(2)
-                val callback = args.checkfunction(args.narg())
-                val headers = if (args.narg() > 3 && args.istable(3)) args.checktable(3) else null
-                val cookie = if (args.narg() > 4) args.optjstring(4, null) else null
+                val hasTimeout: Boolean = args.isnumber(args.narg())
+                val callback =
+                    if (hasTimeout) args.checkfunction(args.narg() - 1) else args.checkfunction(args.narg())
+                val headers =
+                    if (args.narg() > (if (hasTimeout) 4 else 3) && args.istable(3)) args.checktable(
+                        3
+                    ) else null
+                val cookie =
+                    if (args.narg() > (if (hasTimeout) 5 else 4)) args.optjstring(4, null) else null
+                val timeout =
+                    if (hasTimeout) args.checklong(args.narg()).toLong() else 10000L // Default 10s
 
-                // 默认内容类型
+                val client = OkHttpClient.Builder()
+                    .connectTimeout(timeout, TimeUnit.MILLISECONDS)
+                    .readTimeout(timeout, TimeUnit.MILLISECONDS)
+                    .writeTimeout(timeout, TimeUnit.MILLISECONDS)
+                    .build()
+
                 var contentType = "application/x-www-form-urlencoded"
-
-                // 检查headers中是否指定了Content-Type
                 headers?.let {
                     var key: LuaValue = LuaValue.NIL
                     while (true) {
                         val nextPair = headers.next(key)
                         key = nextPair.arg1()
                         val value = nextPair.arg(2)
-
                         if (key.isnil()) break
-
                         if (key.tojstring().equals("Content-Type", ignoreCase = true)) {
                             contentType = value.tojstring()
                             break
@@ -101,23 +123,17 @@ class LuaHttp : OneArgFunction() {
                     }
                 }
 
-                // 根据内容类型创建RequestBody
                 val requestBody = postData.toRequestBody(contentType.toMediaTypeOrNull())
-
                 val requestBuilder = Request.Builder().url(url).post(requestBody)
 
-                // 添加请求头
                 headers?.let {
                     val headerMap = mutableMapOf<String, String>()
-
                     var key: LuaValue = LuaValue.NIL
                     while (true) {
                         val nextPair = headers.next(key)
-                        key = nextPair.arg1()  // 获取下一个键
-                        val value = nextPair.arg(2)  // 获取键对应的值
-
-                        if (key.isnil()) break  // 遍历完所有键，退出循环
-
+                        key = nextPair.arg1()
+                        val value = nextPair.arg(2)
+                        if (key.isnil()) break
                         headerMap[key.tojstring()] = value.tojstring()
                     }
                     for ((k, v) in headerMap) {
@@ -125,7 +141,6 @@ class LuaHttp : OneArgFunction() {
                     }
                 }
 
-                // 添加 Cookie
                 cookie?.let {
                     requestBuilder.addHeader("Cookie", it)
                 }
@@ -146,6 +161,132 @@ class LuaHttp : OneArgFunction() {
                 return NIL
             }
         }
+
+//        http["get"] = object : VarArgFunction() {
+//            override fun invoke(args: Varargs): LuaValue {
+//                val url = args.checkjstring(1)
+//                val callback = args.checkfunction(args.narg())
+//                val headers = if (args.narg() > 2 && args.istable(2)) args.checktable(2) else null
+//                val cookie = if (args.narg() > 3) args.optjstring(3, null) else null
+//
+//                val requestBuilder = Request.Builder().url(url)
+//
+//                // 添加请求头
+//                headers?.let {
+//                    val headerMap = mutableMapOf<String, String>()
+//
+//                    // 遍历 LuaTable
+//                    var key: LuaValue = NIL
+//                    while (true) {
+//                        val nextPair = headers.next(key)
+//                        key = nextPair.arg1()  // 获取下一个键
+//                        val value = nextPair.arg(2)  // 获取键对应的值
+//
+//                        if (key.isnil()) break  // 遍历完所有键，退出循环
+//
+//                        headerMap[key.tojstring()] = value.tojstring()
+//                    }
+//
+//                    for ((k, v) in headerMap) {
+//                        requestBuilder.addHeader(k, v)
+//                    }
+//                }
+//
+//                // 添加 Cookie
+//                cookie?.let {
+//                    requestBuilder.addHeader("Cookie", it)
+//                }
+//
+//                val request = requestBuilder.build()
+//
+//                client.newCall(request).enqueue(object : Callback {
+//                    override fun onFailure(call: Call, e: IOException) {
+//                        callback.call(LuaValue.valueOf(-1), LuaValue.valueOf(e.message ?: ""))
+//                    }
+//
+//                    override fun onResponse(call: Call, response: Response) {
+//                        val body = response.body?.string() ?: ""
+//                        callback.call(LuaValue.valueOf(response.code), LuaValue.valueOf(body))
+//                    }
+//                })
+//
+//                return NIL
+//            }
+//        }
+//
+//        http["post"] = object : VarArgFunction() {
+//            override fun invoke(args: Varargs): LuaValue {
+//                val url = args.checkjstring(1)
+//                val postData = args.checkjstring(2)
+//                val callback = args.checkfunction(args.narg())
+//                val headers = if (args.narg() > 3 && args.istable(3)) args.checktable(3) else null
+//                val cookie = if (args.narg() > 4) args.optjstring(4, null) else null
+//
+//                // 默认内容类型
+//                var contentType = "application/x-www-form-urlencoded"
+//
+//                // 检查headers中是否指定了Content-Type
+//                headers?.let {
+//                    var key: LuaValue = LuaValue.NIL
+//                    while (true) {
+//                        val nextPair = headers.next(key)
+//                        key = nextPair.arg1()
+//                        val value = nextPair.arg(2)
+//
+//                        if (key.isnil()) break
+//
+//                        if (key.tojstring().equals("Content-Type", ignoreCase = true)) {
+//                            contentType = value.tojstring()
+//                            break
+//                        }
+//                    }
+//                }
+//
+//                // 根据内容类型创建RequestBody
+//                val requestBody = postData.toRequestBody(contentType.toMediaTypeOrNull())
+//
+//                val requestBuilder = Request.Builder().url(url).post(requestBody)
+//
+//                // 添加请求头
+//                headers?.let {
+//                    val headerMap = mutableMapOf<String, String>()
+//
+//                    var key: LuaValue = LuaValue.NIL
+//                    while (true) {
+//                        val nextPair = headers.next(key)
+//                        key = nextPair.arg1()  // 获取下一个键
+//                        val value = nextPair.arg(2)  // 获取键对应的值
+//
+//                        if (key.isnil()) break  // 遍历完所有键，退出循环
+//
+//                        headerMap[key.tojstring()] = value.tojstring()
+//                    }
+//                    for ((k, v) in headerMap) {
+//                        requestBuilder.addHeader(k, v)
+//                    }
+//                }
+//
+//                // 添加 Cookie
+//                cookie?.let {
+//                    requestBuilder.addHeader("Cookie", it)
+//                }
+//
+//                val request = requestBuilder.build()
+//
+//                client.newCall(request).enqueue(object : Callback {
+//                    override fun onFailure(call: Call, e: IOException) {
+//                        callback.call(LuaValue.valueOf(-1), LuaValue.valueOf(e.message ?: ""))
+//                    }
+//
+//                    override fun onResponse(call: Call, response: Response) {
+//                        val body = response.body?.string() ?: ""
+//                        callback.call(LuaValue.valueOf(response.code), LuaValue.valueOf(body))
+//                    }
+//                })
+//
+//                return NIL
+//            }
+//        }
 
 
         // 新增 postJson 方法，专门用于发送 JSON 数据
@@ -246,13 +387,19 @@ class LuaHttp : OneArgFunction() {
                     override fun onResponse(call: Call, response: Response) {
                         try {
                             if (!response.isSuccessful) {
-                                callback.call(LuaValue.valueOf(response.code), LuaValue.valueOf("下载失败: ${response.message}"))
+                                callback.call(
+                                    LuaValue.valueOf(response.code),
+                                    LuaValue.valueOf("下载失败: ${response.message}")
+                                )
                                 return
                             }
 
                             val body = response.body
                             if (body == null) {
-                                callback.call(LuaValue.valueOf(response.code), LuaValue.valueOf("下载失败: 空响应"))
+                                callback.call(
+                                    LuaValue.valueOf(response.code),
+                                    LuaValue.valueOf("下载失败: 空响应")
+                                )
                                 return
                             }
 
@@ -281,9 +428,15 @@ class LuaHttp : OneArgFunction() {
                             outputStream.close()
                             inputStream.close()
 
-                            callback.call(LuaValue.valueOf(response.code), LuaValue.valueOf(savePath))
+                            callback.call(
+                                LuaValue.valueOf(response.code),
+                                LuaValue.valueOf(savePath)
+                            )
                         } catch (e: Exception) {
-                            callback.call(LuaValue.valueOf(-1), LuaValue.valueOf("下载异常: ${e.message}"))
+                            callback.call(
+                                LuaValue.valueOf(-1),
+                                LuaValue.valueOf("下载异常: ${e.message}")
+                            )
                         }
                     }
                 })
@@ -477,7 +630,10 @@ class LuaHttp : OneArgFunction() {
                 try {
                     val file = File(filePath)
                     if (!file.exists() || !file.isFile) {
-                        callback.call(LuaValue.valueOf(-1), LuaValue.valueOf("文件不存在或不是文件"))
+                        callback.call(
+                            LuaValue.valueOf(-1),
+                            LuaValue.valueOf("文件不存在或不是文件")
+                        )
                         return NIL
                     }
 
@@ -539,14 +695,30 @@ class LuaHttp : OneArgFunction() {
             // 根据文件扩展名获取 MIME 类型
             private fun getMimeType(fileName: String): String {
                 return when {
-                    fileName.endsWith(".jpg", true) || fileName.endsWith(".jpeg", true) -> "image/jpeg"
+                    fileName.endsWith(".jpg", true) || fileName.endsWith(
+                        ".jpeg",
+                        true
+                    ) -> "image/jpeg"
+
                     fileName.endsWith(".png", true) -> "image/png"
                     fileName.endsWith(".gif", true) -> "image/gif"
                     fileName.endsWith(".txt", true) -> "text/plain"
-                    fileName.endsWith(".html", true) || fileName.endsWith(".htm", true) -> "text/html"
+                    fileName.endsWith(".html", true) || fileName.endsWith(
+                        ".htm",
+                        true
+                    ) -> "text/html"
+
                     fileName.endsWith(".pdf", true) -> "application/pdf"
-                    fileName.endsWith(".doc", true) || fileName.endsWith(".docx", true) -> "application/msword"
-                    fileName.endsWith(".xls", true) || fileName.endsWith(".xlsx", true) -> "application/vnd.ms-excel"
+                    fileName.endsWith(".doc", true) || fileName.endsWith(
+                        ".docx",
+                        true
+                    ) -> "application/msword"
+
+                    fileName.endsWith(".xls", true) || fileName.endsWith(
+                        ".xlsx",
+                        true
+                    ) -> "application/vnd.ms-excel"
+
                     fileName.endsWith(".zip", true) -> "application/zip"
                     fileName.endsWith(".mp3", true) -> "audio/mpeg"
                     fileName.endsWith(".mp4", true) -> "video/mp4"

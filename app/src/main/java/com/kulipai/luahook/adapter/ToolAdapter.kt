@@ -684,15 +684,29 @@ class ToolAdapter(
                             return result.toString()
                         }
 
-                        editor.setText(
-                            convertLuaColonToDot(
-                                convertImportToImports(
-                                    convertItArgsIndex(
-                                        editor.text.toString()
+
+                        MaterialAlertDialogBuilder(context)
+                            .setTitle("语法转换")
+                            .setMessage("请确认是否需要将 Lua 语法转换为 Luaj++ 语法。如果当前内容已经是 Luaj++ 语法，请勿重复转换。")
+                            .setPositiveButton("确定") { dialog, which ->
+                                editor.setText(
+                                    convertLuaColonToDot(
+                                        convertImportToImports(
+                                            convertItArgsIndex(
+                                                editor.text.toString()
+                                            )
+                                        )
                                     )
                                 )
-                            )
-                        )
+                                dialog.dismiss()
+                            }
+                            .setNegativeButton("取消") { dialog, which ->
+                                dialog.dismiss()
+                            }
+                            .show()
+
+
+
 
 
                     }
