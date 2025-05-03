@@ -96,7 +96,7 @@ class AppsFragment : Fragment() {
     private val viewModel by activityViewModels<AppListViewModel>()
     private val RESULT_OK = 0
     private lateinit var adapter: AppsAdapter
-    private lateinit var appInfoList: List<AppInfo>
+    private var appInfoList: List<AppInfo> = emptyList()
 
 
     // --- **修改点 1：将 launcher 的初始化移到这里，作为成员变量** ---

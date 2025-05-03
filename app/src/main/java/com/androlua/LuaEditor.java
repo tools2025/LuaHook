@@ -15,6 +15,7 @@ import android.widget.*;
 import android.widget.RadioGroup.*;
 import android.widget.TextView.*;
 
+import com.luaj.vm2.compiler.LexState;
 import com.myopicmobile.textwarrior.android.*;
 import com.myopicmobile.textwarrior.common.*;
 
@@ -168,6 +169,8 @@ public class LuaEditor extends FreeScrollingTextField {
         respan();
         invalidate();
     }
+
+
 
     public void removePackage(String pkg) {
         LanguageLua lang = (LanguageLua) Lexer.getLanguage();

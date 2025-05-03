@@ -17,6 +17,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.androlua.LuaEditor
+import com.androlua.LuaLexer
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.kulipai.luahook.adapter.SymbolAdapter
@@ -72,22 +73,22 @@ class AppsEdit : AppCompatActivity() {
             bottomSymbolBar.translationY = -imeInsets.bottom.toFloat()
             fab.translationY = -imeInsets.bottom.toFloat()
 
-            editor.setPadding(0,0,0, navigationBarInsets.bottom + bottomSymbolBar.height)
+
+            editor.setPadding(0, 0, 0,  bottomSymbolBar.height+imeInsets.bottom)
+
             // 设置根布局的底部内边距
             if (imeInsets.bottom > 0) {
                 // 输入法可见时，不需要额外的底部内边距来避免被导航栏遮挡，
                 // 因为 bottomSymbolBar 已经移动到输入法上方
-                editor.fixX = imeInsets.bottom - navigationBarInsets.bottom
+
                 view.setPadding(
                     navigationBarInsets.left,
                     statusBarInsets.top,
                     navigationBarInsets.right,
                     0
                 )
-
             } else {
-                editor.fixX = 0
-                        // 输入法不可见时，设置底部内边距以避免内容被导航栏遮挡
+                // 输入法不可见时，设置底部内边距以避免内容被导航栏遮挡
                 view.setPadding(
                     navigationBarInsets.left,
                     statusBarInsets.top,
@@ -96,12 +97,13 @@ class AppsEdit : AppCompatActivity() {
                 )
             }
 
+
             insets
         }
 
         // 确保在布局稳定后请求 WindowInsets，以便监听器能够正确工作
         ViewCompat.requestApplyInsets(rootLayout)
-
+//        Toast.makeText(this, editor.err(), Toast.LENGTH_SHORT).show()
 
         //接收传递信息
         val intent = getIntent()
@@ -163,8 +165,6 @@ class AppsEdit : AppCompatActivity() {
             savePrefs(currentPackageName, editor.text.toString())
             Toast.makeText(this, "保存成功", Toast.LENGTH_SHORT).show()
         }
-
-
 
 
     }
@@ -236,7 +236,7 @@ class AppsEdit : AppCompatActivity() {
                 true
             }
 
-            9->{
+            9 -> {
                 editor.search()
                 true
             }

@@ -15,7 +15,7 @@ object LogcatHelper {
         val command = if (since.isNullOrEmpty()) {
             "logcat -d $tag:* *:S"
         } else {
-            "logcat -d -T $since $tag:* *:S"
+            "logcat -d -T \"$since\" $tag:* *:S"
         }
 
         return withContext(Dispatchers.IO) {
@@ -24,11 +24,11 @@ object LogcatHelper {
                 if (result.isSuccess) {
                     result.out
                 } else {
-                    emptyList()
+                    mutableListOf()
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
-                emptyList()
+                mutableListOf()
             }
         }
     }

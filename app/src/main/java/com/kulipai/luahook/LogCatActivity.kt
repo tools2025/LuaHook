@@ -1,5 +1,6 @@
 package com.kulipai.luahook
 
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -18,6 +19,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.kulipai.luahook.adapter.LogAdapter
 import com.kulipai.luahook.util.LogcatHelper
 import com.kulipai.luahook.util.RootHelper
+import com.kulipai.luahook.util.d
 import kotlinx.coroutines.launch
 
 
@@ -30,7 +32,7 @@ class LogCatActivity : AppCompatActivity() {
     private val reresh: FloatingActionButton by lazy { findViewById<FloatingActionButton>(R.id.fab) }
 
     private lateinit var adapter: LogAdapter
-    private var thisTime: String? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -42,6 +44,8 @@ class LogCatActivity : AppCompatActivity() {
         }
 
         setSupportActionBar(toolbar)
+
+        RootHelper.canGetRoot()
 
         // 启用导航按钮
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
@@ -64,9 +68,9 @@ class LogCatActivity : AppCompatActivity() {
 //        var currentTime = LogcatHelper.getCurrentLogcatTimeFormat()
 
 
-        if (RootHelper.canGetRoot()) {
+        if (RootHelper.isRoot()) {
             lifecycleScope.launch {
-                var logs = LogcatHelper.getSystemLogsByTagSince("LuaXposed")
+                var logs = LogcatHelper.getSystemLogsByTagSince("LuaXposed",getSharedPreferences("cache",MODE_PRIVATE).getString("logClearTime",null))
                 LogRecyclerView.layoutManager =
                     LinearLayoutManager(this@LogCatActivity, LinearLayoutManager.VERTICAL, false)
                 adapter = LogAdapter(logs as MutableList<String>)
@@ -79,7 +83,9 @@ class LogCatActivity : AppCompatActivity() {
 
         reresh.setOnClickListener {
             lifecycleScope.launch {
-                var logs = LogcatHelper.getSystemLogsByTagSince("LuaXposed")
+                var logs = LogcatHelper.getSystemLogsByTagSince("LuaXposed",
+                    getSharedPreferences("cache",MODE_PRIVATE).getString("logClearTime",null)
+                )
                 adapter.updateLogs(logs)
             }
 
@@ -116,7 +122,16 @@ class LogCatActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             0 -> {
-
+                getSharedPreferences("cache",MODE_PRIVATE).edit().apply{
+                    putString("logClearTime", LogcatHelper.getCurrentLogcatTimeFormat())
+                    apply()
+                }
+                lifecycleScope.launch {
+                    var logs = LogcatHelper.getSystemLogsByTagSince("LuaXposed",
+                        getSharedPreferences("cache",MODE_PRIVATE).getString("logClearTime",null)
+                    )
+                    adapter.updateLogs(logs)
+                }
                 true
             }
 

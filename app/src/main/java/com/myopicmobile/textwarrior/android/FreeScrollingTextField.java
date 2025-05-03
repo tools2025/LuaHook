@@ -135,7 +135,6 @@ import com.androlua.LuaEditor;
 @SuppressWarnings("ALL")
 public class FreeScrollingTextField extends View
         implements Document.TextFieldMetrics {
-    public int fixX = 0;
 
     //---------------------------------------------------------------------
     //--------------------------  Caret Scroll  ---------------------------
@@ -870,7 +869,7 @@ public class FreeScrollingTextField extends View
 
         canvas.restore();
         if ( ((LuaEditor) this).enableErrMsg==true && LexState.errormsg != null) {
-            int paintX = drawString(canvas, LexState.errormsg, 0, LexState.errormsg.length(), getPaddingLeft(), getScrollY() + getHeight() - getPaddingBottom() - rowHeight()-fixX);
+            int paintX = drawString(canvas, LexState.errormsg, 0, LexState.errormsg.length(), getPaddingLeft(), getScrollY() + getHeight() - getPaddingBottom() - rowHeight());
             if (paintX > _xExtent) {
                 // record widest line seen so far
                 _xExtent = paintX;
