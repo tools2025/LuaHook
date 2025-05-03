@@ -73,9 +73,12 @@ class ToolAdapter(
                                     view.findViewById<TextInputEditText>(R.id.funcName).text.toString()
                                 val param: String =
                                     view.findViewById<TextInputEditText>(R.id.param).text.toString()
-                                var p = param.split(",").joinToString(",") { "\"${it.trim()}\"" }
+                                var p = ""
+                                if(param.trim().isNotEmpty()){
+                                    p = param.split(",").joinToString(",") { "\"${it.trim()}\"" }+",\n"
+                                }
                                 val hookLua =
-                                    "hook(\"$className\",\nlpparam.classLoader,\n\"$funcName\",\n$p,\nfunction(it)\n\nend,\nfunction(it)\n\nend)"
+                                    "hook(\"$className\",\nlpparam.classLoader,\n\"$funcName\",\n${p}function(it)\n\nend,\nfunction(it)\n\nend)"
                                 editor.insert(editor.selectionStart, hookLua)
                                 dialog.dismiss()
                             }
@@ -118,10 +121,13 @@ class ToolAdapter(
                                     view.findViewById<TextInputEditText>(R.id.className).text.toString()
                                 val param: String =
                                     view.findViewById<TextInputEditText>(R.id.param).text.toString()
-                                var p = param.split(",").joinToString(",") { "\"${it.trim()}\"" }
+                                var p = ""
+                                if(param.trim().isNotEmpty()){
+                                    p = param.split(",").joinToString(",") { "\"${it.trim()}\"" }+",\n"
+                                }
 
                                 val hookLua =
-                                    "hookcotr(\"$className\",\nlpparam.classLoader,\n$p,\nfunction(it)\n\nend,\nfunction(it)\n\nend)"
+                                    "hookcotr(\"$className\",\nlpparam.classLoader,\n${p}function(it)\n\nend,\nfunction(it)\n\nend)"
                                 editor.insert(editor.selectionStart, hookLua)
                                 dialog.dismiss()
                             }
