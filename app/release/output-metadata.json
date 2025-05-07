@@ -11,8 +11,8 @@
       "type": "SINGLE",
       "filters": [],
       "attributes": [],
-      "versionCode": 16,
-      "versionName": "3.4444444444444-luaj++",
+      "versionCode": 17,
+      "versionName": "3.5-canary",
       "outputFile": "app-release.apk"
     }
   ],

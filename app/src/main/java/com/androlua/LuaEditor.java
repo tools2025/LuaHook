@@ -87,7 +87,7 @@ public class LuaEditor extends FreeScrollingTextField {
 //            setItalicTypeface(Typeface.createFromFile(tf));
         DisplayMetrics dm = context.getResources().getDisplayMetrics();
 
-        float size = TypedValue.applyDimension(2, BASE_TEXT_SIZE_PIXELS, dm);
+        float size = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, BASE_TEXT_SIZE_PIXELS, dm);
         setTextSize((int) size);
         setShowLineNumbers(true);
         setHighlightCurrentRow(true);

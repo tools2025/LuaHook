@@ -15,7 +15,7 @@ android {
         minSdk = 28
         targetSdk = 35
         versionCode = 17
-        versionName = "3.5"
+        versionName = "3.5-canary"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -67,5 +67,6 @@ dependencies {
     implementation(libs.dexkit)
     implementation(libs.ripple.components.android)
     implementation(libs.ripple.insets)
+    implementation(libs.androidx.preference.ktx)
 
 }

@@ -1,6 +1,4 @@
 package com.kulipai.luahook
-
-
 import HookLib
 import LuaDrawableLoader
 import LuaHttp
@@ -90,6 +88,9 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
     }
 
     override fun handleLoadPackage(lpparam: LoadPackageParam) {
+
+
+        
 
 
         SelectAppsString = selectApps.getString("selectApps", "").toString()
