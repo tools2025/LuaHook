@@ -1,6 +1,5 @@
 package com.kulipai.luahook
 import LanguageUtil
-import LanguageUtil.LANGUAGE_ENGLISH
 import android.app.Application
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -13,12 +12,15 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.core.content.edit
+
 
 class MyApplication : Application() {
 
     private var cachedAppList: List<AppInfo>? = null
     private var isLoading = false
     private val waiters = mutableListOf<CompletableDeferred<List<AppInfo>>>()
+    private var shellMode: String? = null
 
 
     companion object {
@@ -91,13 +93,31 @@ class MyApplication : Application() {
         instance = this
         LanguageUtil.applyLanguage(this)
 
-
-
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         LanguageUtil.applyLanguage(this)
+    }
+
+
+    internal fun loadShellMode():String {
+        val prefs = getSharedPreferences("config", MODE_PRIVATE)
+        shellMode = prefs.getString("shellmode", "no")
+        return shellMode.toString()
+
+    }
+
+    fun getShellMode(): String {
+        return shellMode.toString()
+    }
+
+    fun setShellMode(newShellMode: String?) {
+        shellMode = newShellMode
+        val prefs = getSharedPreferences("config", MODE_PRIVATE)
+        prefs.edit {
+            putString("shellmode", newShellMode)
+        }
     }
 
 }
