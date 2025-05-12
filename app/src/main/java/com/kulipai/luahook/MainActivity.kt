@@ -69,7 +69,7 @@ class MainActivity : AppCompatActivity() {
         val shellmode = MyApplication.instance.loadShellMode()
         if(shellmode =="no") {
 
-            //弹窗选择模式
+            // 弹窗选择模式
 
         } else if (shellmode == "shizuku") {
 
@@ -77,7 +77,7 @@ class MainActivity : AppCompatActivity() {
 
         } else if (shellmode == "root") {
 
-            //检测root权限
+            // 检测root权限
 
         }
 
