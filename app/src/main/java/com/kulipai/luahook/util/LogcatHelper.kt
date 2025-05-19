@@ -1,6 +1,5 @@
 package com.kulipai.luahook.util
 
-import com.topjohnwu.superuser.Shell
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
@@ -18,9 +17,9 @@ object LogcatHelper {
 
         return withContext(Dispatchers.IO) {
             try {
-                val result = Shell.cmd(command).exec()
-                if (result.isSuccess) {
-                    result.out
+                val (result, err) = ShellManager.shell(command)
+                if (!err) {
+                    result.split("\n")
                 } else {
                     mutableListOf()
                 }

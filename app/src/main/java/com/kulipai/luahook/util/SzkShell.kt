@@ -41,6 +41,6 @@ object SzkShell {
         } catch (e: RemoteException) {
             e.printStackTrace()
             "RemoteException: ${e.message}"
-        }
+        }.toString()
     }
 }

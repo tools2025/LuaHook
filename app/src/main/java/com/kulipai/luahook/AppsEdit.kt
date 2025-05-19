@@ -21,7 +21,10 @@ import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.kulipai.luahook.adapter.SymbolAdapter
 import com.kulipai.luahook.adapter.ToolAdapter
+import com.kulipai.luahook.util.LShare
+import com.kulipai.luahook.util.ShellManager
 import com.topjohnwu.superuser.Shell
+import java.io.File
 
 
 class AppsEdit : AppCompatActivity() {
@@ -47,12 +50,12 @@ class AppsEdit : AppCompatActivity() {
 
     override fun onStop() {
         super.onStop()
-        savePrefs(currentPackageName, editor.text.toString())
+        LShare.writeTmp(currentPackageName, editor.text.toString())
     }
 
     override fun onPause() {
         super.onPause()
-        savePrefs(currentPackageName, editor.text.toString())
+        LShare.writeTmp(currentPackageName, editor.text.toString())
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -73,7 +76,7 @@ class AppsEdit : AppCompatActivity() {
             fab.translationY = -imeInsets.bottom.toFloat()
 
 
-            editor.setPadding(0, 0, 0,  bottomSymbolBar.height+imeInsets.bottom)
+            editor.setPadding(0, 0, 0, bottomSymbolBar.height + imeInsets.bottom)
 
             // 设置根布局的底部内边距
             if (imeInsets.bottom > 0) {
@@ -154,14 +157,23 @@ class AppsEdit : AppCompatActivity() {
         ToolRec.adapter = ToolAdapter(tool, editor, this)
 
 
-        val prefs = getSharedPreferences(PREFS_NAME, MODE_WORLD_READABLE)
+//        val prefs = getSharedPreferences(PREFS_NAME, MODE_WORLD_READABLE)
 
-        val script = prefs.getString(currentPackageName, "")
+        //        val script = prefs.getString(currentPackageName, "")
+        fun read(path: String): String {
+            if (File(path).exists()) {
+                return File(path).readText()
+            }
+            return ""
+        }
+
+
+        val script = read("/data/local/tmp/LuaHook/tmp/$currentPackageName.lua")
 
         editor.setText(script)
 
         fab.setOnClickListener {
-            savePrefs(currentPackageName, editor.text.toString())
+            LShare.writeTmp(currentPackageName, editor.text.toString())
             Toast.makeText(this, "保存成功", Toast.LENGTH_SHORT).show()
         }
 
@@ -195,9 +207,9 @@ class AppsEdit : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             0 -> {
-                savePrefs(currentPackageName, editor.text.toString())
+                LShare.writeTmp(currentPackageName, editor.text.toString())
 //                operateAppAdvanced(this,currentPackageName)
-                Shell.cmd("am force-stop $currentPackageName").exec()
+                ShellManager.shell("am force-stop $currentPackageName")
                 launchApp(this, currentPackageName)
                 true
 
@@ -246,14 +258,14 @@ class AppsEdit : AppCompatActivity() {
     }
 
 
-    // 写入 SharedPreferences 并修改权限
-    fun savePrefs(packageName: String, text: String) {
-        val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_WORLD_READABLE)
-        prefs.edit().apply {
-            putString(packageName, text)
-            apply()
-        }
-    }
+//    // 写入 SharedPreferences 并修改权限
+//    fun savePrefs(packageName: String, text: String) {
+//        val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_WORLD_READABLE)
+//        prefs.edit().apply {
+//            putString(packageName, text)
+//            apply()
+//        }
+//    }
 
 
     fun operateAppAdvanced(context: Context, packageName: String) {

@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Build
+import android.util.Log
 import com.google.android.material.color.DynamicColors
 import com.kulipai.luahook.fragment.AppInfo
 import com.kulipai.luahook.fragment.getInstalledApps
@@ -13,6 +14,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import androidx.core.content.edit
+import com.kulipai.luahook.util.ShellManager
+import com.kulipai.luahook.util.d
+import com.topjohnwu.superuser.Shell
 
 
 class MyApplication : Application() {
@@ -20,7 +24,6 @@ class MyApplication : Application() {
     private var cachedAppList: List<AppInfo>? = null
     private var isLoading = false
     private val waiters = mutableListOf<CompletableDeferred<List<AppInfo>>>()
-    private var shellMode: String? = null
 
 
     companion object {
@@ -92,6 +95,19 @@ class MyApplication : Application() {
         DynamicColors.applyToActivitiesIfAvailable(this)
         instance = this
         LanguageUtil.applyLanguage(this)
+        // 预加载 shell，确保 MainActivity 能及时拿到状态
+        Shell.getShell {
+            // 这里啥都不用干，只是为了让 Shell 初始化
+        }
+
+        // 在 Application 中初始化
+        ShellManager.init(applicationContext) {
+            val (output, success) = ShellManager.shell("id")
+            ("Output = $output, success = $success").d()
+            ShellManager.getMode().toString().d()
+
+        }
+
 
     }
 
@@ -101,23 +117,6 @@ class MyApplication : Application() {
     }
 
 
-    internal fun loadShellMode():String {
-        val prefs = getSharedPreferences("config", MODE_PRIVATE)
-        shellMode = prefs.getString("shellmode", "no")
-        return shellMode.toString()
 
-    }
-
-    fun getShellMode(): String {
-        return shellMode.toString()
-    }
-
-    fun setShellMode(newShellMode: String?) {
-        shellMode = newShellMode
-        val prefs = getSharedPreferences("config", MODE_PRIVATE)
-        prefs.edit {
-            putString("shellmode", newShellMode)
-        }
-    }
 
 }

@@ -1,15 +1,11 @@
 package com.kulipai.luahook
 
 import LanguageUtil
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Bundle
-import android.os.IBinder
-import android.os.RemoteException
 import android.view.Menu
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
@@ -30,17 +26,16 @@ import com.kulipai.luahook.fragment.AppsFragment
 import com.kulipai.luahook.fragment.HomeFragment
 import com.kulipai.luahook.fragment.PluginsFragment
 import com.kulipai.luahook.fragment.canHook
+import com.kulipai.luahook.util.LShare
+import com.kulipai.luahook.util.ShellManager
 import com.kulipai.luahook.util.d
+import com.topjohnwu.superuser.Shell
 import kotlinx.coroutines.launch
 import rikka.shizuku.Shizuku
-import rikka.shizuku.Shizuku.UserServiceArgs
 import rikka.sui.Sui
 
 
 class MainActivity : AppCompatActivity() {
-
-
-
 
 
     private val shizukuRequestCode = 100
@@ -66,32 +61,15 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
 
         setContentView(R.layout.activity_main)
-        val shellmode = MyApplication.instance.loadShellMode()
-        if(shellmode =="no") {
 
-            // 弹窗选择模式
 
-        } else if (shellmode == "shizuku") {
-
-            // 申请权限
-
-        } else if (shellmode == "root") {
-
-            // 检测root权限
+        //没有root则shizuku
+        if (Shell.isAppGrantedRoot() == false && !Shizuku.isPreV11() && Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED)  {
+            Shizuku.addBinderReceivedListener(binderReceivedListener)
+            Shizuku.addRequestPermissionResultListener(requestPermissionResultListener)
+            updatePermissionStatus()
 
         }
-
-
-
-        Shizuku.addBinderReceivedListener(binderReceivedListener)
-        Shizuku.addRequestPermissionResultListener(requestPermissionResultListener)
-
-        updatePermissionStatus()
-
-
-
-        Sui.init(packageName)
-
 
 
 //        performShizukuOperation()
@@ -247,21 +225,22 @@ class MainActivity : AppCompatActivity() {
 
 
     fun saveStringList(context: Context, key: String, list: List<String>) {
-        val prefs = context.getSharedPreferences("MyAppPrefs", MODE_WORLD_READABLE)
-        val serialized = list.joinToString(",")
-        prefs.edit { putString(key, serialized) }
+        LShare.write("/apps.txt",list.joinToString(","))
+//        val prefs = context.getSharedPreferences("MyAppPrefs", MODE_WORLD_READABLE)
+//        val serialized = list.joinToString(",")
+//        prefs.edit { putString(key, serialized) }
     }
 
     fun getStringList(context: Context, key: String): MutableList<String> {
-        val prefs = context.getSharedPreferences("MyAppPrefs", MODE_WORLD_READABLE)
-        val serialized = prefs.getString(key, "") ?: ""
-        return if (serialized.isNotEmpty()) {
+//        val prefs = context.getSharedPreferences("MyAppPrefs", MODE_WORLD_READABLE)
+//        val serialized = prefs.getString(key, "") ?: ""
+        val serialized = LShare.read("/apps.txt")
+        return if (serialized!="") {
             serialized.split(",").toMutableList()
         } else {
             mutableListOf()
         }
     }
-
 
     private val binderReceivedListener = Shizuku.OnBinderReceivedListener {
         updatePermissionStatus()
@@ -279,9 +258,6 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-
-
-
 
 
     override fun onDestroy() {
@@ -309,24 +285,25 @@ class MainActivity : AppCompatActivity() {
         } else if (Shizuku.isPreV11()) {
             Toast.makeText(this, "Shizuku 版本过低，请使用 ADB 启动", Toast.LENGTH_LONG).show()
         } else {
-            Toast.makeText(this, "Shizuku 权限已存在", Toast.LENGTH_SHORT).show()
+//            Toast.makeText(this, "Shizuku 权限已存在", Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun updatePermissionStatus() {
         if (!isShizukuAvailable()) {
-            Toast.makeText(this, "Shizuku 服务未运行", Toast.LENGTH_SHORT).show()
-//            permissionStatusTextView.text = ""
-//            executeCommandButton.isEnabled = false
+//            Toast.makeText(this, "Shizuku 服务未运行", Toast.LENGTH_SHORT).show()
+
         } else if (checkShizukuPermission()) {
-            Toast.makeText(this, "Shizuku 权限已授予", Toast.LENGTH_SHORT).show()
-            SzkShell.bind(applicationContext)
+//            Toast.makeText(this, "Shizuku 权限已授予2", Toast.LENGTH_SHORT).show()
+            ShellManager.init(applicationContext) {
+                val (output, success) = ShellManager.shell("id")
+                ("Output = $output, success = $success").d()
+                ShellManager.getMode().toString().d()
+            }
 
-
-//            permissionStatusTextView.text = "Shizuku 权限已授予"
-//            executeCommandButton.isEnabled = true
+            Sui.init(packageName)
         } else {
-            Toast.makeText(this, "Shizuku 权限未授予", Toast.LENGTH_SHORT).show()
+//            Toast.makeText(this, "Shizuku 权限未授予", Toast.LENGTH_SHORT).show()
 //            permissionStatusTextView.text = "Shizuku 权限未授予"
 //            executeCommandButton.isEnabled = false
             requestShizukuPermission() // 尝试请求权限

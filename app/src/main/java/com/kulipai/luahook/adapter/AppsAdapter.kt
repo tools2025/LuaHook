@@ -15,6 +15,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.kulipai.luahook.AppsEdit
 import com.kulipai.luahook.R
 import com.kulipai.luahook.fragment.AppInfo
+import com.kulipai.luahook.util.LShare
 
 class AppsAdapter(private var apps: List<AppInfo>, private val context: Context) :
     RecyclerView.Adapter<AppsAdapter.AppsViewHolder>() {
@@ -96,19 +97,19 @@ class AppsAdapter(private var apps: List<AppInfo>, private val context: Context)
     }
 
 
-    fun saveStringList(context: Context, key: String, list: MutableList<String>) {
-        val sharedPreferences = context.getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE)
-        val serializedList = list.joinToString(",") // 使用逗号作为分隔符
-        sharedPreferences.edit {
-            putString(key, serializedList)
-        }
+    fun saveStringList(context: Context, key: String, list: List<String>) {
+        LShare.write("/apps.txt",list.joinToString(","))
+//        val prefs = context.getSharedPreferences("MyAppPrefs", MODE_WORLD_READABLE)
+//        val serialized = list.joinToString(",")
+//        prefs.edit { putString(key, serialized) }
     }
 
     fun getStringList(context: Context, key: String): MutableList<String> {
-        val sharedPreferences = context.getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE)
-        val serializedList = sharedPreferences.getString(key, "") ?: ""
-        return if (serializedList.isNotEmpty()) {
-            serializedList.split(",").toMutableList()
+//        val prefs = context.getSharedPreferences("MyAppPrefs", MODE_WORLD_READABLE)
+//        val serialized = prefs.getString(key, "") ?: ""
+        val serialized = LShare.read("/apps.txt")
+        return if (serialized!="") {
+            serialized.split(",").toMutableList()
         } else {
             mutableListOf()
         }

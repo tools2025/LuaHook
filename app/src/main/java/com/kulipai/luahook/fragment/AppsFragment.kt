@@ -31,6 +31,7 @@ import com.kulipai.luahook.MyApplication
 import com.kulipai.luahook.R
 import com.kulipai.luahook.SelectApps
 import com.kulipai.luahook.adapter.AppsAdapter
+import com.kulipai.luahook.util.LShare
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -221,21 +222,19 @@ class AppsFragment : Fragment() {
     }
 
 
-    fun saveStringList(context: Context, key: String, list: MutableList<String>) {
-        val sharedPreferences =
-            context.getSharedPreferences("MyAppPrefs", Context.MODE_WORLD_READABLE)
-        val serializedList = list.joinToString(",") // 使用逗号作为分隔符
-        sharedPreferences.edit {
-            putString(key, serializedList)
-        }
+    fun saveStringList(context: Context, key: String, list: List<String>) {
+        LShare.write("/apps.txt",list.joinToString(","))
+//        val prefs = context.getSharedPreferences("MyAppPrefs", MODE_WORLD_READABLE)
+//        val serialized = list.joinToString(",")
+//        prefs.edit { putString(key, serialized) }
     }
 
     fun getStringList(context: Context, key: String): MutableList<String> {
-        val sharedPreferences =
-            context.getSharedPreferences("MyAppPrefs", Context.MODE_WORLD_READABLE)
-        val serializedList = sharedPreferences.getString(key, "") ?: ""
-        return if (serializedList.isNotEmpty()) {
-            serializedList.split(",").toMutableList()
+//        val prefs = context.getSharedPreferences("MyAppPrefs", MODE_WORLD_READABLE)
+//        val serialized = prefs.getString(key, "") ?: ""
+        val serialized = LShare.read("/apps.txt")
+        return if (serialized!="") {
+            serialized.split(",").toMutableList()
         } else {
             mutableListOf()
         }

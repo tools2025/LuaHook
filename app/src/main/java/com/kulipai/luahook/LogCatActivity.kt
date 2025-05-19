@@ -18,6 +18,8 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.kulipai.luahook.adapter.LogAdapter
 import com.kulipai.luahook.util.LogcatHelper
 import com.kulipai.luahook.util.RootHelper
+import com.kulipai.luahook.util.ShellManager
+import com.topjohnwu.superuser.Shell
 import kotlinx.coroutines.launch
 
 
@@ -66,7 +68,7 @@ class LogCatActivity : AppCompatActivity() {
 //        var currentTime = LogcatHelper.getCurrentLogcatTimeFormat()
 
 
-        if (RootHelper.isRoot()) {
+        if (ShellManager.getMode() != ShellManager.Mode.NONE) {
             lifecycleScope.launch {
                 var logs = LogcatHelper.getSystemLogsByTagSince("LuaXposed",getSharedPreferences("cache",MODE_PRIVATE).getString("logClearTime",null))
                 LogRecyclerView.layoutManager =

@@ -1,4 +1,5 @@
 package com.kulipai.luahook
+
 import HookLib
 import LuaDrawableLoader
 import LuaHttp
@@ -11,13 +12,11 @@ import com.kulipai.luahook.util.d
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.IXposedHookZygoteInit
 import de.robv.android.xposed.XC_MethodHook
-import de.robv.android.xposed.XSharedPreferences
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import org.luaj.Globals
 import org.luaj.LuaValue
-import org.luaj.lib.OneArgFunction
 import org.luaj.lib.jse.CoerceJavaToLua
 import org.luaj.lib.jse.JsePlatform
 import org.luckypray.dexkit.DexKitBridge
@@ -36,31 +35,32 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
 //        }
 
         const val MODULE_PACKAGE = "com.kulipai.luahook"  // 模块包名
-        const val PREFS_NAME = "xposed_prefs"
-        const val APPS = "apps"
+        val PATH = "/data/local/tmp/LuaHook"
+//        const val PREFS_NAME = "xposed_prefs"
+//        const val APPS = "apps"
     }
 
 
     lateinit var luaScript: String
     lateinit var appsScript: String
     lateinit var SelectAppsString: String
-    lateinit var apps: XSharedPreferences
-    lateinit var selectApps: XSharedPreferences
+//    lateinit var apps: XSharedPreferences
+//    lateinit var selectApps: XSharedPreferences
     lateinit var SelectAppsList: MutableList<String>
 
     override fun initZygote(startupParam: IXposedHookZygoteInit.StartupParam) {
 
         XpHelper.initZygote(startupParam);
 
-        val pref = XSharedPreferences(MODULE_PACKAGE, PREFS_NAME)
-        apps = XSharedPreferences(MODULE_PACKAGE, APPS)
-        pref.makeWorldReadable()
-        apps.makeWorldReadable()
+//        val pref = XSharedPreferences(MODULE_PACKAGE, PREFS_NAME)
+//        apps = XSharedPreferences(MODULE_PACKAGE, APPS)
+//        pref.makeWorldReadable()
+//        apps.makeWorldReadable()
 
-        selectApps = XSharedPreferences(MODULE_PACKAGE, "MyAppPrefs")
-        selectApps.makeWorldReadable()
+//        selectApps = XSharedPreferences(MODULE_PACKAGE, "MyAppPrefs")
+//        selectApps.makeWorldReadable()
 
-        luaScript = pref.getString("lua", "nil").toString()
+//        luaScript = pref.getString("lua", "nil").toString()
 
 
     }
@@ -90,12 +90,27 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
     override fun handleLoadPackage(lpparam: LoadPackageParam) {
 
 
-        
 
 
-        SelectAppsString = selectApps.getString("selectApps", "").toString()
+//        SelectAppsString = selectApps.getString("selectApps", "").toString()
 
-        if (SelectAppsString.isNotEmpty()) {
+        fun read(path: String): String {
+            if (File(path).exists()) {
+                return File(path).readText()
+            }
+            return ""
+        }
+
+        SelectAppsString = read(PATH+"/apps.txt").replace("\n","")
+
+        luaScript =  read(PATH + "/globals.lua")
+
+
+
+
+
+
+        if (SelectAppsString.isNotEmpty() && SelectAppsString !="") {
             SelectAppsList = SelectAppsString.split(",").toMutableList()
         } else {
             SelectAppsList = mutableListOf()
@@ -136,10 +151,11 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
         }
 
 
-        //app单独脚本
+//        app单独脚本
         try {
+
             if (lpparam.packageName in SelectAppsList) {
-                appsScript = apps.getString(lpparam.packageName, "nil").toString()
+                appsScript = read(PATH + "/tmp/" + lpparam.packageName + ".lua")
                 globals.load(appsScript).call()
             }
         } catch (e: Exception) {

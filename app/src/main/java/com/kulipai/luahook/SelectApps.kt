@@ -21,6 +21,7 @@ import com.google.android.material.card.MaterialCardView
 import com.google.android.material.color.DynamicColors
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.kulipai.luahook.fragment.AppInfo
+import com.kulipai.luahook.util.LShare
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -124,15 +125,17 @@ class SelectApps : AppCompatActivity() {
     }
 
     fun saveStringList(context: Context, key: String, list: List<String>) {
-        val prefs = context.getSharedPreferences("MyAppPrefs", MODE_WORLD_READABLE)
-        val serialized = list.joinToString(",")
-        prefs.edit { putString(key, serialized) }
+        LShare.write("/apps.txt",list.joinToString(","))
+//        val prefs = context.getSharedPreferences("MyAppPrefs", MODE_WORLD_READABLE)
+//        val serialized = list.joinToString(",")
+//        prefs.edit { putString(key, serialized) }
     }
 
     fun getStringList(context: Context, key: String): MutableList<String> {
-        val prefs = context.getSharedPreferences("MyAppPrefs", MODE_WORLD_READABLE)
-        val serialized = prefs.getString(key, "") ?: ""
-        return if (serialized.isNotEmpty()) {
+//        val prefs = context.getSharedPreferences("MyAppPrefs", MODE_WORLD_READABLE)
+//        val serialized = prefs.getString(key, "") ?: ""
+        val serialized = LShare.read("/apps.txt")
+        return if (serialized!="") {
             serialized.split(",").toMutableList()
         } else {
             mutableListOf()
