@@ -1,5 +1,7 @@
 package com.kulipai.luahook
 
+import AViewModel
+import DataRepository.ShellInit
 import LanguageUtil
 import android.content.Context
 import android.content.Intent
@@ -11,6 +13,7 @@ import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.edit
 import androidx.core.view.ViewCompat
@@ -25,10 +28,8 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.kulipai.luahook.fragment.AppsFragment
 import com.kulipai.luahook.fragment.HomeFragment
 import com.kulipai.luahook.fragment.PluginsFragment
-import com.kulipai.luahook.fragment.canHook
 import com.kulipai.luahook.util.LShare
 import com.kulipai.luahook.util.ShellManager
-import com.kulipai.luahook.util.d
 import com.topjohnwu.superuser.Shell
 import kotlinx.coroutines.launch
 import rikka.shizuku.Shizuku
@@ -50,6 +51,8 @@ class MainActivity : AppCompatActivity() {
     private val bottomBar: BottomNavigationView by lazy { findViewById(R.id.bottomBar) }
     private val toolbar: MaterialToolbar by lazy { findViewById(R.id.toolbar) }
     private val viewPager2: ViewPager2 by lazy { findViewById(R.id.viewPager2) }
+    private val viewModel by viewModels<AViewModel>()
+
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -63,14 +66,15 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
 
-        //没有root则shizuku
-        if (Shell.isAppGrantedRoot() == false && !Shizuku.isPreV11() && Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED)  {
-            Shizuku.addBinderReceivedListener(binderReceivedListener)
-            Shizuku.addRequestPermissionResultListener(requestPermissionResultListener)
-            updatePermissionStatus()
+        viewModel.data.observe(this) {
+            //没有root则shizuku
+            if (Shell.isAppGrantedRoot() == false && Shizuku.getBinder() != null && !Shizuku.isPreV11() && Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
+                Shizuku.addBinderReceivedListener(binderReceivedListener)
+                Shizuku.addRequestPermissionResultListener(requestPermissionResultListener)
+                updatePermissionStatus()
 
+            }
         }
-
 
 //        performShizukuOperation()
 
@@ -125,7 +129,7 @@ class MainActivity : AppCompatActivity() {
         val app = application as MyApplication
         lifecycleScope.launch {
             val apps = app.getAppListAsync()
-            if (canHook()) {
+            if (ShellManager.getMode() != ShellManager.Mode.NONE) {
                 val savedList = getStringList(this@MainActivity, "selectApps")
                 if (savedList.isEmpty()) {
                     // 列表为空的逻辑
@@ -225,7 +229,7 @@ class MainActivity : AppCompatActivity() {
 
 
     fun saveStringList(context: Context, key: String, list: List<String>) {
-        LShare.write("/apps.txt",list.joinToString(","))
+        LShare.write("/apps.txt", list.joinToString(","))
 //        val prefs = context.getSharedPreferences("MyAppPrefs", MODE_WORLD_READABLE)
 //        val serialized = list.joinToString(",")
 //        prefs.edit { putString(key, serialized) }
@@ -235,7 +239,7 @@ class MainActivity : AppCompatActivity() {
 //        val prefs = context.getSharedPreferences("MyAppPrefs", MODE_WORLD_READABLE)
 //        val serialized = prefs.getString(key, "") ?: ""
         val serialized = LShare.read("/apps.txt")
-        return if (serialized!="") {
+        return if (serialized != "") {
             serialized.split(",").toMutableList()
         } else {
             mutableListOf()
@@ -295,11 +299,7 @@ class MainActivity : AppCompatActivity() {
 
         } else if (checkShizukuPermission()) {
 //            Toast.makeText(this, "Shizuku 权限已授予2", Toast.LENGTH_SHORT).show()
-            ShellManager.init(applicationContext) {
-                val (output, success) = ShellManager.shell("id")
-                ("Output = $output, success = $success").d()
-                ShellManager.getMode().toString().d()
-            }
+            ShellInit(applicationContext)
 
             Sui.init(packageName)
         } else {

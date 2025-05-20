@@ -18,7 +18,7 @@ object LogcatHelper {
         return withContext(Dispatchers.IO) {
             try {
                 val (result, err) = ShellManager.shell(command)
-                if (!err) {
+                if (err) {
                     result.split("\n")
                 } else {
                     mutableListOf()

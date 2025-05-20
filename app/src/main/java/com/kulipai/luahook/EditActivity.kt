@@ -7,8 +7,6 @@ import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.drawable.Drawable
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.text.SpannableString
 import android.text.TextPaint
 import android.text.method.LinkMovementMethod
@@ -27,7 +25,6 @@ import androidx.annotation.AttrRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.content.ContextCompat
-import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -38,7 +35,8 @@ import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.kulipai.luahook.adapter.SymbolAdapter
-import kotlin.system.exitProcess
+import com.kulipai.luahook.util.LShare
+import java.io.File
 
 class EditActivity : AppCompatActivity() {
 
@@ -253,7 +251,7 @@ class EditActivity : AppCompatActivity() {
                 true
             }
 
-            9->{
+            9 -> {
                 editor.search()
                 true
             }
@@ -272,33 +270,22 @@ class EditActivity : AppCompatActivity() {
     private lateinit var defaultLogo: Drawable
 
     companion object {
-        const val PREFS_NAME = "xposed_prefs"
     }
 
 
-    // 写入 SharedPreferences 并修改权限
-    fun savePrefs(context: Context, text: String) {
-        val prefs = context.getSharedPreferences(PREFS_NAME, MODE_WORLD_READABLE)
-        prefs.edit().apply {
-            putString("lua", text)
-            apply()
-
-        }
+    fun saveScript(text: String) {
+        LShare.write("/global.lua", text)
     }
 
-    fun readPrefs(context: Context): String {
-        val prefs = context.getSharedPreferences(PREFS_NAME, MODE_WORLD_READABLE)
-        return prefs.getString("lua", "") ?: ""
-    }
 
     override fun onStop() {
         super.onStop()
-        savePrefs(this@EditActivity, editor.text.toString())
+        saveScript(editor.text.toString())
     }
 
     override fun onPause() {
         super.onPause()
-        savePrefs(this@EditActivity, editor.text.toString())
+        saveScript(editor.text.toString())
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -345,8 +332,8 @@ class EditActivity : AppCompatActivity() {
             bottomSymbolBar.translationY = -imeInsets.bottom.toFloat()
             fab.translationY = -imeInsets.bottom.toFloat()
 
-            editor.setPadding(0,0,0, navigationBarInsets.bottom)
-            
+            editor.setPadding(0, 0, 0, navigationBarInsets.bottom)
+
 
             // 设置根布局的底部内边距
             if (imeInsets.bottom > 0) {
@@ -375,17 +362,25 @@ class EditActivity : AppCompatActivity() {
         // 确保在布局稳定后请求 WindowInsets，以便监听器能够正确工作
         ViewCompat.requestApplyInsets(rootLayout)
 
-        var luaScript = readPrefs(this)
+        fun read(path: String): String {
+            if (File(path).exists()) {
+                return File(path).readText()
+            }
+            return ""
+        }
+
+
+        val luaScript = read("/data/local/tmp/LuaHook/global.lua")
         if (luaScript == "") {
             var lua = """
         """.trimIndent()
-            savePrefs(this, lua)
+            saveScript(lua)
         }
 
         editor.setText(luaScript)
 
         fab.setOnClickListener {
-            savePrefs(this@EditActivity, editor.text.toString())
+            saveScript(editor.text.toString())
             Toast.makeText(this, resources.getString(R.string.save_ok), Toast.LENGTH_SHORT).show()
         }
 

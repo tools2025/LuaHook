@@ -1,4 +1,5 @@
 package com.kulipai.luahook
+import DataRepository.ShellInit
 import LanguageUtil
 import android.app.Application
 import android.content.pm.PackageManager
@@ -14,9 +15,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import androidx.core.content.edit
+import com.kulipai.luahook.util.LShare
 import com.kulipai.luahook.util.ShellManager
+import com.kulipai.luahook.util.ShellManager.Mode
 import com.kulipai.luahook.util.d
 import com.topjohnwu.superuser.Shell
+import rikka.shizuku.Shizuku
 
 
 class MyApplication : Application() {
@@ -96,17 +100,20 @@ class MyApplication : Application() {
         instance = this
         LanguageUtil.applyLanguage(this)
         // 预加载 shell，确保 MainActivity 能及时拿到状态
-        Shell.getShell {
-            // 这里啥都不用干，只是为了让 Shell 初始化
-        }
 
-        // 在 Application 中初始化
-        ShellManager.init(applicationContext) {
-            val (output, success) = ShellManager.shell("id")
-            ("Output = $output, success = $success").d()
-            ShellManager.getMode().toString().d()
 
-        }
+
+        ShellInit(applicationContext)
+
+
+//        // 在 Application 中初始化
+//        ShellManager.init(applicationContext) {
+//
+//            val (output, success) = ShellManager.shell("id")
+//            ("Output = $output, success = $success").d()
+//            ShellManager.getMode().toString().d()
+//
+//        }
 
 
     }

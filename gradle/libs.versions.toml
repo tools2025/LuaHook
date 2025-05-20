@@ -21,7 +21,7 @@ preferenceKtx = "1.2.1"
 provider = "13.1.5"
 rippleComponentsAndroid = "a7b66126c6"
 rippleInsets = "1.1.0"
-xphelper = "2.5"
+xphelper = "2.6"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }

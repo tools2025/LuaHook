@@ -103,7 +103,7 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
 
         SelectAppsString = read(PATH+"/apps.txt").replace("\n","")
 
-        luaScript =  read(PATH + "/globals.lua")
+        luaScript =  read(PATH + "/global.lua")
 
 
 

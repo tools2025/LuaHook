@@ -1,6 +1,6 @@
 package com.kulipai.luahook.fragment
 
-import AppListViewModel
+import AViewModel
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
@@ -17,10 +17,9 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.edit
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -32,17 +31,16 @@ import com.kulipai.luahook.R
 import com.kulipai.luahook.SelectApps
 import com.kulipai.luahook.adapter.AppsAdapter
 import com.kulipai.luahook.util.LShare
+import com.kulipai.luahook.util.ShellManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 data class AppInfo(
     val appName: String,
     val packageName: String,
-//    val icon: Drawable,
     val versionName: String,
     val versionCode: Long
 )
@@ -82,22 +80,10 @@ fun getInstalledApps(context: Context): List<AppInfo> {
 }
 
 
-fun loadAppsAsync(context: Context, onResult: (List<AppInfo>) -> Unit) {
-    CoroutineScope(Dispatchers.IO).launch {
-        val apps = getInstalledApps(context)
-        withContext(Dispatchers.Main) {
-            onResult(apps)
-        }
-    }
-}
-
-
 class AppsFragment : Fragment() {
-
-    private val viewModel by activityViewModels<AppListViewModel>()
-    private val RESULT_OK = 0
     private lateinit var adapter: AppsAdapter
     private var appInfoList: List<AppInfo> = emptyList()
+    private val viewModel by viewModels<AViewModel>()
 
 
     // --- **修改点 1：将 launcher 的初始化移到这里，作为成员变量** ---
@@ -107,7 +93,7 @@ class AppsFragment : Fragment() {
 
             // 在处理 Fragment 视图相关的操作时，使用 viewLifecycleOwner.lifecycleScope 更安全
             lifecycleScope.launch {
-                if (canHook()) {
+                if (ShellManager.getMode() != ShellManager.Mode.NONE) {
                     val savedList = getStringList(requireContext(), "selectApps")
                     if (savedList.isEmpty()) {
                         // 列表为空的逻辑
@@ -151,18 +137,18 @@ class AppsFragment : Fragment() {
         rec.layoutManager = LinearLayoutManager(requireContext())
         rec.adapter = adapter
 
-
-        lifecycleScope.launch {
-            if (canHook()) {
-                val savedList = getStringList(requireContext(), "selectApps")
-                if (savedList.isEmpty()) {
-                    // 列表为空的逻辑
-                } else {
-                    appInfoList = MyApplication.Companion.instance.getAppInfoList(savedList)
-                    adapter.updateData(appInfoList)
+        viewModel.data.observe(requireActivity()) {
+            lifecycleScope.launch {
+                if (ShellManager.getMode() != ShellManager.Mode.NONE) {
+                    val savedList = getStringList(requireContext(), "selectApps")
+                    if (savedList.isEmpty()) {
+                        // 列表为空的逻辑
+                    } else {
+                        appInfoList = MyApplication.Companion.instance.getAppInfoList(savedList)
+                        adapter.updateData(appInfoList)
+                    }
                 }
             }
-
         }
 
         searchbar.setOnClickListener {
@@ -207,14 +193,12 @@ class AppsFragment : Fragment() {
 
         //fab添加app
         fab.setOnClickListener {
-            if (canHook()) {
-
-
+            if (ShellManager.getMode() != ShellManager.Mode.NONE) {
                 val intent = Intent(requireContext(), SelectApps::class.java)
                 launcher.launch(intent)
             } else {
                 Toast.makeText(requireContext(), "未激活模块", Toast.LENGTH_SHORT).show()
-                
+
             }
 
         }
@@ -223,7 +207,7 @@ class AppsFragment : Fragment() {
 
 
     fun saveStringList(context: Context, key: String, list: List<String>) {
-        LShare.write("/apps.txt",list.joinToString(","))
+        LShare.write("/apps.txt", list.joinToString(","))
 //        val prefs = context.getSharedPreferences("MyAppPrefs", MODE_WORLD_READABLE)
 //        val serialized = list.joinToString(",")
 //        prefs.edit { putString(key, serialized) }
@@ -233,7 +217,7 @@ class AppsFragment : Fragment() {
 //        val prefs = context.getSharedPreferences("MyAppPrefs", MODE_WORLD_READABLE)
 //        val serialized = prefs.getString(key, "") ?: ""
         val serialized = LShare.read("/apps.txt")
-        return if (serialized!="") {
+        return if (serialized != "") {
             serialized.split(",").toMutableList()
         } else {
             mutableListOf()

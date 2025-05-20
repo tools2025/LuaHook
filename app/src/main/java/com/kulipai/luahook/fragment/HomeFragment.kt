@@ -1,5 +1,6 @@
 package com.kulipai.luahook.fragment
 
+import AViewModel
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
@@ -15,19 +16,20 @@ import android.widget.Toast
 import androidx.annotation.AttrRes
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import com.google.android.material.card.MaterialCardView
 import com.kulipai.luahook.EditActivity
 import com.kulipai.luahook.R
-
+import com.kulipai.luahook.util.ShellManager
 
 
 fun canHook(): Boolean {
-    return false
+    return true
 }
 
 class HomeFragment : Fragment() {
 
-
+    private val viewModel by viewModels<AViewModel>()
 
     private fun getAppVersionName(context: Context): String {
         return try {
@@ -59,7 +61,6 @@ class HomeFragment : Fragment() {
     }
 
 
-
     @SuppressLint("MissingInflatedId", "SetTextI18n")
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -74,23 +75,78 @@ class HomeFragment : Fragment() {
         val status: TextView by lazy { view.findViewById(R.id.status) }
         val version: TextView by lazy { view.findViewById(R.id.version) }
 
-        version.text = getAppVersionName(requireContext()).toString()+" ("+getAppVersionCode(requireContext()).toString()+")"
+        version.text =
+            getAppVersionName(requireContext()).toString() + " (" + getAppVersionCode(requireContext()).toString() + ")"
 
-        if(canHook()) {
-            status.text=resources.getString(R.string.Xposed_status_ok)
-            card.setCardBackgroundColor(getDynamicColor(requireContext(),com.google.android.material.R.attr.colorPrimary))
-            status.setTextColor(getDynamicColor(requireContext(),com.google.android.material.R.attr.colorOnPrimary))
-            version.setTextColor(getDynamicColor(requireContext(),com.google.android.material.R.attr.colorOnPrimary))
-            img.setImageResource(R.drawable.check_circle_24px)
-            img.setColorFilter(getDynamicColor(requireContext(),com.google.android.material.R.attr.colorOnPrimary))
+        // 观察 LiveData，当数据变化时自动更新 UI
+        viewModel.data.observe(requireActivity()) {
+            if (ShellManager.getMode() == ShellManager.Mode.ROOT) {
+                status.text = "Root"
+//            status.text="Root模式"+resources.getString(R.string.Xposed_status_ok)
+                card.setCardBackgroundColor(
+                    getDynamicColor(
+                        requireContext(),
+                        com.google.android.material.R.attr.colorPrimary
+                    )
+                )
+                status.setTextColor(
+                    getDynamicColor(
+                        requireContext(),
+                        com.google.android.material.R.attr.colorOnPrimary
+                    )
+                )
+                version.setTextColor(
+                    getDynamicColor(
+                        requireContext(),
+                        com.google.android.material.R.attr.colorOnPrimary
+                    )
+                )
+                img.setImageResource(R.drawable.check_circle_24px)
+                img.setColorFilter(
+                    getDynamicColor(
+                        requireContext(),
+                        com.google.android.material.R.attr.colorOnPrimary
+                    )
+                )
+
+            } else if (ShellManager.getMode() == ShellManager.Mode.SHIZUKU) {
+                status.text = "Shizuku"
+                card.setCardBackgroundColor(
+                    getDynamicColor(
+                        requireContext(),
+                        com.google.android.material.R.attr.colorTertiary
+                    )
+                )
+                status.setTextColor(
+                    getDynamicColor(
+                        requireContext(),
+                        com.google.android.material.R.attr.colorOnTertiary
+                    )
+                )
+                version.setTextColor(
+                    getDynamicColor(
+                        requireContext(),
+                        com.google.android.material.R.attr.colorOnTertiary
+                    )
+                )
+                img.setImageResource(R.drawable.shizuku_logo)
+                img.setColorFilter(
+                    getDynamicColor(
+                        requireContext(),
+                        com.google.android.material.R.attr.colorOnTertiary
+                    )
+                )
+
+            }
+
         }
 
 
-        card1.setOnClickListener{
-            if (canHook()) {
+        card1.setOnClickListener {
+            if (ShellManager.getMode() != ShellManager.Mode.NONE) {
                 val intent = Intent(requireActivity(), EditActivity::class.java)
                 startActivity(intent)
-            }else{
+            } else {
                 Toast.makeText(requireContext(), "未激活模块", Toast.LENGTH_SHORT).show()
             }
         }

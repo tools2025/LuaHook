@@ -17,7 +17,6 @@ import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.kulipai.luahook.adapter.LogAdapter
 import com.kulipai.luahook.util.LogcatHelper
-import com.kulipai.luahook.util.RootHelper
 import com.kulipai.luahook.util.ShellManager
 import com.topjohnwu.superuser.Shell
 import kotlinx.coroutines.launch
@@ -44,8 +43,6 @@ class LogCatActivity : AppCompatActivity() {
         }
 
         setSupportActionBar(toolbar)
-
-        RootHelper.canGetRoot()
 
         // 启用导航按钮
         supportActionBar?.setDisplayHomeAsUpEnabled(true)

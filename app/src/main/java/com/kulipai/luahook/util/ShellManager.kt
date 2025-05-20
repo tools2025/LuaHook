@@ -1,17 +1,17 @@
 package com.kulipai.luahook.util
 
+import android.content.ComponentName
 import android.content.Context
+import android.content.ServiceConnection
+import android.content.pm.PackageManager
+import android.os.IBinder
+import android.os.RemoteException
 import android.util.Log
 import com.kulipai.luahook.BuildConfig
 import com.kulipai.luahook.IUserService
 import com.kulipai.luahook.UserService
 import com.topjohnwu.superuser.Shell
 import rikka.shizuku.Shizuku
-import android.content.ComponentName
-import android.content.ServiceConnection
-import android.content.pm.PackageManager
-import android.os.IBinder
-import android.os.RemoteException
 
 object ShellManager {
 
@@ -28,15 +28,16 @@ object ShellManager {
      * 初始化，推荐在 Application.onCreate() 中调用
      */
     fun init(context: Context, onInitialized: (() -> Unit)? = null) {
-        // 显式尝试获取一次 Shell，会触发 root 权限申请（如必要）
+
         Shell.getShell {
-            if (Shell.isAppGrantedRoot() == true) {
-                //root
+            if (it.isRoot) {
                 rootShell = it
                 mode = Mode.ROOT
                 LShare.init(context)
                 onInitialized?.invoke()
-            } else if (Shizuku.pingBinder()) {
+            }
+            // 显式尝试获取一次 Shell，会触发 root 权限申请（如必要）
+            else if (Shizuku.getBinder() != null && Shizuku.pingBinder()) {
                 //shizuku
 
                 bindShizuku(context) {
@@ -50,6 +51,7 @@ object ShellManager {
                 onInitialized?.invoke()
             }
         }
+
     }
 
 
@@ -130,4 +132,11 @@ object ShellManager {
     }
 
     fun getMode(): Mode = mode
+    fun setMode(m: Mode) {
+        mode = m
+    }
+
+    fun setShell(s: Shell) {
+        rootShell = s
+    }
 }

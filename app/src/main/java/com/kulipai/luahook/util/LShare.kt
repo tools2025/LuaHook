@@ -1,10 +1,13 @@
 package com.kulipai.luahook.util
 
 import android.content.Context
+import android.util.Base64
 import androidx.core.content.edit
 import java.security.MessageDigest
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+
+
 
 object LShare {
 
@@ -22,21 +25,58 @@ object LShare {
     }
 
     fun write(file: String, content: String): Boolean {
-        var path = DIR+file
-        val sb = StringBuilder()
-        content.lines().forEach { line ->
-            val escaped = line.replace("\"", "\\\"")
-            sb.append("echo \"$escaped\" >> \"$path\"\n")
-        }
+        val path = "$DIR/$file"
+
+        // 将内容编码为 Base64，然后解码写入文件
+        val base64Content = Base64.encodeToString(content.toByteArray(Charsets.UTF_8), Base64.NO_WRAP) // NO_WRAP 避免换行
+
         val script = """
         rm -f "$path"
         touch "$path"
-        ${sb.toString()}
+        echo "$base64Content" | base64 -d > "$path"
     """.trimIndent()
 
         val (output, success) = ShellManager.shell(script)
         return success
     }
+
+//    fun write(file: String, content: String): Boolean {
+//        val path = "$DIR/$file"
+//        val sb = StringBuilder()
+//
+//        content.lines().forEach { line ->
+//            val escaped = line.replace("\"", "\\\"")
+//            // 使用 printf "%s\n" 添加换行符
+//            sb.append("printf \"%s\\n\" \"$escaped\" >> \"$path\"\n")
+//        }
+//
+//        val script = """
+//        rm -f "$path"
+//        touch "$path"
+//        ${sb.toString()}
+//    """.trimIndent()
+//
+//        val (output, success) = ShellManager.shell(script)
+//        return success
+//    }
+
+
+//    fun write(file: String, content: String): Boolean {
+//        var path = DIR+file
+//        val sb = StringBuilder()
+//        content.lines().forEach { line ->
+//            val escaped = line.replace("\"", "\\\"")
+//            sb.append("echo \"$escaped\" >> \"$path\"\n")
+//        }
+//        val script = """
+//        rm -f "$path"
+//        touch "$path"
+//        ${sb.toString()}
+//    """.trimIndent()
+//
+//        val (output, success) = ShellManager.shell(script)
+//        return success
+//    }
 
 
 
