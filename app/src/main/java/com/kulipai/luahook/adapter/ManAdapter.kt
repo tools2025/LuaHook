@@ -11,7 +11,7 @@ import androidx.transition.TransitionManager
 import com.androlua.LuaEditor
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.transition.MaterialContainerTransform
-import com.kulipai.luahook.OnCardExpandListener
+import com.kulipai.luahook.Activity.OnCardExpandListener
 import com.kulipai.luahook.R
 
 class ManAdapter(
@@ -34,7 +34,7 @@ class ManAdapter(
 
         init {
             card.setOnClickListener {
-                editor.setText(body[adapterPosition])
+                editor.setText(body[bindingAdapterPosition])
                 startContainerTransition(root, it, details)
                 listener.onCardExpanded(it) // ← 通知 MainActivity 当前展开的是哪个 View
             }

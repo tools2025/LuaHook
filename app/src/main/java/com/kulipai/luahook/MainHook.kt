@@ -8,6 +8,7 @@ import LuaJson
 import LuaResourceBridge
 import LuaSharedPreferences
 import Luafile
+import com.kulipai.luahook.util.LShare
 import com.kulipai.luahook.util.d
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.IXposedHookZygoteInit
@@ -15,6 +16,7 @@ import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
+import org.json.JSONObject
 import org.luaj.Globals
 import org.luaj.LuaValue
 import org.luaj.lib.jse.CoerceJavaToLua
@@ -44,7 +46,8 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
     lateinit var luaScript: String
     lateinit var appsScript: String
     lateinit var SelectAppsString: String
-//    lateinit var apps: XSharedPreferences
+
+    //    lateinit var apps: XSharedPreferences
 //    lateinit var selectApps: XSharedPreferences
     lateinit var SelectAppsList: MutableList<String>
 
@@ -89,28 +92,11 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
 
     override fun handleLoadPackage(lpparam: LoadPackageParam) {
 
+        SelectAppsString = read(PATH + "/apps.txt").replace("\n", "")
 
+        luaScript = read(PATH + "/global.lua")
 
-
-//        SelectAppsString = selectApps.getString("selectApps", "").toString()
-
-        fun read(path: String): String {
-            if (File(path).exists()) {
-                return File(path).readText()
-            }
-            return ""
-        }
-
-        SelectAppsString = read(PATH+"/apps.txt").replace("\n","")
-
-        luaScript =  read(PATH + "/global.lua")
-
-
-
-
-
-
-        if (SelectAppsString.isNotEmpty() && SelectAppsString !="") {
+        if (SelectAppsString.isNotEmpty() && SelectAppsString != "") {
             SelectAppsList = SelectAppsString.split(",").toMutableList()
         } else {
             SelectAppsList = mutableListOf()
@@ -119,6 +105,37 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
         canHook(lpparam)
 
 
+        //全局脚本
+        try {
+            //排除自己
+            if (lpparam.packageName != MODULE_PACKAGE) {
+                val chunk: LuaValue = CreateGlobals(lpparam).load(luaScript)
+                chunk.call()
+            }
+        } catch (e: Exception) {
+            e.toString().d()
+        }
+
+
+
+//        app单独脚本
+        try {
+            if (lpparam.packageName in SelectAppsList) {
+
+                for ((k, v) in readMap("$PATH/${LShare.AppConf}/${lpparam.packageName}.txt")) {
+                    if(v as Boolean){
+                        CreateGlobals(lpparam).load(read("$PATH/${LShare.AppScript}/${lpparam.packageName}/$k.lua")).call()
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            e.toString().d()
+        }
+
+
+    }
+
+    fun CreateGlobals(lpparam: LoadPackageParam):Globals {
         val globals: Globals = JsePlatform.standardGlobals()
 
         //加载Lua模块
@@ -138,30 +155,33 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
         LuaResourceBridge().registerTo(globals)
 
         LuaDrawableLoader().registerTo(globals)
+        return globals
+    }
 
-        //全局脚本
-        try {
-            //排除自己
-            if (lpparam.packageName != MODULE_PACKAGE) {
-                val chunk: LuaValue = globals.load(luaScript)
-                chunk.call()
-            }
-        } catch (e: Exception) {
-            e.toString().d()
+    fun read(path: String): String {
+        if (File(path).exists()) {
+            return File(path).readText()
         }
+        return ""
+    }
 
-
-//        app单独脚本
-        try {
-
-            if (lpparam.packageName in SelectAppsList) {
-                appsScript = read(PATH + "/tmp/" + lpparam.packageName + ".lua")
-                globals.load(appsScript).call()
-            }
-        } catch (e: Exception) {
-            e.toString().d()
+    fun readMap(path: String): MutableMap<String, Any?> {
+        val jsonString = read(path)
+        if (jsonString.isEmpty()) {
+            return mutableMapOf()
         }
-
+        return try {
+            val jsonObject = JSONObject(jsonString)
+            val map = mutableMapOf<String, Any?>()
+            val keys = jsonObject.keys()
+            while (keys.hasNext()) {
+                val key = keys.next()
+                map[key] = jsonObject.get(key)
+            }
+            map
+        } catch (e: Exception) {
+            mutableMapOf()
+        }
 
     }
 

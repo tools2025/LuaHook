@@ -1,4 +1,4 @@
-package com.kulipai.luahook
+package com.kulipai.luahook.Activity
 
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -8,14 +8,12 @@ import android.os.Bundle
 import android.view.View
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.OnApplyWindowInsetsListener
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import concerrox.ripple.menu.SimpleMenuPopupWindow
-import concerrox.preference.widget.Preference
+import com.kulipai.luahook.R
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -54,7 +52,7 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         about.setOnClickListener {
-        val intent=Intent(this,AboutActivity::class.java)
+        val intent=Intent(this, AboutActivity::class.java)
         startActivity(intent)
 
         }

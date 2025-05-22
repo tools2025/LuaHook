@@ -28,7 +28,7 @@ import com.google.android.material.card.MaterialCardView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.kulipai.luahook.MyApplication
 import com.kulipai.luahook.R
-import com.kulipai.luahook.SelectApps
+import com.kulipai.luahook.Activity.SelectApps
 import com.kulipai.luahook.adapter.AppsAdapter
 import com.kulipai.luahook.util.LShare
 import com.kulipai.luahook.util.ShellManager
@@ -94,7 +94,7 @@ class AppsFragment : Fragment() {
             // 在处理 Fragment 视图相关的操作时，使用 viewLifecycleOwner.lifecycleScope 更安全
             lifecycleScope.launch {
                 if (ShellManager.getMode() != ShellManager.Mode.NONE) {
-                    val savedList = getStringList(requireContext(), "selectApps")
+                    val savedList = LShare.readStringList("/apps.txt")
                     if (savedList.isEmpty()) {
                         // 列表为空的逻辑
                     } else {
@@ -140,7 +140,7 @@ class AppsFragment : Fragment() {
         viewModel.data.observe(requireActivity()) {
             lifecycleScope.launch {
                 if (ShellManager.getMode() != ShellManager.Mode.NONE) {
-                    val savedList = getStringList(requireContext(), "selectApps")
+                    val savedList = LShare.readStringList("/apps.txt")
                     if (savedList.isEmpty()) {
                         // 列表为空的逻辑
                     } else {
@@ -205,24 +205,6 @@ class AppsFragment : Fragment() {
         return view
     }
 
-
-    fun saveStringList(context: Context, key: String, list: List<String>) {
-        LShare.write("/apps.txt", list.joinToString(","))
-//        val prefs = context.getSharedPreferences("MyAppPrefs", MODE_WORLD_READABLE)
-//        val serialized = list.joinToString(",")
-//        prefs.edit { putString(key, serialized) }
-    }
-
-    fun getStringList(context: Context, key: String): MutableList<String> {
-//        val prefs = context.getSharedPreferences("MyAppPrefs", MODE_WORLD_READABLE)
-//        val serialized = prefs.getString(key, "") ?: ""
-        val serialized = LShare.read("/apps.txt")
-        return if (serialized != "") {
-            serialized.split(",").toMutableList()
-        } else {
-            mutableListOf()
-        }
-    }
 
     private fun filterAppList(query: String, clearImage: ImageView) {
         val filteredList = if (query.isEmpty()) {

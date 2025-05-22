@@ -1,6 +1,5 @@
-package com.kulipai.luahook
+package com.kulipai.luahook.Activity
 
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -19,13 +18,12 @@ import androidx.recyclerview.widget.RecyclerView
 import com.androlua.LuaEditor
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.kulipai.luahook.R
 import com.kulipai.luahook.adapter.SymbolAdapter
 import com.kulipai.luahook.adapter.ToolAdapter
 import com.kulipai.luahook.util.LShare
 import com.kulipai.luahook.util.ShellManager
-import com.topjohnwu.superuser.Shell
 import java.io.File
-
 
 class AppsEdit : AppCompatActivity() {
 
@@ -42,20 +40,17 @@ class AppsEdit : AppCompatActivity() {
     //全局变量
     private lateinit var currentPackageName: String
     private lateinit var appName: String
+    private lateinit var scripName: String
 
-
-    companion object {
-        const val PREFS_NAME = "apps"
-    }
 
     override fun onStop() {
         super.onStop()
-        LShare.writeTmp(currentPackageName, editor.text.toString())
+        saveScript(editor.text.toString())
     }
 
     override fun onPause() {
         super.onPause()
-        LShare.writeTmp(currentPackageName, editor.text.toString())
+        saveScript(editor.text.toString())
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -112,6 +107,7 @@ class AppsEdit : AppCompatActivity() {
         if (intent != null) {
             currentPackageName = intent.getStringExtra("packageName").toString()
             appName = intent.getStringExtra("appName").toString()
+            scripName = intent.getStringExtra("scripName").toString()
 //            toolbar.title = appName
             title = appName
 
@@ -168,12 +164,12 @@ class AppsEdit : AppCompatActivity() {
         }
 
 
-        val script = read("/data/local/tmp/LuaHook/tmp/$currentPackageName.lua")
+        val script = read("/data/local/tmp/LuaHook/${LShare.AppScript}/$currentPackageName/$scripName.lua")
 
         editor.setText(script)
 
         fab.setOnClickListener {
-            LShare.writeTmp(currentPackageName, editor.text.toString())
+            saveScript(editor.text.toString())
             Toast.makeText(this, "保存成功", Toast.LENGTH_SHORT).show()
         }
 
@@ -207,7 +203,7 @@ class AppsEdit : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             0 -> {
-                LShare.writeTmp(currentPackageName, editor.text.toString())
+                saveScript(editor.text.toString())
 //                operateAppAdvanced(this,currentPackageName)
                 ShellManager.shell("am force-stop $currentPackageName")
                 launchApp(this, currentPackageName)
@@ -268,82 +264,6 @@ class AppsEdit : AppCompatActivity() {
 //    }
 
 
-    fun operateAppAdvanced(context: Context, packageName: String) {
-        Shell.getShell { shell ->
-            if (shell.isRoot) {
-                // 1. 强制停止应用 (可选)
-                val forceStopResult = Shell.cmd("am force-stop $packageName").exec()
-
-
-                // 2. 使用 pm dump 查找主 Activity
-                val dumpResult =
-                    Shell.cmd("pm dump $packageName | grep -E \"android\\.intent\\.action\\.MAIN.*category android\\.intent\\.category\\.LAUNCHER\" -B 1")
-                        .exec()
-                if (dumpResult.out.isNotEmpty()) {
-                    val outputLines = dumpResult.out
-                    var activityName: String? = null
-
-                    // 查找包含 android:name 的行
-                    for (line in outputLines) {
-                        val nameRegex = Regex("""android:name="([^"]+)"""")
-                        val matchResult = nameRegex.find(line)
-                        if (matchResult != null) {
-                            activityName = matchResult.groupValues[1]
-                            break
-                        }
-                    }
-
-                    if (!activityName.isNullOrEmpty()) {
-                        // 构建 ComponentName
-                        val componentName = if (activityName.startsWith(".")) {
-                            ComponentName(packageName, packageName + activityName)
-                        } else {
-                            ComponentName(packageName, activityName)
-                        }
-
-                        // 3. 使用 am start -n 启动主 Activity
-                        val startIntent = Intent(Intent.ACTION_MAIN)
-                        startIntent.addCategory(Intent.CATEGORY_LAUNCHER)
-                        startIntent.component = componentName
-                        startIntent.flags =
-                            Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
-
-                        try {
-                            context.startActivity(startIntent)
-                            Log.d(
-                                "RootShell",
-                                "Successfully launched $packageName with component: $componentName"
-                            )
-                        } catch (e: Exception) {
-                            Log.e("RootShell", "Failed to launch $packageName: ${e.message}")
-                            Toast.makeText(
-                                context,
-                                "启动应用失败: ${e.message}",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-
-                    } else {
-                        Log.w(
-                            "RootShell",
-                            "Could not find the main activity for $packageName in pm dump output."
-                        )
-                        Toast.makeText(context, "找不到应用的主 Activity", Toast.LENGTH_SHORT)
-                            .show()
-                    }
-
-                } else {
-                    Log.w("RootShell", "Failed to execute pm dump or no matching output found.")
-                    Toast.makeText(context, "无法获取应用信息", Toast.LENGTH_SHORT).show()
-                }
-
-            } else {
-                Log.w("RootShell", "Root access denied.")
-                Toast.makeText(context, "需要 Root 权限才能执行此操作", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
     private fun launchApp(context: Context, packageName: String): Boolean {
         val packageManager = context.packageManager
         val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
@@ -360,6 +280,12 @@ class AppsEdit : AppCompatActivity() {
             Log.w("LaunchApp", "Launch intent not found for $packageName")
             false
         }
+    }
+
+
+    fun saveScript(script: String) {
+        val path = LShare.AppScript + "/" + currentPackageName + "/" + scripName + ".lua"
+        LShare.write(path, script)
     }
 
 

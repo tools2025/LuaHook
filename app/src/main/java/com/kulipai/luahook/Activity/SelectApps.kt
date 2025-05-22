@@ -1,7 +1,6 @@
-package com.kulipai.luahook
+package com.kulipai.luahook.Activity
 
 import SelectAppsAdapter
-import android.content.Context
 import android.graphics.Rect
 import android.os.Bundle
 import android.view.View
@@ -10,7 +9,6 @@ import android.widget.EditText
 import android.widget.ImageView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.edit
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.widget.doAfterTextChanged
@@ -20,6 +18,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.color.DynamicColors
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.kulipai.luahook.MyApplication
+import com.kulipai.luahook.R
 import com.kulipai.luahook.fragment.AppInfo
 import com.kulipai.luahook.util.LShare
 import kotlinx.coroutines.CoroutineScope
@@ -55,7 +55,7 @@ class SelectApps : AppCompatActivity() {
             insets
         }
 
-        val selectedPackageNames = getStringList(this@SelectApps, "selectApps")
+        val selectedPackageNames = LShare.readStringList("/apps.txt")
         selectApps = selectedPackageNames
 
         adapter = SelectAppsAdapter(emptyList(), this, selectApps) // 先传空列表
@@ -117,30 +117,13 @@ class SelectApps : AppCompatActivity() {
         }
 
         fab.setOnClickListener {
-            saveStringList(this, "selectApps", selectApps)
+            LShare.writeStringList("/apps.txt", selectApps)
             finish()
         }
 
 
     }
 
-    fun saveStringList(context: Context, key: String, list: List<String>) {
-        LShare.write("/apps.txt",list.joinToString(","))
-//        val prefs = context.getSharedPreferences("MyAppPrefs", MODE_WORLD_READABLE)
-//        val serialized = list.joinToString(",")
-//        prefs.edit { putString(key, serialized) }
-    }
-
-    fun getStringList(context: Context, key: String): MutableList<String> {
-//        val prefs = context.getSharedPreferences("MyAppPrefs", MODE_WORLD_READABLE)
-//        val serialized = prefs.getString(key, "") ?: ""
-        val serialized = LShare.read("/apps.txt")
-        return if (serialized!="") {
-            serialized.split(",").toMutableList()
-        } else {
-            mutableListOf()
-        }
-    }
 
     private fun filterAppList(query: String, clearImage: ImageView) {
         val filteredList = if (query.isEmpty()) {

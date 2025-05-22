@@ -1,4 +1,4 @@
-package com.kulipai.luahook
+package com.kulipai.luahook.Activity
 
 import android.animation.ArgbEvaluator
 import android.annotation.SuppressLint
@@ -7,7 +7,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.RenderEffect
 import android.graphics.Shader
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.TypedValue
@@ -21,27 +20,28 @@ import android.widget.PopupWindow
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
+import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.isInvisible
+import androidx.core.view.isVisible
 import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.textview.MaterialTextView
-import androidx.coordinatorlayout.widget.CoordinatorLayout
-import kotlin.math.abs
-
-// 导入 OkHttp 相关类
-import okhttp3.*
-import java.io.IOException
-// 导入 JSON 解析相关类
-import org.json.JSONObject
+import com.kulipai.luahook.R
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
 import org.json.JSONException
-import androidx.core.view.isVisible
-import androidx.core.view.isInvisible
-import androidx.core.net.toUri
-
+import org.json.JSONObject
+import java.io.IOException
+import kotlin.math.abs
 
 class AboutActivity : AppCompatActivity() {
     private val toolbar: MaterialToolbar by lazy { findViewById(R.id.toolbar) }
@@ -265,8 +265,10 @@ class AboutActivity : AppCompatActivity() {
                                         .setMessage("当前版本: $currentVersion\n最新版本: $latestVersion\n\n是否前往 GitHub Release 页面查看并更新？")
                                         .setPositiveButton("前往 GitHub Release") { dialog, _ ->
                                             // 打开 Release 页面链接
-                                            val intent = Intent(Intent.ACTION_VIEW,
-                                                releasePageUrl.toUri())
+                                            val intent = Intent(
+                                                Intent.ACTION_VIEW,
+                                                releasePageUrl.toUri()
+                                            )
                                             if (intent.resolveActivity(packageManager) != null) {
                                                 startActivity(intent)
                                             } else {
@@ -331,7 +333,8 @@ class AboutActivity : AppCompatActivity() {
     // --- 赞赏弹窗逻辑 ---
     private fun showDonatePopup(anchor: View) {
         val popupView = LayoutInflater.from(this).inflate(R.layout.qrcode, null)
-        val popupWindow = PopupWindow(popupView,
+        val popupWindow = PopupWindow(
+            popupView,
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.MATCH_PARENT,
             true // 可点击外部关闭

@@ -1,0 +1,147 @@
+package com.kulipai.luahook.Activity
+
+import android.annotation.SuppressLint
+import android.content.Intent
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.widget.Toast
+import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.widget.doBeforeTextChanged
+import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.floatingtoolbar.FloatingToolbarLayout
+import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
+import com.kulipai.luahook.R
+import com.kulipai.luahook.adapter.MultScriptAdapter
+import com.kulipai.luahook.util.LShare
+import kotlinx.coroutines.launch
+
+class MultiScriptActivity : AppCompatActivity() {
+
+    private val ftb: FloatingToolbarLayout by lazy { findViewById(R.id.ftb) }
+    private val toollbar: MaterialToolbar by lazy { findViewById(R.id.toolbar) }
+    private val rec: RecyclerView by lazy { findViewById(R.id.rec) }
+    private val fab: FloatingActionButton by lazy { findViewById(R.id.fab) }
+
+
+    private lateinit var adapter: MultScriptAdapter
+    private lateinit var currentPackageName: String
+    private lateinit var appName: String
+    lateinit var ScriptList: MutableList<MutableMap.MutableEntry<String, Any?>>
+
+
+    val launcher: ActivityResultLauncher<Intent> =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            lifecycleScope.launch {
+                ScriptList = ReadConf()
+                adapter.updateData(ScriptList)
+            }
+        }
+
+    @SuppressLint("MissingInflatedId")
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        setContentView(R.layout.activity_multi_script)
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(systemBars.left, 0, systemBars.right, 0)
+            insets
+        }
+
+        //接收传递信息
+        val intent = getIntent()
+        if (intent != null) {
+            currentPackageName = intent.getStringExtra("packageName").toString()
+            appName = intent.getStringExtra("appName").toString()
+            toollbar.title = appName + "多脚本管理"
+        }
+
+        toollbar.setNavigationOnClickListener {
+            finish()
+        }
+
+
+        ScriptList = ReadConf()
+
+        rec.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
+        adapter = MultScriptAdapter(ScriptList, currentPackageName, appName, this, launcher)
+        rec.adapter = adapter
+
+
+
+
+        fab.setOnClickListener {
+            var view = LayoutInflater.from(this).inflate(R.layout.dialog_edit, null)
+            val inputLayout = view.findViewById<TextInputLayout>(R.id.text_input_layout)
+            val edit = view.findViewById<TextInputEditText>(R.id.edit)
+            inputLayout.hint = "脚本名称"
+            edit.doBeforeTextChanged { text, start, count, after ->
+                // text: 改变前的内容
+                // start: 改变开始的位置
+                // count: 将被替换的旧内容长度
+                // after: 新内容长度
+                edit.error = null
+
+            }
+            MaterialAlertDialogBuilder(this)
+                .setTitle("新建脚本")
+                .setView(view)
+                .setPositiveButton("确定", { dialog, which ->
+
+                    if (edit.text.isNullOrEmpty()) {
+                        edit.error = "请输入内容"
+                    } else {
+                        // TODO 内容过长判断
+                        CreateScript(edit.text.toString())
+                    }
+                })
+                .setNegativeButton("取消", { dialog, which ->
+                    dialog.dismiss()
+                })
+                .show()
+
+
+        }
+
+
+    }
+
+
+    fun ReadConf(): MutableList<MutableMap.MutableEntry<String, Any?>> {
+        var path = LShare.AppConf + "/" + currentPackageName + ".txt"
+        return LShare.readMap(path).entries.toMutableList()
+
+    }
+
+
+    fun CreateScript(name: String) {
+        // 写配置
+        var path = LShare.AppConf + "/" + currentPackageName + ".txt"
+        var map = LShare.readMap(path)
+        map[name] = true
+        LShare.writeMap(path, map)
+        LShare.ensureDirectoryExists(LShare.DIR + "/" + LShare.AppScript + "/" + currentPackageName)
+
+        // 进入编辑界面
+        val intent = Intent(this, AppsEdit::class.java)
+        intent.putExtra("packageName", currentPackageName)
+        intent.putExtra("appName", appName)
+        intent.putExtra("scripName", name)
+        launcher.launch(intent)
+
+
+    }
+
+
+}

@@ -18,7 +18,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.google.android.material.card.MaterialCardView
-import com.kulipai.luahook.EditActivity
+import com.kulipai.luahook.Activity.EditActivity
 import com.kulipai.luahook.R
 import com.kulipai.luahook.util.ShellManager
 
@@ -86,7 +86,7 @@ class HomeFragment : Fragment() {
                 card.setCardBackgroundColor(
                     getDynamicColor(
                         requireContext(),
-                        com.google.android.material.R.attr.colorPrimary
+                        androidx.appcompat.R.attr.colorPrimary
                     )
                 )
                 status.setTextColor(

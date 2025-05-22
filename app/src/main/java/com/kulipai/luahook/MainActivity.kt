@@ -25,6 +25,9 @@ import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.kulipai.luahook.Activity.AppsEdit
+import com.kulipai.luahook.Activity.EditActivity
+import com.kulipai.luahook.Activity.SettingsActivity
 import com.kulipai.luahook.fragment.AppsFragment
 import com.kulipai.luahook.fragment.HomeFragment
 import com.kulipai.luahook.fragment.PluginsFragment

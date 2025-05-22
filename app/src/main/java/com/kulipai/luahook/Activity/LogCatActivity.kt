@@ -1,4 +1,4 @@
-package com.kulipai.luahook
+package com.kulipai.luahook.Activity
 
 import android.os.Bundle
 import android.view.Menu
@@ -15,10 +15,10 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.kulipai.luahook.R
 import com.kulipai.luahook.adapter.LogAdapter
 import com.kulipai.luahook.util.LogcatHelper
 import com.kulipai.luahook.util.ShellManager
-import com.topjohnwu.superuser.Shell
 import kotlinx.coroutines.launch
 
 

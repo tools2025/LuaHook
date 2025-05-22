@@ -1,4 +1,4 @@
-package com.kulipai.luahook
+package com.kulipai.luahook.Activity
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -34,6 +34,7 @@ import com.androlua.LuaEditor
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.kulipai.luahook.R
 import com.kulipai.luahook.adapter.SymbolAdapter
 import com.kulipai.luahook.util.LShare
 import java.io.File
@@ -109,7 +110,7 @@ class EditActivity : AppCompatActivity() {
                     super.updateDrawState(ds)
                     ds.color = getDynamicColor(
                         this@EditActivity,
-                        com.google.android.material.R.attr.colorPrimary
+                        androidx.appcompat.R.attr.colorPrimary
                     )
                     ds.isUnderlineText = true
                 }
@@ -135,7 +136,7 @@ class EditActivity : AppCompatActivity() {
                     super.updateDrawState(ds)
                     ds.color = getDynamicColor(
                         this@EditActivity,
-                        com.google.android.material.R.attr.colorPrimary
+                        androidx.appcompat.R.attr.colorPrimary
                     )
                     ds.isUnderlineText = true
                 }

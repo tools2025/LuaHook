@@ -12,7 +12,8 @@ import androidx.core.content.edit
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.kulipai.luahook.AppsEdit
+import com.kulipai.luahook.Activity.AppsEdit
+import com.kulipai.luahook.Activity.MultiScriptActivity
 import com.kulipai.luahook.R
 import com.kulipai.luahook.fragment.AppInfo
 import com.kulipai.luahook.util.LShare
@@ -34,9 +35,9 @@ class AppsAdapter(private var apps: List<AppInfo>, private val context: Context)
 
             //跳转到app脚本编辑
             card.setOnClickListener{
-                val intent = Intent(context, AppsEdit::class.java)
-                intent.putExtra("packageName", apps[adapterPosition].packageName)
-                intent.putExtra("appName", apps[adapterPosition].appName)
+                val intent = Intent(context, MultiScriptActivity::class.java)
+                intent.putExtra("packageName", apps[bindingAdapterPosition].packageName)
+                intent.putExtra("appName", apps[bindingAdapterPosition].appName)
                 context.startActivity(intent)
             }
 
@@ -46,9 +47,9 @@ class AppsAdapter(private var apps: List<AppInfo>, private val context: Context)
                     .setTitle("提示")
                     .setMessage("确定删除吗?")
                     .setPositiveButton("确定") { dialog, _ ->
-                        val savedList = getStringList(context, "selectApps")
-                        savedList.remove(apps[adapterPosition].packageName)
-                        saveStringList(context,"selectApps",savedList)
+                        val savedList = LShare.readStringList("/apps.txt")
+                        savedList.remove(apps[bindingAdapterPosition].packageName)
+                        LShare.writeStringList("/apps.txt",savedList)
                         val availableAppsToShow: List<AppInfo> = apps.filter { appInfo ->
                             savedList.contains(appInfo.packageName)
                             // 或者写成: appInfo.packageName !in selectedPackagesSet
@@ -97,21 +98,4 @@ class AppsAdapter(private var apps: List<AppInfo>, private val context: Context)
     }
 
 
-    fun saveStringList(context: Context, key: String, list: List<String>) {
-        LShare.write("/apps.txt",list.joinToString(","))
-//        val prefs = context.getSharedPreferences("MyAppPrefs", MODE_WORLD_READABLE)
-//        val serialized = list.joinToString(",")
-//        prefs.edit { putString(key, serialized) }
-    }
-
-    fun getStringList(context: Context, key: String): MutableList<String> {
-//        val prefs = context.getSharedPreferences("MyAppPrefs", MODE_WORLD_READABLE)
-//        val serialized = prefs.getString(key, "") ?: ""
-        val serialized = LShare.read("/apps.txt")
-        return if (serialized!="") {
-            serialized.split(",").toMutableList()
-        } else {
-            mutableListOf()
-        }
-    }
 }

@@ -1,4 +1,4 @@
-package com.kulipai.luahook
+package com.kulipai.luahook.Activity
 
 import android.graphics.Color
 import android.os.Build
@@ -20,6 +20,7 @@ import com.androlua.LuaEditor
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.transition.MaterialContainerTransform
+import com.kulipai.luahook.R
 import com.kulipai.luahook.adapter.ManAdapter
 
 
@@ -367,7 +368,7 @@ class Manual : AppCompatActivity(), OnCardExpandListener {
                 startView = detail
                 endView = currentCard
                 addTarget(currentCard!!)
-                duration = 300
+                duration = 300L
                 scrimColor = Color.TRANSPARENT
                 fadeMode = MaterialContainerTransform.FADE_MODE_OUT
                 fitMode = MaterialContainerTransform.FIT_MODE_AUTO

@@ -206,6 +206,7 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
                 try {
                     val obj = args.arg(1)  // Lua 传入的第一个参数
                     val methodName = args.checkjstring(2) // 方法名
+                    var isStatic: Boolean = false
 
                     // 获取 Java 对象
                     val targetObject: Any? = when {
@@ -213,6 +214,11 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
                             val param =
                                 obj.touserdata(XC_MethodHook.MethodHookParam::class.java) as XC_MethodHook.MethodHookParam
                             param.thisObject // 获取 thisObject
+                        }
+
+                        obj.isuserdata(Class::class.java) -> {
+                            isStatic = true
+                            obj.touserdata(Class::class.java)
                         }
 
                         obj.isuserdata(Any::class.java) -> obj.touserdata(Any::class.java)
@@ -225,12 +231,23 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
                         javaParams.add(fromLuaValue(args.arg(i)))
                     }
 
-                    // 反射调用方法
-                    val result = XposedHelpers.callMethod(
-                        targetObject,
-                        methodName,
-                        *javaParams.toTypedArray()
-                    )
+                    var result: Any
+                    if (isStatic) {
+                        // 反射调用方法
+                        result = XposedHelpers.callStaticMethod(
+                            targetObject as Class<*>?,
+                            methodName,
+                            *javaParams.toTypedArray()
+                        )
+
+                    } else {
+                        // 反射调用方法
+                        result = XposedHelpers.callMethod(
+                            targetObject,
+                            methodName,
+                            *javaParams.toTypedArray()
+                        )
+                    }
 
                     return CoerceJavaToLua.coerce(result) // 把 Java 结果返回 Lua
                 } catch (e: Exception) {
@@ -466,38 +483,38 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
                     return CoerceJavaToLua.coerce(instance)
 
                 } catch (e: ClassNotFoundException) {
-                    println("newInstance error: Class not found: ${e.message}")
+//                    println("newInstance error: Class not found: ${e.message}")
                     e.toString().d()
                     return NIL
                 } catch (e: NoSuchMethodException) {
-                    println("newInstance error: Constructor not found for ${args.arg(1)} with parameter types:")
+//                    println("newInstance error: Constructor not found for ${args.arg(1)} with parameter types:")
                     e.toString().d()
                     return NIL
                 } catch (e: InstantiationException) {
-                    println("newInstance error: Cannot instantiate ${args.arg(1)}: ${e.message}")
+//                    println("newInstance error: Cannot instantiate ${args.arg(1)}: ${e.message}")
                     e.toString().d()
                     return NIL
                 } catch (e: IllegalAccessException) {
-                    println("newInstance error: Illegal access to constructor of ${args.arg(1)}: ${e.message}")
+//                    println("newInstance error: Illegal access to constructor of ${args.arg(1)}: ${e.message}")
                     e.toString().d()
                     return NIL
                 } catch (e: InvocationTargetException) {
-                    println(
-                        "newInstance error: Exception occurred during constructor invocation of ${
-                            args.arg(
-                                1
-                            )
-                        }: ${e.targetException?.message}"
-                    )
+//                    println(
+//                        "newInstance error: Exception occurred during constructor invocation of ${
+//                            args.arg(
+//                                1
+//                            )
+//                        }: ${e.targetException?.message}"
+//                    )
                     e.toString().d()
                     e.targetException?.toString()?.d()
                     return NIL
                 } catch (e: IllegalArgumentException) {
-                    println("newInstance error: Illegal arguments provided: ${e.message}")
+//                    println("newInstance error: Illegal arguments provided: ${e.message}")
                     e.toString().d()
                     return NIL
                 } catch (e: Exception) {
-                    println("newInstance error: An unexpected error occurred: ${e.message}")
+//                    println("newInstance error: An unexpected error occurred: ${e.message}")
                     e.toString().d()
                     return NIL
                 }
@@ -640,60 +657,64 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
                 try {
                     val classNameOrClassOrMethod = args.arg(1)
-                    val classLoader: ClassLoader? = null
+                    var classLoader: ClassLoader? = null
                     val methodName: String
 
                     if (classNameOrClassOrMethod.isstring()) { /////////string,
-
-                        val classLoader =
+                        classLoader =
                             args.optuserdata(2, lpparam.javaClass.classLoader) as ClassLoader
-//                        classLoader.toString().d()
-//                        lpparam.classLoader.toString().d()
                         val className = classNameOrClassOrMethod.tojstring()
                         methodName = args.checkjstring(3)
 
 
-                        // 动态处理参数类型
                         val paramTypes = mutableListOf<Class<*>>()
 
-                        // 收集参数类型
-                        for (i in 4 until args.narg() - 1) {
-                            val param = args.arg(i)
-                            when {
+                        if (args.arg(4).istable()) {
+                            for (key in args.arg(4).checktable().keys()) {
+                                val param = args.arg(4).checktable().get(key)
 
-//                                else if (args.arg(i).isuserdata()) {
-//                                    // 使用安全的转换方法替代直接 as 转换
-//                                    val classObj = safeToJavaClass(args.arg(i))
-//                                    if (classObj != null) {
-//                                        paramTypes.add(classObj)
-                                param.isstring() -> {
-                                    // 支持更多类型转换
-                                    val typeStr = param.tojstring()
+                                when {
 
-                                    val type = parseType(typeStr, classLoader)
+                                    param.isstring() -> {
+                                        // 支持更多类型转换
+                                        val typeStr = param.tojstring()
+                                        val type = parseType(typeStr, classLoader)
+                                        paramTypes.add(type!!)
 
-
-//                                    val type = when (typeStr) {
-//                                        "int" -> Int::class.javaPrimitiveType
-//                                        "long" -> Long::class.javaPrimitiveType
-//                                        "boolean" -> Boolean::class.javaPrimitiveType
-//                                        "double" -> Double::class.javaPrimitiveType
-//                                        "float" -> Float::class.javaPrimitiveType
-//                                        "String" -> String::class.java
-//                                        else -> Class.forName(typeStr, true, classLoader)
-//                                    }
-                                    paramTypes.add(type!!)
-
+                                    }
+                                    // 可以扩展更多类型的处理
+                                    else -> {
+                                        val classObj = safeToJavaClass(param)
+                                        if (classObj != null) {
+                                            paramTypes.add(classObj)
+                                        }
+                                    }
                                 }
-                                // 可以扩展更多类型的处理
-                                else -> {
-                                    val classObj = safeToJavaClass(param)
-                                    if (classObj != null) {
-                                        paramTypes.add(classObj)
+                            }
+                        } else {
+                            // 收集参数类型
+                            for (i in 4 until args.narg() - 1) {
+                                val param = args.arg(i)
+                                when {
+
+                                    param.isstring() -> {
+                                        // 支持更多类型转换
+                                        val typeStr = param.tojstring()
+                                        val type = parseType(typeStr, classLoader)
+                                        paramTypes.add(type!!)
+
+                                    }
+                                    // 可以扩展更多类型的处理
+                                    else -> {
+                                        val classObj = safeToJavaClass(param)
+                                        if (classObj != null) {
+                                            paramTypes.add(classObj)
+                                        }
                                     }
                                 }
                             }
                         }
+
 
                         val beforeFunc = args.optfunction(args.narg() - 1, null)
                         val afterFunc = args.optfunction(args.narg(), null)
@@ -1068,45 +1089,58 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
                 try {
                     val classNameOrClass = args.arg(1)
-                    val classLoader: ClassLoader? = null
+                    var classLoader: ClassLoader? = null
 
                     if (classNameOrClass.isstring()) { // If first arg is a string (class name)
-                        val classLoader =
+                        classLoader =
                             args.optuserdata(2, lpparam.javaClass.classLoader) as ClassLoader
                         val className = classNameOrClass.tojstring()
 
                         // Dynamic parameter type handling
                         val paramTypes = mutableListOf<Class<*>>()
 
-                        // Collect parameter types (starting from index 3)
-                        for (i in 3 until args.narg() - 1) {
-                            val param = args.arg(i)
-                            when {
-                                param.isstring() -> {
-                                    // Support various type conversions
-                                    val typeStr = param.tojstring()
-                                    val type = parseType(typeStr, classLoader)
+                        if (args.arg(3).istable()) {
+                            for (key in args.arg(3).checktable().keys()) {
+                                val param = args.arg(3).checktable().get(key)
+                                when {
+                                    param.isstring() -> {
+                                        // Support various type conversions
+                                        val typeStr = param.tojstring()
+                                        val type = parseType(typeStr, classLoader)
 
-//                                    val type = when (typeStr) {
-//                                        "int" -> Int::class.javaPrimitiveType
-//                                        "long" -> Long::class.javaPrimitiveType
-//                                        "boolean" -> Boolean::class.javaPrimitiveType
-//                                        "double" -> Double::class.javaPrimitiveType
-//                                        "float" -> Float::class.javaPrimitiveType
-//                                        "String" -> String::class.java
-//                                        else -> Class.forName(typeStr, true, classLoader)
-//                                    }
-                                    paramTypes.add(type!!)
+                                        paramTypes.add(type!!)
+                                    }
+                                    // Can expand more type handling here
+                                    else -> {
+                                        val classObj = safeToJavaClass(param)
+                                        if (classObj != null) {
+                                            paramTypes.add(classObj)
+                                        }
+                                    }
                                 }
-                                // Can expand more type handling here
-                                else -> {
-                                    val classObj = safeToJavaClass(param)
-                                    if (classObj != null) {
-                                        paramTypes.add(classObj)
+                            }
+                        } else {
+                            // Collect parameter types (starting from index 3)
+                            for (i in 3 until args.narg() - 1) {
+                                val param = args.arg(i)
+                                when {
+                                    param.isstring() -> {
+                                        // Support various type conversions
+                                        val typeStr = param.tojstring()
+                                        val type = parseType(typeStr, classLoader)
+                                        paramTypes.add(type!!)
+                                    }
+
+                                    else -> {
+                                        val classObj = safeToJavaClass(param)
+                                        if (classObj != null) {
+                                            paramTypes.add(classObj)
+                                        }
                                     }
                                 }
                             }
                         }
+
 
                         val beforeFunc = args.optfunction(args.narg() - 1, null)
                         val afterFunc = args.optfunction(args.narg(), null)
@@ -1160,93 +1194,130 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
                             }
                         )
 
-                    }
+                    } else if (classNameOrClass.isuserdata(Class::class.java)) {
 
-                    //todo 和hook一样解决参数类型无classloader找不到类的问题
-//                    else if (classNameOrClass.isuserdata(Class::class.java)) { // If first arg is a Class object
-//                        val hookClass = classNameOrClass.touserdata(Class::class.java) as Class<*>
-//
-//                        // Dynamic parameter type handling
-//                        val paramTypes = mutableListOf<Class<*>>()
-//
-//                        // Collect parameter types (starting from index 2)
-//                        for (i in 2 until args.narg() - 1) {
-//                            val param = args.arg(i)
-//                            when {
-//                                param.isstring() -> {
-//                                    // Support various type conversions
-//                                    val typeStr = param.tojstring()
-//                                    val type = parseType(typeStr)
-//
-////                                    val type = when (typeStr) {
-////                                        "int" -> Int::class.javaPrimitiveType
-////                                        "long" -> Long::class.javaPrimitiveType
-////                                        "boolean" -> Boolean::class.javaPrimitiveType
-////                                        "double" -> Double::class.javaPrimitiveType
-////                                        "float" -> Float::class.javaPrimitiveType
-////                                        "String" -> String::class.java
-////                                        else -> Class.forName(typeStr, true, classLoader)
-////                                    }
-//                                    paramTypes.add(type!!)
-//                                }
-//                                // Can expand more type handling here
-//                                else -> {
-//                                    throw IllegalArgumentException("Unsupported parameter type: ${param.type()}")
-//                                }
-//                            }
-//                        }
-//
-//                        val beforeFunc = args.optfunction(args.narg() - 1, null)
-//                        val afterFunc = args.optfunction(args.narg(), null)
-//
-//                        XposedHelpers.findAndHookConstructor(
-//                            hookClass,
-//                            *paramTypes.toTypedArray(),
-//                            object : XC_MethodHook() {
-//                                override fun beforeHookedMethod(param: MethodHookParam?) {
-//                                    beforeFunc?.let { func ->
-//                                        val luaParam = CoerceJavaToLua.coerce(param)
-//
-//                                        // Allow parameter modification in Lua
-//                                        val modifiedParam = func.call(luaParam)
-//
-//                                        // Replace original parameters if modified
-//                                        if (!modifiedParam.isnil()) {
-//                                            if (modifiedParam.istable()) {
-//                                                val table = modifiedParam.checktable()
-//                                                val argsTable = table.get("args")
-//
-//                                                if (argsTable.istable()) {
-//                                                    val argsModified = argsTable.checktable()
-//                                                    for (i in 1..argsModified.length()) {
-//                                                        // Convert Lua parameters back to Java types
-//                                                        param?.args?.set(
-//                                                            i - 1,
-//                                                            fromLuaValue(argsModified.get(i))
-//                                                        )
-//                                                    }
-//                                                }
-//                                            }
-//                                        }
+
+                        val classs = classNameOrClass as Class<*>
+
+                        // Dynamic parameter type handling
+                        val paramTypes = mutableListOf<Class<*>>()
+
+                        if (args.arg(2).istable()) {
+                            for (key in args.arg(2).checktable().keys()) {
+                                val param = args.arg(2).checktable().get(key)
+                                when {
+                                    param.isstring() -> {
+                                        // Support various type conversions
+                                        val typeStr = param.tojstring()
+                                        val type = parseType(typeStr, lpparam.classLoader)
+
+//                                    val type = when (typeStr) {
+//                                        "int" -> Int::class.javaPrimitiveType
+//                                        "long" -> Long::class.javaPrimitiveType
+//                                        "boolean" -> Boolean::class.javaPrimitiveType
+//                                        "double" -> Double::class.javaPrimitiveType
+//                                        "float" -> Float::class.javaPrimitiveType
+//                                        "String" -> String::class.java
+//                                        else -> Class.forName(typeStr, true, classLoader)
 //                                    }
-//                                }
-//
-//                                override fun afterHookedMethod(param: MethodHookParam?) {
-//                                    afterFunc?.let { func ->
-//                                        val luaParam = CoerceJavaToLua.coerce(param)
-//
-//                                        // Allow modification of return value in Lua
-//                                        val modifiedResult = func.call(luaParam)
-//
-//                                        // Replace original return value if modified
-//                                        if (!modifiedResult.isnil()) {
-//                                            param?.result = fromLuaValue(modifiedResult)
-//                                        }
+                                        paramTypes.add(type!!)
+                                    }
+                                    // Can expand more type handling here
+                                    else -> {
+                                        val classObj = safeToJavaClass(param)
+                                        if (classObj != null) {
+                                            paramTypes.add(classObj)
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+
+                            // Collect parameter types (starting from index 3)
+                            for (i in 2 until args.narg() - 1) {
+                                val param = args.arg(i)
+                                when {
+                                    param.isstring() -> {
+                                        // Support various type conversions
+                                        val typeStr = param.tojstring()
+                                        val type = parseType(typeStr, lpparam.classLoader)
+
+//                                    val type = when (typeStr) {
+//                                        "int" -> Int::class.javaPrimitiveType
+//                                        "long" -> Long::class.javaPrimitiveType
+//                                        "boolean" -> Boolean::class.javaPrimitiveType
+//                                        "double" -> Double::class.javaPrimitiveType
+//                                        "float" -> Float::class.javaPrimitiveType
+//                                        "String" -> String::class.java
+//                                        else -> Class.forName(typeStr, true, classLoader)
 //                                    }
-//                                }
-//                            }
-//                        )
-//                    }
+                                        paramTypes.add(type!!)
+                                    }
+                                    // Can expand more type handling here
+                                    else -> {
+                                        val classObj = safeToJavaClass(param)
+                                        if (classObj != null) {
+                                            paramTypes.add(classObj)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+
+                        val beforeFunc = args.optfunction(args.narg() - 1, null)
+                        val afterFunc = args.optfunction(args.narg(), null)
+
+                        XposedHelpers.findAndHookConstructor(
+                            classs,
+                            *paramTypes.toTypedArray(),
+                            object : XC_MethodHook() {
+                                override fun beforeHookedMethod(param: MethodHookParam?) {
+                                    beforeFunc?.let { func ->
+                                        val luaParam = CoerceJavaToLua.coerce(param)
+
+                                        // Allow parameter modification in Lua
+                                        val modifiedParam = func.call(luaParam)
+
+                                        // Replace original parameters if modified
+                                        if (!modifiedParam.isnil()) {
+                                            if (modifiedParam.istable()) {
+                                                val table = modifiedParam.checktable()
+                                                val argsTable = table.get("args")
+
+                                                if (argsTable.istable()) {
+                                                    val argsModified = argsTable.checktable()
+                                                    for (i in 1..argsModified.length()) {
+                                                        // Convert Lua parameters back to Java types
+                                                        param?.args?.set(
+                                                            i - 1,
+                                                            fromLuaValue(argsModified.get(i))
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                override fun afterHookedMethod(param: MethodHookParam?) {
+                                    afterFunc?.let { func ->
+                                        val luaParam = CoerceJavaToLua.coerce(param)
+
+                                        // Allow modification of return value in Lua
+                                        val modifiedResult = func.call(luaParam)
+
+                                        // Replace original return value if modified
+                                        if (!modifiedResult.isnil()) {
+                                            param?.result = fromLuaValue(modifiedResult)
+                                        }
+                                    }
+                                }
+                            }
+                        )
+
+
+                    }
 
                     return NIL
 
@@ -1318,296 +1389,6 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
             }
         }
 
-//// 专门为EditText添加文本变化监听器
-//        globals["registerTextWatcher"] = object : VarArgFunction() {
-//            override fun invoke(args: Varargs): LuaValue {
-//                try {
-//                    if (args.narg() < 2) {
-//                        return LuaValue.error("至少需要两个参数: EditText控件和回调函数")
-//                    }
-//
-//                    // 获取EditText控件
-//                    val editText = args.arg(1).touserdata(View::class.java) as? EditText
-//                        ?: return LuaValue.error("第一个参数必须是EditText对象")
-//
-//                    // 获取回调函数
-//                    val beforeTextChangedCallback = args.optfunction(2, null)
-//                    val onTextChangedCallback = args.optfunction(3, null)
-//                    val afterTextChangedCallback = args.optfunction(4, null)
-//
-//                    // 创建文本监听器
-//                    val textWatcher = object : TextWatcher {
-//                        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
-//                            beforeTextChangedCallback?.let {
-//                                try {
-//                                    val luaText = LuaValue.valueOf(s.toString())
-//                                    val luaStart = LuaValue.valueOf(start)
-//                                    val luaCount = LuaValue.valueOf(count)
-//                                    val luaAfter = LuaValue.valueOf(after)
-//                                    it.call(luaText, luaStart, luaCount, luaAfter)
-//                                } catch (e: Exception) {
-//                                    Log.e("LuaXposed", "beforeTextChanged回调执行错误: ${e.message}")
-//                                    e.printStackTrace()
-//                                }
-//                            }
-//                        }
-//
-//                        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-//                            onTextChangedCallback?.let {
-//                                try {
-//                                    val luaText = LuaValue.valueOf(s.toString())
-//                                    val luaStart = LuaValue.valueOf(start)
-//                                    val luaBefore = LuaValue.valueOf(before)
-//                                    val luaCount = LuaValue.valueOf(count)
-//                                    it.call(luaText, luaStart, luaBefore, luaCount)
-//                                } catch (e: Exception) {
-//                                    Log.e("LuaXposed", "onTextChanged回调执行错误: ${e.message}")
-//                                    e.printStackTrace()
-//                                }
-//                            }
-//                        }
-//
-//                        override fun afterTextChanged(s: Editable?) {
-//                            afterTextChangedCallback?.let {
-//                                try {
-//                                    val luaText = LuaValue.valueOf(s.toString())
-//                                    it.call(luaText)
-//                                } catch (e: Exception) {
-//                                    Log.e("LuaXposed", "afterTextChanged回调执行错误: ${e.message}")
-//                                    e.printStackTrace()
-//                                }
-//                            }
-//                        }
-//                    }
-//
-//                    // 添加监听器
-//                    editText.addTextChangedListener(textWatcher)
-//
-//                    return LuaValue.TRUE
-//                } catch (e: Exception) {
-//                    Log.e("LuaXposed", "设置文本监听器错误: ${e.message}")
-//                    e.printStackTrace()
-//                    return LuaValue.error("设置文本监听器错误: ${e.message}")
-//                }
-//            }
-//        }
-//
-//// 为ListView/RecyclerView添加条目点击监听
-//        globals["registerItemClickListener"] = object : VarArgFunction() {
-//            override fun invoke(args: Varargs): LuaValue {
-//                try {
-//                    if (args.narg() < 2) {
-//                        return LuaValue.error("至少需要两个参数: ListView/RecyclerView控件和回调函数")
-//                    }
-//
-//                    val view = args.arg(1).touserdata(View::class.java)
-//                    val callback = args.checkfunction(2)
-//
-//                    when (view) {
-//                        is ListView -> {
-//                            view.setOnItemClickListener { parent, v, position, id ->
-//                                try {
-//                                    val luaParent = CoerceJavaToLua.coerce(parent)
-//                                    val luaView = CoerceJavaToLua.coerce(v)
-//                                    val luaPosition = LuaValue.valueOf(position)
-//                                    val luaId = LuaValue.valueOf(id)
-//                                    callback.call(luaParent, luaView, luaPosition, luaId)
-//                                } catch (e: Exception) {
-//                                    Log.e("LuaXposed", "列表项点击回调执行错误: ${e.message}")
-//                                    e.printStackTrace()
-//                                }
-//                            }
-//                        }
-//                        is RecyclerView -> {
-//                            // 为RecyclerView添加点击监听需要自定义ItemTouchListener
-//                            view.addOnItemTouchListener(object : RecyclerView.OnItemTouchListener {
-//                                val gestureDetector = GestureDetector(view.context, object : GestureDetector.SimpleOnGestureListener() {
-//                                    override fun onSingleTapUp(e: MotionEvent): Boolean {
-//                                        val childView = view.findChildViewUnder(e.x, e.y)
-//                                        if (childView != null) {
-//                                            val position = view.getChildAdapterPosition(childView)
-//                                            try {
-//                                                val luaRecyclerView = CoerceJavaToLua.coerce(view)
-//                                                val luaChildView = CoerceJavaToLua.coerce(childView)
-//                                                val luaPosition = LuaValue.valueOf(position)
-//                                                callback.call(luaRecyclerView, luaChildView, luaPosition)
-//                                            } catch (e: Exception) {
-//                                                Log.e("LuaXposed", "RecyclerView项点击回调执行错误: ${e.message}")
-//                                                e.printStackTrace()
-//                                            }
-//                                            return true
-//                                        }
-//                                        return false
-//                                    }
-//                                })
-//
-//                                override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
-//                                    gestureDetector.onTouchEvent(e)
-//                                    return false
-//                                }
-//
-//                                override fun onTouchEvent(rv: RecyclerView, e: MotionEvent) {}
-//
-//                                override fun onRequestDisallowInterceptTouchEvent(disallowIntercept: Boolean) {}
-//                            })
-//                        }
-//                        else -> {
-//                            return LuaValue.error("不支持的控件类型，只支持ListView或RecyclerView")
-//                        }
-//                    }
-//
-//                    return LuaValue.TRUE
-//                } catch (e: Exception) {
-//                    Log.e("LuaXposed", "设置列表项点击监听器错误: ${e.message}")
-//                    e.printStackTrace()
-//                    return LuaValue.error("设置列表项点击监听器错误: ${e.message}")
-//                }
-//            }
-//        }
-//
-//// 综合手势检测器
-//        globals["registerGestureDetector"] = object : VarArgFunction() {
-//            override fun invoke(args: Varargs): LuaValue {
-//                try {
-//                    if (args.narg() < 2) {
-//                        return LuaValue.error("至少需要两个参数: View控件和回调表")
-//                    }
-//
-//                    val view = args.arg(1).touserdata(View::class.java) as? View
-//                        ?: return LuaValue.error("第一个参数必须是View对象")
-//
-//                    val callbackTable = args.checktable(2)
-//
-//                    // 从表中获取各种回调函数
-//                    val onDownCallback = callbackTable.get("onDown").optfunction(null)
-//                    val onShowPressCallback = callbackTable.get("onShowPress").optfunction(null)
-//                    val onSingleTapUpCallback = callbackTable.get("onSingleTapUp").optfunction(null)
-//                    val onScrollCallback = callbackTable.get("onScroll").optfunction(null)
-//                    val onLongPressCallback = callbackTable.get("onLongPress").optfunction(null)
-//                    val onFlingCallback = callbackTable.get("onFling").optfunction(null)
-//                    val onDoubleTapCallback = callbackTable.get("onDoubleTap").optfunction(null)
-//
-//                    // 创建手势检测器
-//                    val gestureDetector = GestureDetector(view.context, object : GestureDetector.SimpleOnGestureListener() {
-//                        override fun onDown(e: MotionEvent): Boolean {
-//                            return onDownCallback?.let {
-//                                try {
-//                                    val luaEvent = CoerceJavaToLua.coerce(e)
-//                                    val result = it.call(luaEvent)
-//                                    if (result.isboolean()) result.toboolean() else super.onDown(e)
-//                                } catch (e: Exception) {
-//                                    Log.e("LuaXposed", "onDown回调执行错误: ${e.message}")
-//                                    e.printStackTrace()
-//                                    super.onDown(e)
-//                                }
-//                            } ?: super.onDown(e)
-//                        }
-//
-//                        override fun onShowPress(e: MotionEvent) {
-//                            onShowPressCallback?.let {
-//                                try {
-//                                    val luaEvent = CoerceJavaToLua.coerce(e)
-//                                    it.call(luaEvent)
-//                                } catch (e: Exception) {
-//                                    Log.e("LuaXposed", "onShowPress回调执行错误: ${e.message}")
-//                                    e.printStackTrace()
-//                                }
-//                            } ?: super.onShowPress(e)
-//                        }
-//
-//                        override fun onSingleTapUp(e: MotionEvent): Boolean {
-//                            return onSingleTapUpCallback?.let {
-//                                try {
-//                                    val luaEvent = CoerceJavaToLua.coerce(e)
-//                                    val result = it.call(luaEvent)
-//                                    if (result.isboolean()) result.toboolean() else super.onSingleTapUp(e)
-//                                } catch (e: Exception) {
-//                                    Log.e("LuaXposed", "onSingleTapUp回调执行错误: ${e.message}")
-//                                    e.printStackTrace()
-//                                    super.onSingleTapUp(e)
-//                                }
-//                            } ?: super.onSingleTapUp(e)
-//                        }
-//
-//                        override fun onScroll(e1: MotionEvent, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
-//                            return onScrollCallback?.let {
-//                                try {
-//                                    val luaE1 = CoerceJavaToLua.coerce(e1)
-//                                    val luaE2 = CoerceJavaToLua.coerce(e2)
-//                                    val luaDistanceX = LuaValue.valueOf(distanceX.toDouble())
-//                                    val luaDistanceY = LuaValue.valueOf(distanceY.toDouble())
-//                                    val result = it.call(luaE1, luaE2, luaDistanceX, luaDistanceY)
-//                                    if (result.isboolean()) result.toboolean() else super.onScroll(e1, e2, distanceX, distanceY)
-//                                } catch (e: Exception) {
-//                                    Log.e("LuaXposed", "onScroll回调执行错误: ${e.message}")
-//                                    e.printStackTrace()
-//                                    super.onScroll(e1, e2, distanceX, distanceY)
-//                                }
-//                            } ?: super.onScroll(e1, e2, distanceX, distanceY)
-//                        }
-//
-//                        override fun onLongPress(e: MotionEvent) {
-//                            onLongPressCallback?.let {
-//                                try {
-//                                    val luaEvent = CoerceJavaToLua.coerce(e)
-//                                    it.call(luaEvent)
-//                                } catch (e: Exception) {
-//                                    Log.e("LuaXposed", "onLongPress回调执行错误: ${e.message}")
-//                                    e.printStackTrace()
-//                                }
-//                            } ?: super.onLongPress(e)
-//                        }
-//
-//                        override fun onFling(e1: MotionEvent, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
-//                            return onFlingCallback?.let {
-//                                try {
-//                                    val luaE1 = CoerceJavaToLua.coerce(e1)
-//                                    val luaE2 = CoerceJavaToLua.coerce(e2)
-//                                    val luaVelocityX = LuaValue.valueOf(velocityX.toDouble())
-//                                    val luaVelocityY = LuaValue.valueOf(velocityY.toDouble())
-//                                    val result = it.call(luaE1, luaE2, luaVelocityX, luaVelocityY)
-//                                    if (result.isboolean()) result.toboolean() else super.onFling(e1, e2, velocityX, velocityY)
-//                                } catch (e: Exception) {
-//                                    Log.e("LuaXposed", "onFling回调执行错误: ${e.message}")
-//                                    e.printStackTrace()
-//                                    super.onFling(e1, e2, velocityX, velocityY)
-//                                }
-//                            } ?: super.onFling(e1, e2, velocityX, velocityY)
-//                        }
-//
-//                        override fun onDoubleTap(e: MotionEvent): Boolean {
-//                            return onDoubleTapCallback?.let {
-//                                try {
-//                                    val luaEvent = CoerceJavaToLua.coerce(e)
-//                                    val result = it.call(luaEvent)
-//                                    if (result.isboolean()) result.toboolean() else super.onDoubleTap(e)
-//                                } catch (e: Exception) {
-//                                    Log.e("LuaXposed", "onDoubleTap回调执行错误: ${e.message}")
-//                                    e.printStackTrace()
-//                                    super.onDoubleTap(e)
-//                                }
-//                            } ?: super.onDoubleTap(e)
-//                        }
-//                    })
-//
-//                    // 启用双击检测
-//                    gestureDetector.setIsLongpressEnabled(true)
-//
-//                    // 添加触摸监听
-//                    view.setOnTouchListener { v, event ->
-//                        gestureDetector.onTouchEvent(event)
-//                        true
-//                    }
-//
-//                    return LuaValue.TRUE
-//                } catch (e: Exception) {
-//                    Log.e("LuaXposed", "设置手势检测器错误: ${e.message}")
-//                    e.printStackTrace()
-//                    return LuaValue.error("设置手势检测器错误: ${e.message}")
-//                }
-//            }
-//        }
-
         return NIL
     }
 
@@ -1629,7 +1410,7 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
 
     fun parseType(
         typeStr: String,
-        classLoader: ClassLoader = Thread.currentThread().contextClassLoader
+        classLoader: ClassLoader? = Thread.currentThread().contextClassLoader
     ): Class<*>? {
         val typeMap = mapOf(
             "int" to Int::class.javaPrimitiveType,
