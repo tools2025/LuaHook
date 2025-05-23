@@ -1,26 +1,5 @@
 package com.androlua;
 
-import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
-import android.content.*;
-import android.content.res.*;
-import android.graphics.*;
-import android.os.AsyncTask;
-import android.os.Build;
-import android.os.Bundle;
-import android.util.*;
-import android.view.*;
-import android.view.accessibility.AccessibilityNodeInfo;
-import android.widget.*;
-import android.widget.RadioGroup.*;
-import android.widget.TextView.*;
-
-import com.luaj.vm2.compiler.LexState;
-import com.myopicmobile.textwarrior.android.*;
-import com.myopicmobile.textwarrior.common.*;
-
-import java.io.*;
-
 import static android.view.accessibility.AccessibilityNodeInfo.ACTION_ARGUMENT_EXTEND_SELECTION_BOOLEAN;
 import static android.view.accessibility.AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_END_INT;
 import static android.view.accessibility.AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_START_INT;
@@ -32,21 +11,56 @@ import static android.view.accessibility.AccessibilityNodeInfo.ACTION_PREVIOUS_A
 import static android.view.accessibility.AccessibilityNodeInfo.ACTION_SET_SELECTION;
 import static android.view.accessibility.AccessibilityNodeInfo.ACTION_SET_TEXT;
 
+import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
+import android.content.Context;
+import android.content.res.TypedArray;
+import android.graphics.Typeface;
+import android.os.Build;
+import android.os.Bundle;
+import android.util.AttributeSet;
+import android.util.DisplayMetrics;
+import android.util.TypedValue;
+import android.view.ActionMode;
+import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.accessibility.AccessibilityNodeInfo;
+import android.widget.EditText;
+import android.widget.RadioGroup.LayoutParams;
+import android.widget.TextView;
+import android.widget.TextView.OnEditorActionListener;
+import android.widget.Toast;
+
+import com.myopicmobile.textwarrior.android.FreeScrollingTextField;
+import com.myopicmobile.textwarrior.android.TrackpadNavigationMethod;
+import com.myopicmobile.textwarrior.android.YoyoNavigationMethod;
+import com.myopicmobile.textwarrior.common.ColorScheme;
+import com.myopicmobile.textwarrior.common.ColorSchemeDark;
+import com.myopicmobile.textwarrior.common.ColorSchemeLight;
+import com.myopicmobile.textwarrior.common.Document;
+import com.myopicmobile.textwarrior.common.DocumentProvider;
+import com.myopicmobile.textwarrior.common.LanguageLua;
+import com.myopicmobile.textwarrior.common.Lexer;
+import com.myopicmobile.textwarrior.common.LinearSearchStrategy;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+
 public class LuaEditor extends FreeScrollingTextField {
 
-    private Document _inputtingDoc;
-
-    private boolean _isWordWrap;
-
-    private Context mContext;
-
-    private String _lastSelectedFile;
-    
     public boolean enableErrMsg = true;
+    private Document _inputtingDoc;
+    private boolean _isWordWrap;
+    private final Context mContext;
+    private String _lastSelectedFile;
 
 //    private String fontDir = LuaApplication.getInstance().getLuaExtDir("fonts");
 //    private String libDir = LuaApplication.getInstance().getLuaExtPath("android.jar");
-
     private int _index;
     private LinearSearchStrategy finder;
     private int idx;
@@ -71,7 +85,6 @@ public class LuaEditor extends FreeScrollingTextField {
         mContext = context;
         init(context);
     }
-
 
 
     private void init(Context context) {
@@ -132,6 +145,7 @@ public class LuaEditor extends FreeScrollingTextField {
         }.execute();*/
 //        PackageUtil.load(context);
     }
+
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         // TODO: Implement this method
@@ -169,7 +183,6 @@ public class LuaEditor extends FreeScrollingTextField {
         respan();
         invalidate();
     }
-
 
 
     public void removePackage(String pkg) {
@@ -225,7 +238,7 @@ public class LuaEditor extends FreeScrollingTextField {
     public void setEnableDrawingErrMsg(boolean enable) {
         enableErrMsg = enable;
     }
-    
+
     public void setNonPrintingCharVisibility(boolean enable) {
         super.setNonPrintingCharVisibility(enable);
     }
@@ -234,7 +247,7 @@ public class LuaEditor extends FreeScrollingTextField {
         // TODO: Implement this method
         return _hDoc.subSequence(getSelectionStart(), getSelectionEnd() - getSelectionStart()).toString();
     }
-    
+
 
     @Override
     public boolean onKeyShortcut(int keyCode, KeyEvent event) {
@@ -291,7 +304,7 @@ public class LuaEditor extends FreeScrollingTextField {
                 mode.setTitle("转到");
                 mode.setSubtitle(null);
 
-                edit = new EditText(mContext) {
+                edit = new androidx.appcompat.widget.AppCompatEditText(mContext) {
                     @Override
                     public void onTextChanged(CharSequence s, int start, int before, int count) {
                         if (s.length() > 0) {
@@ -378,7 +391,7 @@ public class LuaEditor extends FreeScrollingTextField {
                 mode.setTitle("搜索");
                 mode.setSubtitle(null);
 
-                edit = new EditText(mContext) {
+                edit = new androidx.appcompat.widget.AppCompatEditText(mContext) {
                     @Override
                     public void onTextChanged(CharSequence s, int start, int before, int count) {
                         if (s.length() > 0) {
@@ -528,7 +541,7 @@ public class LuaEditor extends FreeScrollingTextField {
         }
     }
 
-    public String getFilePath(){
+    public String getFilePath() {
         return _lastSelectedFile;
     }
 
@@ -539,8 +552,8 @@ public class LuaEditor extends FreeScrollingTextField {
         String line;
         while ((line = reader.readLine()) != null)
             buf.append(line).append("\n");
-        if(buf.length()>1)
-        buf.setLength(buf.length() - 1);
+        if (buf.length() > 1)
+            buf.setLength(buf.length() - 1);
         setText(buf);
         /*
         File inputFile = new File(filename);
@@ -555,7 +568,7 @@ public class LuaEditor extends FreeScrollingTextField {
     }
 
     public boolean save(String filename) throws IOException {
-        if(filename==null)
+        if (filename == null)
             return true;
         File outputFile = new File(filename);
 
@@ -595,6 +608,7 @@ public class LuaEditor extends FreeScrollingTextField {
         moveCaret(idx);
         return true;
     }
+
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     @Override
     public boolean performAccessibilityAction(int action, Bundle arguments) {
@@ -621,7 +635,7 @@ public class LuaEditor extends FreeScrollingTextField {
                 }
                 return true;
             case ACTION_SET_SELECTION:
-                if(arguments==null)
+                if (arguments == null)
                     return true;
                 int start = arguments.getInt(ACTION_ARGUMENT_SELECTION_START_INT, 0);
                 int end = arguments.getInt(ACTION_ARGUMENT_SELECTION_END_INT, 0);
@@ -633,10 +647,10 @@ public class LuaEditor extends FreeScrollingTextField {
                 return true;
             case ACTION_SET_TEXT:
                 selectText(false);
-                if(arguments==null)
-                    setText("",true);
+                if (arguments == null)
+                    setText("", true);
                 else
-                    setText(arguments.getCharSequence(ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE),true);
+                    setText(arguments.getCharSequence(ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE), true);
                 return true;
             case ACTION_PASTE:
                 paste();
