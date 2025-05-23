@@ -2,25 +2,80 @@ name: Android CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main # 当推送到 main 分支时触发
+    tags:
+      - 'v*' # <--- 新增：当推送到以 'v' 开头的标签时触发 (例如 v1.0, v1.0.1)
   pull_request:
-    branches: [ "main" ]
+    branches:
+      - main
+  workflow_dispatch: # 允许手动触发工作流程
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-        cache: gradle
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-    - name: Build with Gradle
-      run: ./gradlew build
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      # -------------------------------------------------------------
+      # Release APK 构建与签名
+      # -------------------------------------------------------------
+      - name: Decode Keystore File
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 --decode > android_release.jks
+
+      - name: Build Release APK
+        run: ./gradlew assembleRelease
+        env:
+          ORG_GRADLE_PROJECT_KEYSTORE_FILE: ${{ github.workspace }}/android_release.jks
+          ORG_GRADLE_PROJECT_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          ORG_GRADLE_PROJECT_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          ORG_GRADLE_PROJECT_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
+      - name: Upload Release APK (as workflow artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-apk
+          path: app/build/outputs/apk/release/app-release.apk
+
+      # -------------------------------------------------------------
+      # 新增：发布到 GitHub Release
+      # -------------------------------------------------------------
+      - name: Create Release
+        id: create_new_release # 给这个步骤一个ID，以便引用其输出
+        uses: actions/create-release@v1 # 使用 GitHub 官方的 create-release action
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # GitHub Actions 自动提供的 token
+        with:
+          tag_name: ${{ github.ref }} # 使用触发工作流程的标签名作为 Release 标签
+          release_name: Release ${{ github.ref }} # Release 的名称
+          body: |
+            Automatic Release for tag ${{ github.ref }}.
+            
+            **Changes:**
+            - (Add your release notes here, e.g., from a CHANGELOG.md)
+          draft: false # 是否作为草稿
+          prerelease: false # 是否作为预发布版本
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1 # 使用 GitHub 官方的 upload-release-asset action
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_new_release.outputs.upload_url }} # 从上一步获取上传URL
+          asset_path: app/build/outputs/apk/release/app-release.apk # 要上传的 APK 文件路径
+          asset_name: app-release-${{ github.ref_name }}.apk # Release 中文件的名称 (例如 app-release-v1.0.apk)
+          asset_content_type: application/vnd.android.package-archive # APK 文件的 MIME 类型
