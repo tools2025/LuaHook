@@ -1,75 +1,70 @@
-package com.androlua;
+package com.androlua
 
-import android.app.Application;
-
-import org.luaj.LuaValue;
-
-import java.lang.reflect.Field;
-
-import dx.proxy.Enhancer;
-import dx.proxy.EnhancerInterface;
-import dx.proxy.MethodFilter;
-import dx.proxy.MethodInterceptor;
+import android.app.Application
+import dx.proxy.Enhancer
+import dx.proxy.EnhancerInterface
+import dx.proxy.MethodFilter
+import dx.proxy.MethodInterceptor
+import org.luaj.LuaValue
+import java.lang.reflect.Method
 
 /**
  * Created by nirenr on 2018/12/19.
  */
-class LuaEnhancer {
+internal class LuaEnhancer(cls: Class<*>?) {
+    private val mEnhancer: Enhancer = Enhancer(Application())
 
-    private final Enhancer mEnhancer;
+    constructor(cls: String) : this(Class.forName(cls))
 
-    public LuaEnhancer(String cls) throws ClassNotFoundException {
-        this(Class.forName(cls));
+    init {
+        mEnhancer.setSuperclass(cls)
     }
 
-    public LuaEnhancer(Class<?> cls) {
-        mEnhancer = new Enhancer(new Application());
-        mEnhancer.setSuperclass(cls);
+    fun setInterceptor(obj: EnhancerInterface, interceptor: MethodInterceptor?) {
+        obj.setMethodInterceptor_Enhancer(interceptor)
     }
 
-    public static void setInterceptor(Class<?> obj, MethodInterceptor interceptor) {
+    fun create(): Class<*>? {
         try {
-            Field field = obj.getDeclaredField("methodInterceptor");
-            field.setAccessible(true);
-            field.set(obj, interceptor);
-        } catch (Exception e) {
-            e.printStackTrace();
+            return mEnhancer.create()
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
+        return null
     }
 
-    public void setInterceptor(EnhancerInterface obj, MethodInterceptor interceptor) {
-        obj.setMethodInterceptor_Enhancer(interceptor);
-    }
-
-    public Class<?> create() {
+    fun create(filer: MethodFilter?): Class<*>? {
         try {
-            return mEnhancer.create();
-        } catch (Exception e) {
-            e.printStackTrace();
+            mEnhancer.setMethodFilter(filer)
+            return mEnhancer.create()
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
-        return null;
+        return null
     }
 
-    public Class<?> create(MethodFilter filer) {
+    fun create(arg: LuaValue): Class<*>? {
+        val filter = MethodFilter { method: Method?, name: String? -> !arg.get(name).isnil() }
         try {
-            mEnhancer.setMethodFilter(filer);
-            return mEnhancer.create();
-        } catch (Exception e) {
-            e.printStackTrace();
+            mEnhancer.setMethodFilter(filter)
+            val cls = mEnhancer.create()
+            setInterceptor(cls, LuaMethodInterceptor(arg))
+            return cls
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
-        return null;
+        return null
     }
 
-    public Class<?> create(LuaValue arg) {
-        MethodFilter filter = (method, name) -> !arg.get(name).isnil();
-        try {
-            mEnhancer.setMethodFilter(filter);
-            Class<?> cls = mEnhancer.create();
-            setInterceptor(cls, new LuaMethodInterceptor(arg));
-            return cls;
-        } catch (Exception e) {
-            e.printStackTrace();
+    companion object {
+        fun setInterceptor(obj: Class<*>, interceptor: MethodInterceptor?) {
+            try {
+                val field = obj.getDeclaredField("methodInterceptor")
+                field.setAccessible(true)
+                field.set(obj, interceptor)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
-        return null;
     }
 }
