@@ -3,13 +3,13 @@ name: Android CI
 on:
   push:
     branches:
-      - main # 推送到 main 分支时触发（只构建，不发布）
+      - main
     tags:
-      - 'v*' # 推送以 v 开头的 tag 时触发（构建并发布）
+      - 'v*'
   pull_request:
     branches:
       - main
-  workflow_dispatch: # 允许手动触发
+  workflow_dispatch:
 
 jobs:
   build:
@@ -29,7 +29,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Decode Keystore File
-        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
+        if: env.KEYSTORE_BASE64 != ''
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         run: |
@@ -49,9 +49,6 @@ jobs:
           name: release-apk
           path: app/build/outputs/apk/release/app-release.apk
 
-      # -------------------------------------------------------------
-      # 仅当 tag 推送时创建 GitHub Release 并上传 APK
-      # -------------------------------------------------------------
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         id: create_release
