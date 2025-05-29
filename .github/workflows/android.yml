@@ -1,83 +1,30 @@
-name: Android CI
+name: Release Existing APK
 
 on:
   push:
     branches:
       - main
-    tags:
-      - 'v*'  # 推送以 v 开头的标签时触发（如 v1.0.0）
-  pull_request:
-    branches:
-      - main
-  workflow_dispatch:  # 允许手动触发
 
 jobs:
-  build:
+  release:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+    - name: Checkout repo
+      uses: actions/checkout@v3
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
+    - name: Read versionName from build.gradle.kts
+      id: version
+      run: |
+        version=$(grep 'versionName' app/build.gradle.kts | head -1 | sed -E 's/.*versionName\s*=\s*"(.+)"$/\1/')
+        echo "version_name=$version" >> "$GITHUB_OUTPUT"
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-
-      - name: Decode Keystore File
-        env:
-          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-        run: |
-          echo "$KEYSTORE_BASE64" | base64 --decode > android_release.jks
-
-
-      - name: Build Release APK
-        run: ./gradlew assembleRelease
-        env:
-          ORG_GRADLE_PROJECT_KEYSTORE_FILE: ${{ github.workspace }}/android_release.jks
-          ORG_GRADLE_PROJECT_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          ORG_GRADLE_PROJECT_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          ORG_GRADLE_PROJECT_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-
-      - name: Find Built APK Path
-        id: find_apk
-        run: |
-          APK_PATH=$(find . -type f -name "*-release.apk" | head -n 1)
-          echo "Found APK: $APK_PATH"
-          echo "apk_path=$APK_PATH" >> $GITHUB_OUTPUT
-
-      - name: Upload APK as Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-apk
-          path: ${{ steps.find_apk.outputs.apk_path }}
-
-      - name: Create GitHub Release
-        if: startsWith(github.ref, 'refs/tags/')
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref_name }}
-          release_name: Release ${{ github.ref_name }}
-          body: |
-            Automatic Release for tag ${{ github.ref_name }}.
-            - Add your changes here
-          draft: false
-          prerelease: false
-
-      - name: Upload APK to GitHub Release
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ steps.find_apk.outputs.apk_path }}
-          asset_name: app-release-${{ github.ref_name }}.apk
-          asset_content_type: application/vnd.android.package-archive
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v${{ steps.version.outputs.version_name }}
+        name: v${{ steps.version.outputs.version_name }}
+        body: ${{ github.event.head_commit.message }}
+        files: app/release/*.apk
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
