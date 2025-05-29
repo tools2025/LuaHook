@@ -16,6 +16,7 @@ import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
+import org.json.JSONArray
 import org.json.JSONObject
 import org.luaj.Globals
 import org.luaj.LuaValue
@@ -53,7 +54,7 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
 
     override fun initZygote(startupParam: IXposedHookZygoteInit.StartupParam) {
 
-        XpHelper.initZygote(startupParam);
+        XpHelper.initZygote(startupParam)
 
 //        val pref = XSharedPreferences(MODULE_PACKAGE, PREFS_NAME)
 //        apps = XSharedPreferences(MODULE_PACKAGE, APPS)
@@ -117,14 +118,19 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
         }
 
 
-
 //        app单独脚本
         try {
             if (lpparam.packageName in SelectAppsList) {
 
                 for ((k, v) in readMap("$PATH/${LShare.AppConf}/${lpparam.packageName}.txt")) {
-                    if(v as Boolean){
-                        CreateGlobals(lpparam).load(read("$PATH/${LShare.AppScript}/${lpparam.packageName}/$k.lua")).call()
+                    if (v is Boolean) {
+                        CreateGlobals(lpparam).load(read("$PATH/${LShare.AppScript}/${lpparam.packageName}/$k.lua"))
+                            .call()
+                    } else if ((v is JSONArray)) {
+                        if ((v as JSONArray)[0] as Boolean) {
+                            CreateGlobals(lpparam).load(read("$PATH/${LShare.AppScript}/${lpparam.packageName}/$k.lua"))
+                                .call()
+                        }
                     }
                 }
             }
@@ -135,7 +141,7 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
 
     }
 
-    fun CreateGlobals(lpparam: LoadPackageParam):Globals {
+    fun CreateGlobals(lpparam: LoadPackageParam): Globals {
         val globals: Globals = JsePlatform.standardGlobals()
 
         //加载Lua模块

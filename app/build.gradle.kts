@@ -1,4 +1,3 @@
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -35,6 +34,15 @@ android {
             )
         }
     }
+    signingConfigs {
+        create("release") {
+            storeFile = file(System.getProperty("user.dir") + "/release.keystore")
+            storePassword = project.findProperty("MY_STORE_PASSWORD") as String?
+            keyAlias = project.findProperty("MY_KEY_ALIAS") as String?
+            keyPassword = project.findProperty("MY_KEY_PASSWORD") as String?
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
