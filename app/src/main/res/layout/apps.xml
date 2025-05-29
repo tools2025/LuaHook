@@ -86,6 +86,36 @@
 <!--        app:layout_anchor="@id/searchBar">-->
 <!--        &lt;!&ndash; Search suggestions/results go here (ScrollView, RecyclerView, etc.). &ndash;&gt;-->
 <!--    </com.google.android.material.search.SearchView>-->
+    <com.google.android.material.button.MaterialButton
+        android:rotation="45"
+        android:id="@+id/fab1"
+        android:alpha="0"
+        android:visibility="gone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/Widget.Material3.Button.IconButton.Filled.Tonal"
+        android:layout_gravity="end|bottom"
+        app:cornerRadius="12dp"
+        android:layout_marginEnd="30dp"
+        android:layout_marginBottom="246dp"
+        app:icon="@drawable/new_window_24px" />
+
+
+    <com.google.android.material.button.MaterialButton
+        android:rotation="45"
+        android:id="@+id/fab2"
+        android:alpha="0"
+        android:visibility="gone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/Widget.Material3.Button.IconButton.Filled.Tonal"
+        android:layout_gravity="end|bottom"
+        app:cornerRadius="12dp"
+        android:layout_marginEnd="30dp"
+        android:layout_marginBottom="190dp"
+        app:icon="@drawable/file_open_24px" />
+
+
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab"

@@ -10,12 +10,17 @@ android {
     namespace = "com.kulipai.luahook"
     compileSdk = 35
 
+    buildFeatures {
+        buildConfig = true    // 开启BuildConfig类的生成
+        aidl = true           // 启用aidl
+    }
+
     defaultConfig {
         applicationId = "com.kulipai.luahook"
         minSdk = 28
         targetSdk = 35
-        versionCode = 17
-        versionName = "3.5-canary"
+        versionCode = 19
+        versionName = "3.7"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -68,5 +73,6 @@ dependencies {
     implementation(libs.ripple.components.android)
     implementation(libs.ripple.insets)
     implementation(libs.androidx.preference.ktx)
-
+    implementation(libs.shizuku.api)
+    implementation(libs.provider) // 如果你需要使用 ShizukuProvider
 }

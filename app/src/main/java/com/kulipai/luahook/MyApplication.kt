@@ -1,10 +1,9 @@
 package com.kulipai.luahook
+import DataRepository.ShellInit
 import LanguageUtil
-import LanguageUtil.LANGUAGE_ENGLISH
 import android.app.Application
 import android.content.pm.PackageManager
 import android.content.res.Configuration
-import android.os.Build
 import com.google.android.material.color.DynamicColors
 import com.kulipai.luahook.fragment.AppInfo
 import com.kulipai.luahook.fragment.getInstalledApps
@@ -13,6 +12,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+
 
 class MyApplication : Application() {
 
@@ -40,12 +40,8 @@ class MyApplication : Application() {
                 val appName = pm.getApplicationLabel(applicationInfo).toString()
                 val icon = pm.getApplicationIcon(applicationInfo)
                 val versionName = packageInfo.versionName ?: "N/A"
-                val versionCode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                val versionCode =
                     packageInfo.longVersionCode
-                } else {
-                    @Suppress("DEPRECATION")
-                    packageInfo.versionCode.toLong()
-                }
 
                 appInfoList.add(
                     AppInfo(
@@ -90,7 +86,21 @@ class MyApplication : Application() {
         DynamicColors.applyToActivitiesIfAvailable(this)
         instance = this
         LanguageUtil.applyLanguage(this)
+        // 预加载 shell，确保 MainActivity 能及时拿到状态
 
+
+
+        ShellInit(applicationContext)
+
+
+//        // 在 Application 中初始化
+//        ShellManager.init(applicationContext) {
+//
+//            val (output, success) = ShellManager.shell("id")
+//            ("Output = $output, success = $success").d()
+//            ShellManager.getMode().toString().d()
+//
+//        }
 
 
     }
@@ -99,5 +109,8 @@ class MyApplication : Application() {
         super.onConfigurationChanged(newConfig)
         LanguageUtil.applyLanguage(this)
     }
+
+
+
 
 }

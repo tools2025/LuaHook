@@ -5,22 +5,18 @@ import org.luaj.LuaValue
 import org.luaj.Varargs
 import org.luaj.lib.OneArgFunction
 import org.luaj.lib.VarArgFunction
+import androidx.core.content.edit
 
-// LuaSharedPreferences 类不再接收 Context 参数
 class LuaSharedPreferences(
 ) : OneArgFunction() {
 
-    // modName 和 mod 变量似乎没有在 call 方法的返回值中使用，可以考虑移除如果不需要
-    private val modName = ""
     private var mod =
-        LuaTable() // call 方法返回的是 mod，但 mod 一直是空的，实际注册的是 globals["sp"] 和 globals["xsp"]
+        LuaTable()
 
     override fun call(globals: LuaValue): LuaValue {
 
         // 封装 Android 原生的 SharedPreferences 给 Lua 使用
         val sp = LuaTable()
-
-        // 注意：原生的 SharedPreferences 操作现在需要 Context 作为第一个参数从 Lua 传入
 
         // 设置值
         sp["set"] = object : VarArgFunction() {
@@ -38,24 +34,24 @@ class LuaSharedPreferences(
 
                 val prefs =
                     context.getSharedPreferences(name, Context.MODE_PRIVATE) // 使用传入的 Context
-                val editor = prefs.edit()
+                prefs.edit {
 
-                when {
-                    args.isstring(4) -> editor.putString(key, args.checkjstring(4)) // 参数索引后移
-                    args.isnumber(4) -> { // 参数索引后移
-                        val num = args.checkdouble(4) // 参数索引后移
-                        if (num % 1 == 0.0 && num >= Int.MIN_VALUE && num <= Int.MAX_VALUE) {
-                            editor.putInt(key, num.toInt())
-                        } else {
-                            editor.putFloat(key, num.toFloat())
+                    when {
+                        args.isstring(4) -> putString(key, args.checkjstring(4)) // 参数索引后移
+                        args.isnumber(4) -> { // 参数索引后移
+                            val num = args.checkdouble(4) // 参数索引后移
+                            if (num % 1 == 0.0 && num >= Int.MIN_VALUE && num <= Int.MAX_VALUE) {
+                                putInt(key, num.toInt())
+                            } else {
+                                putFloat(key, num.toFloat())
+                            }
                         }
+
+                        args.toboolean(4) -> putBoolean(key, args.checkboolean(4)) // 参数索引后移
+                        else -> return error("Unsupported value type for sp.set")
                     }
 
-                    args.toboolean(4) -> editor.putBoolean(key, args.checkboolean(4)) // 参数索引后移
-                    else -> return error("Unsupported value type for sp.set")
                 }
-
-                editor.apply()
                 return TRUE
             }
         }
@@ -87,7 +83,7 @@ class LuaSharedPreferences(
                 // 根据默认值的类型来获取 SharedPreferences 中的值
                 return when {
                     // 如果默认值是字符串，按字符串获取
-                    args.isstring(4) -> LuaValue.valueOf(
+                    args.isstring(4) -> valueOf(
                         prefs.getString(
                             key,
                             args.checkjstring(4) // 使用传入的默认值
@@ -95,7 +91,7 @@ class LuaSharedPreferences(
                     )
 
                     // 如果默认值是布尔，按布尔获取
-                    args.toboolean(4) -> LuaValue.valueOf(
+                    args.toboolean(4) -> valueOf(
                         prefs.getBoolean(
                             key,
                             args.checkboolean(4) // 使用传入的默认值
@@ -106,9 +102,9 @@ class LuaSharedPreferences(
                     args.isnumber(4) -> {
                         val defaultValue = args.checkdouble(4) // 使用传入的默认值
                         if (defaultValue % 1 == 0.0 && defaultValue >= Int.MIN_VALUE && defaultValue <= Int.MAX_VALUE) {
-                            LuaValue.valueOf(prefs.getInt(key, defaultValue.toInt()).toDouble())
+                            valueOf(prefs.getInt(key, defaultValue.toInt()).toDouble())
                         } else {
-                            LuaValue.valueOf(prefs.getFloat(key, defaultValue.toFloat()).toDouble())
+                            valueOf(prefs.getFloat(key, defaultValue.toFloat()).toDouble())
                         }
                     }
 
@@ -133,7 +129,7 @@ class LuaSharedPreferences(
                 val prefs =
                     context.getSharedPreferences(name, Context.MODE_PRIVATE) // 使用传入的 Context
 
-                return LuaValue.valueOf(prefs.contains(key))
+                return valueOf(prefs.contains(key))
             }
         }
 
@@ -152,8 +148,8 @@ class LuaSharedPreferences(
                 val prefs =
                     context.getSharedPreferences(name, Context.MODE_PRIVATE) // 使用传入的 Context
 
-                prefs.edit().remove(key).apply()
-                return LuaValue.TRUE
+                prefs.edit { remove(key) }
+                return TRUE
             }
         }
 
@@ -176,14 +172,14 @@ class LuaSharedPreferences(
                 // 遍历并转换为 LuaValue
                 all.forEach { (k, v) ->
                     when (v) {
-                        is String -> table[LuaValue.valueOf(k)] = LuaValue.valueOf(v)
-                        is Int -> table[LuaValue.valueOf(k)] =
-                            LuaValue.valueOf(v.toDouble()) // Lua numbers are doubles
-                        is Float -> table[LuaValue.valueOf(k)] =
-                            LuaValue.valueOf(v.toDouble()) // Lua numbers are doubles
-                        is Boolean -> table[LuaValue.valueOf(k)] = LuaValue.valueOf(v)
-                        else -> table[LuaValue.valueOf(k)] =
-                            LuaValue.valueOf(v.toString()) // Fallback to string
+                        is String -> table[valueOf(k)] = valueOf(v)
+                        is Int -> table[valueOf(k)] =
+                            valueOf(v.toDouble()) // Lua numbers are doubles
+                        is Float -> table[valueOf(k)] =
+                            valueOf(v.toDouble()) // Lua numbers are doubles
+                        is Boolean -> table[valueOf(k)] = valueOf(v)
+                        else -> table[valueOf(k)] =
+                            valueOf(v.toString()) // Fallback to string
                     }
                 }
 
@@ -205,8 +201,8 @@ class LuaSharedPreferences(
                 val prefs =
                     context.getSharedPreferences(name, Context.MODE_PRIVATE) // 使用传入的 Context
 
-                prefs.edit().clear().apply()
-                return LuaValue.TRUE
+                prefs.edit { clear() }
+                return TRUE
             }
         }
 
@@ -243,14 +239,14 @@ class LuaSharedPreferences(
                 }
 
                 return when {
-                    args.isstring(4) -> LuaValue.valueOf(
+                    args.isstring(4) -> valueOf(
                         prefs.getString(
                             key,
                             args.checkjstring(4)
                         )!!
                     )
 
-                    args.toboolean(4) -> LuaValue.valueOf(
+                    args.toboolean(4) -> valueOf(
                         prefs.getBoolean(
                             key,
                             args.checkboolean(4)
@@ -260,9 +256,9 @@ class LuaSharedPreferences(
                     args.isnumber(4) -> {
                         val defaultValue = args.checkdouble(4)
                         if (defaultValue % 1 == 0.0 && defaultValue >= Int.MIN_VALUE && defaultValue <= Int.MAX_VALUE) {
-                            LuaValue.valueOf(prefs.getInt(key, defaultValue.toInt()).toDouble())
+                            valueOf(prefs.getInt(key, defaultValue.toInt()).toDouble())
                         } else {
-                            LuaValue.valueOf(prefs.getFloat(key, defaultValue.toFloat()).toDouble())
+                            valueOf(prefs.getFloat(key, defaultValue.toFloat()).toDouble())
                         }
                     }
 
@@ -282,7 +278,7 @@ class LuaSharedPreferences(
                 val key = args.checkjstring(3)
                 val prefs = getXPrefs(packageName, name) // 使用 helper 函数获取 prefs
 
-                return LuaValue.valueOf(prefs.contains(key))
+                return valueOf(prefs.contains(key))
             }
         }
 
@@ -301,11 +297,11 @@ class LuaSharedPreferences(
 
                 all.forEach { (k, v) ->
                     when (v) {
-                        is String -> table[LuaValue.valueOf(k)] = LuaValue.valueOf(v)
-                        is Int -> table[LuaValue.valueOf(k)] = LuaValue.valueOf(v.toDouble())
-                        is Float -> table[LuaValue.valueOf(k)] = LuaValue.valueOf(v.toDouble())
-                        is Boolean -> table[LuaValue.valueOf(k)] = LuaValue.valueOf(v)
-                        else -> table[LuaValue.valueOf(k)] = LuaValue.valueOf(v.toString())
+                        is String -> table[valueOf(k)] = valueOf(v)
+                        is Int -> table[valueOf(k)] = valueOf(v.toDouble())
+                        is Float -> table[valueOf(k)] = valueOf(v.toDouble())
+                        is Boolean -> table[valueOf(k)] = valueOf(v)
+                        else -> table[valueOf(k)] = valueOf(v.toString())
                     }
                 }
 

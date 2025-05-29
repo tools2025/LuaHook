@@ -9,8 +9,44 @@ import com.androlua.LuaEditor
 import com.google.android.material.card.MaterialCardView
 import com.kulipai.luahook.R
 
-class SymbolAdapter(private val symbols: List<String>, private val editor: LuaEditor) :
+class SymbolAdapter(private val editor: LuaEditor) :
     RecyclerView.Adapter<SymbolAdapter.SymbolViewHolder>() {
+
+    val symbols =
+        listOf(
+            "log",
+            "lp",
+            "(",
+            ")",
+            "[",
+            "]",
+            "{",
+            "}",
+            "\"",
+            "=",
+            ".",
+            ",",
+            ";",
+            "_",
+            "+",
+            "-",
+            "*",
+            "/",
+            "\\",
+            "%",
+            "#",
+            "^",
+            "$",
+            "?",
+            "!",
+            "&",
+            "!",
+            ":",
+            "<",
+            ">",
+            "~",
+            "'",
+        )
 
     inner class SymbolViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val symbolTextView: TextView = itemView.findViewById(R.id.symbolTextView) // 使用自定义布局中的 ID

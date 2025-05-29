@@ -49,16 +49,16 @@ class SelectAppsAdapter(
             //跳转到app脚本编辑
             card.setOnClickListener {
 
-                if (apps[adapterPosition].packageName in selectApps) {
+                if (apps[bindingAdapterPosition].packageName in selectApps) {
                     card.cardElevation = 0.toFloat()
 
 
                     val aicon =
-                        pm.getApplicationIcon(pm.getApplicationInfo(apps[position].packageName, 0))
+                        pm.getApplicationIcon(pm.getApplicationInfo(apps[bindingAdapterPosition].packageName, 0))
                     icon.setImageDrawable(aicon)
 //                    icon.setImageDrawable(apps[adapterPosition].icon)
                     icon.setColorFilter(0)
-                    selectApps -= apps[adapterPosition].packageName
+                    selectApps -= apps[bindingAdapterPosition].packageName
                 } else {
 
                     card.cardElevation = 30.0.toFloat()
@@ -67,10 +67,10 @@ class SelectAppsAdapter(
                     icon.setColorFilter(
                         getDynamicColor(
                             context,
-                            com.google.android.material.R.attr.colorPrimary
+                            androidx.appcompat.R.attr.colorPrimary
                         )
                     )
-                    selectApps += apps[adapterPosition].packageName
+                    selectApps += apps[bindingAdapterPosition].packageName
                 }
 
 
@@ -99,7 +99,7 @@ class SelectAppsAdapter(
             holder.icon.setColorFilter(
                 getDynamicColor(
                     context,
-                    com.google.android.material.R.attr.colorPrimary
+                    androidx.appcompat.R.attr.colorPrimary
                 )
             )
         } else {

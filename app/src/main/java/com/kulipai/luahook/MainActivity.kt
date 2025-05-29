@@ -1,14 +1,19 @@
 package com.kulipai.luahook
 
+import AViewModel
+import DataRepository.ShellInit
 import LanguageUtil
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Bundle
 import android.view.Menu
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.edit
 import androidx.core.view.ViewCompat
@@ -20,14 +25,24 @@ import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.kulipai.luahook.Activity.AppsEdit
+import com.kulipai.luahook.Activity.EditActivity
+import com.kulipai.luahook.Activity.SettingsActivity
 import com.kulipai.luahook.fragment.AppsFragment
 import com.kulipai.luahook.fragment.HomeFragment
 import com.kulipai.luahook.fragment.PluginsFragment
-import com.kulipai.luahook.fragment.canHook
+import com.kulipai.luahook.util.LShare
+import com.kulipai.luahook.util.ShellManager
+import com.topjohnwu.superuser.Shell
 import kotlinx.coroutines.launch
+import rikka.shizuku.Shizuku
+import rikka.sui.Sui
 
 
 class MainActivity : AppCompatActivity() {
+
+
+    private val shizukuRequestCode = 100
 
 
     private lateinit var SettingsLauncher: ActivityResultLauncher<Intent>
@@ -39,6 +54,8 @@ class MainActivity : AppCompatActivity() {
     private val bottomBar: BottomNavigationView by lazy { findViewById(R.id.bottomBar) }
     private val toolbar: MaterialToolbar by lazy { findViewById(R.id.toolbar) }
     private val viewPager2: ViewPager2 by lazy { findViewById(R.id.viewPager2) }
+    private val viewModel by viewModels<AViewModel>()
+
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -50,6 +67,21 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
 
         setContentView(R.layout.activity_main)
+
+
+        viewModel.data.observe(this) {
+            //没有root则shizuku
+            if (Shell.isAppGrantedRoot() == false && Shizuku.getBinder() != null && !Shizuku.isPreV11() && Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
+                Shizuku.addBinderReceivedListener(binderReceivedListener)
+                Shizuku.addRequestPermissionResultListener(requestPermissionResultListener)
+                updatePermissionStatus()
+
+            }
+        }
+
+//        performShizukuOperation()
+
+//        LShare.init(this)
 
 
         // 注册 ActivityResultLauncher
@@ -100,7 +132,7 @@ class MainActivity : AppCompatActivity() {
         val app = application as MyApplication
         lifecycleScope.launch {
             val apps = app.getAppListAsync()
-            if (canHook()) {
+            if (ShellManager.getMode() != ShellManager.Mode.NONE) {
                 val savedList = getStringList(this@MainActivity, "selectApps")
                 if (savedList.isEmpty()) {
                     // 列表为空的逻辑
@@ -164,10 +196,10 @@ class MainActivity : AppCompatActivity() {
 
                 if (position == 0) {
                     menu.get(0).setIcon(R.drawable.home_fill_24px)
-
                 } else if (position == 2) {
 
                     menu.get(2).setIcon(R.drawable.extension_fill_24px)
+
 
                 }
             }
@@ -200,18 +232,84 @@ class MainActivity : AppCompatActivity() {
 
 
     fun saveStringList(context: Context, key: String, list: List<String>) {
-        val prefs = context.getSharedPreferences("MyAppPrefs", MODE_WORLD_READABLE)
-        val serialized = list.joinToString(",")
-        prefs.edit { putString(key, serialized) }
+        LShare.write("/apps.txt", list.joinToString(","))
+//        val prefs = context.getSharedPreferences("MyAppPrefs", MODE_WORLD_READABLE)
+//        val serialized = list.joinToString(",")
+//        prefs.edit { putString(key, serialized) }
     }
 
     fun getStringList(context: Context, key: String): MutableList<String> {
-        val prefs = context.getSharedPreferences("MyAppPrefs", MODE_WORLD_READABLE)
-        val serialized = prefs.getString(key, "") ?: ""
-        return if (serialized.isNotEmpty()) {
+//        val prefs = context.getSharedPreferences("MyAppPrefs", MODE_WORLD_READABLE)
+//        val serialized = prefs.getString(key, "") ?: ""
+        val serialized = LShare.read("/apps.txt")
+        return if (serialized != "") {
             serialized.split(",").toMutableList()
         } else {
             mutableListOf()
+        }
+    }
+
+    private val binderReceivedListener = Shizuku.OnBinderReceivedListener {
+        updatePermissionStatus()
+    }
+    private val requestPermissionResultListener =
+        Shizuku.OnRequestPermissionResultListener { requestCode, grantResult ->
+            if (requestCode == shizukuRequestCode) {
+                val granted = grantResult == PackageManager.PERMISSION_GRANTED
+                if (granted) {
+                    Toast.makeText(this, "Shizuku 权限已授予", Toast.LENGTH_SHORT).show()
+                    updatePermissionStatus()
+                } else {
+                    Toast.makeText(this, "Shizuku 权限被拒绝", Toast.LENGTH_SHORT).show()
+                    updatePermissionStatus()
+                }
+            }
+        }
+
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Shizuku.removeBinderReceivedListener(binderReceivedListener)
+        Shizuku.removeRequestPermissionResultListener(requestPermissionResultListener)
+    }
+
+    private fun isShizukuAvailable(): Boolean {
+        return Shizuku.pingBinder()
+    }
+
+    private fun checkShizukuPermission(): Boolean {
+        return if (Shizuku.isPreV11()) {
+//            permissionStatusTextView.text = "Shizuku 版本过低，不支持权限请求"
+            false
+        } else {
+            Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED
+        }
+    }
+
+    private fun requestShizukuPermission() {
+        if (!Shizuku.isPreV11() && Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
+            Shizuku.requestPermission(shizukuRequestCode)
+        } else if (Shizuku.isPreV11()) {
+            Toast.makeText(this, "Shizuku 版本过低，请使用 ADB 启动", Toast.LENGTH_LONG).show()
+        } else {
+//            Toast.makeText(this, "Shizuku 权限已存在", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun updatePermissionStatus() {
+        if (!isShizukuAvailable()) {
+//            Toast.makeText(this, "Shizuku 服务未运行", Toast.LENGTH_SHORT).show()
+
+        } else if (checkShizukuPermission()) {
+//            Toast.makeText(this, "Shizuku 权限已授予2", Toast.LENGTH_SHORT).show()
+            ShellInit(applicationContext)
+
+            Sui.init(packageName)
+        } else {
+//            Toast.makeText(this, "Shizuku 权限未授予", Toast.LENGTH_SHORT).show()
+//            permissionStatusTextView.text = "Shizuku 权限未授予"
+//            executeCommandButton.isEnabled = false
+            requestShizukuPermission() // 尝试请求权限
         }
     }
 

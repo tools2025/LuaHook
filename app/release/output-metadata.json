@@ -11,8 +11,8 @@
       "type": "SINGLE",
       "filters": [],
       "attributes": [],
-      "versionCode": 17,
-      "versionName": "3.5-canary",
+      "versionCode": 19,
+      "versionName": "3.7",
       "outputFile": "app-release.apk"
     }
   ],
