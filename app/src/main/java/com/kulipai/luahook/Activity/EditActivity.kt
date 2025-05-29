@@ -270,8 +270,7 @@ class EditActivity : AppCompatActivity() {
 
     private lateinit var defaultLogo: Drawable
 
-    companion object {
-    }
+    companion object
 
 
     fun saveScript(text: String) {
@@ -297,37 +296,17 @@ class EditActivity : AppCompatActivity() {
         setContentView(R.layout.edit)
         setSupportActionBar(toolbar)
 
-        val symbols =
-            listOf(
-                "log",
-                "lp",
-                "(",
-                ")",
-                "\"",
-                ":",
-                ",",
-                "=",
-                "[",
-                "]",
-                "+",
-                "-",
-                "{",
-                "}",
-                "?",
-                "!",
-
-                )
         val symbolRecyclerView: RecyclerView = findViewById(R.id.symbolRecyclerView)
         symbolRecyclerView.layoutManager =
             LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
-        symbolRecyclerView.adapter = SymbolAdapter(symbols, editor)
+        symbolRecyclerView.adapter = SymbolAdapter(editor)
 
 
         //窗口处理
         ViewCompat.setOnApplyWindowInsetsListener(rootLayout) { view, insets ->
             val imeInsets = insets.getInsets(WindowInsetsCompat.Type.ime())
             val navigationBarInsets = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
-            val statusBarInsets = insets.getInsets(WindowInsetsCompat.Type.statusBars())
+            insets.getInsets(WindowInsetsCompat.Type.statusBars())
 
             // 调整底部符号栏的位置，使其位于输入法上方
             bottomSymbolBar.translationY = -imeInsets.bottom.toFloat()

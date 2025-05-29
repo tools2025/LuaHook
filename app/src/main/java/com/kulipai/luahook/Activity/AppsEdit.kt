@@ -2,8 +2,10 @@ package com.kulipai.luahook.Activity
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.LinearLayout
@@ -11,21 +13,33 @@ import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.coordinatorlayout.widget.CoordinatorLayout
+import androidx.core.content.FileProvider
+import androidx.core.content.edit
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.widget.doBeforeTextChanged
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.androlua.LuaEditor
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import com.kulipai.luahook.R
 import com.kulipai.luahook.adapter.SymbolAdapter
 import com.kulipai.luahook.adapter.ToolAdapter
 import com.kulipai.luahook.util.LShare
 import com.kulipai.luahook.util.ShellManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 
 class AppsEdit : AppCompatActivity() {
+    // 文件分享
+    private val FILE_PROVIDER_AUTHORITY = "com.kulipai.luahook.fileprovider"
 
     //ui绑定区
     private val toolbar: MaterialToolbar by lazy { findViewById(R.id.toolbar) }
@@ -41,6 +55,8 @@ class AppsEdit : AppCompatActivity() {
     private lateinit var currentPackageName: String
     private lateinit var appName: String
     private lateinit var scripName: String
+    private lateinit var scriptDescription: String
+    private var author: String = ""
 
 
     override fun onStop() {
@@ -106,38 +122,18 @@ class AppsEdit : AppCompatActivity() {
         val intent = getIntent()
         if (intent != null) {
             currentPackageName = intent.getStringExtra("packageName").toString()
-            appName = intent.getStringExtra("appName").toString()
+//            appName = intent.getStringExtra("appName").toString()
+            scriptDescription = intent.getStringExtra("scriptDescription").toString()
             scripName = intent.getStringExtra("scripName").toString()
 //            toolbar.title = appName
-            title = appName
+            title = scripName
 
 
         }
 
-        val symbols =
-            listOf(
-                "log",
-                "lp",
-                "(",
-                ")",
-                "\"",
-                ":",
-                ",",
-                "=",
-                "[",
-                "]",
-                "+",
-                "-",
-                "{",
-                "}",
-                "?",
-                "!",
-
-                )
-
         symbolRecyclerView.layoutManager =
             LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
-        symbolRecyclerView.adapter = SymbolAdapter(symbols, editor)
+        symbolRecyclerView.adapter = SymbolAdapter(editor)
 
 
         val tool =
@@ -164,17 +160,21 @@ class AppsEdit : AppCompatActivity() {
         }
 
 
-        val script = read("/data/local/tmp/LuaHook/${LShare.AppScript}/$currentPackageName/$scripName.lua")
+        val script =
+            read("/data/local/tmp/LuaHook/${LShare.AppScript}/$currentPackageName/$scripName.lua")
 
         editor.setText(script)
 
         fab.setOnClickListener {
+
+
             saveScript(editor.text.toString())
             Toast.makeText(this, "保存成功", Toast.LENGTH_SHORT).show()
         }
 
 
     }
+
 
     //菜单
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -197,6 +197,7 @@ class AppsEdit : AppCompatActivity() {
         menu?.add(0, 5, 0, resources.getString(R.string.manual))
             ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
         menu?.add(0, 9, 0, "搜索")?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
+        menu?.add(0, 15, 0, "分享")?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
         return true
     }
 
@@ -249,6 +250,58 @@ class AppsEdit : AppCompatActivity() {
             }
 
 
+            // 分享
+            15 -> {
+                if (getSharedPreferences("conf", MODE_PRIVATE).getString("author", "")
+                        .isNullOrEmpty()
+                ) {
+
+                    var view = LayoutInflater.from(this).inflate(R.layout.dialog_edit, null)
+                    val inputLayout = view.findViewById<TextInputLayout>(R.id.text_input_layout)
+                    val edit = view.findViewById<TextInputEditText>(R.id.edit)
+                    inputLayout.hint = "作者名称"
+
+                    edit.doBeforeTextChanged { text, start, count, after ->
+                        // text: 改变前的内容
+                        // start: 改变开始的位置
+                        // count: 将被替换的旧内容长度
+                        // after: 新内容长度
+                        edit.error = null
+
+                    }
+                    MaterialAlertDialogBuilder(this)
+                        .setTitle("作者信息")
+                        .setView(view)
+                        .setPositiveButton("确定", { dialog, which ->
+
+                            if (edit.text.isNullOrEmpty()) {
+                                edit.error = "请输入昵称"
+                            } else {
+                                getSharedPreferences("conf", MODE_PRIVATE).edit {
+                                    putString("author", edit.text.toString())
+                                    apply()
+                                }
+                                shareFileFromTmp(
+                                    this,
+                                    "/data/local/tmp/LuaHook/${LShare.AppScript}/$currentPackageName/$scripName.lua"
+                                )
+                            }
+                        })
+                        .setNegativeButton("取消", { dialog, which ->
+                            dialog.dismiss()
+                        })
+                        .show()
+                } else {
+                    shareFileFromTmp(
+                        this,
+                        "/data/local/tmp/LuaHook/${LShare.AppScript}/$currentPackageName/$scripName.lua"
+                    )
+                }
+
+                true
+            }
+
+
             else -> false
         }
     }
@@ -286,6 +339,98 @@ class AppsEdit : AppCompatActivity() {
     fun saveScript(script: String) {
         val path = LShare.AppScript + "/" + currentPackageName + "/" + scripName + ".lua"
         LShare.write(path, script)
+    }
+
+
+    fun shareFileFromTmp(
+        context: Context,
+        sourceFilePath: String,
+        title: String = "分享文件",
+        mimeType: String = "*/*"
+    ) {
+        (context as? androidx.lifecycle.LifecycleOwner)?.lifecycleScope?.launch(Dispatchers.IO) {
+            val originalFile = File(sourceFilePath)
+
+            if (!originalFile.exists() || !originalFile.canRead()) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(
+                        context,
+                        "源文件不存在或无读取权限: $sourceFilePath",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+                return@launch
+            }
+
+            val copiedFile: File? = try {
+                val cacheDir = context.cacheDir
+                val destinationFile = File(cacheDir, originalFile.name)
+
+                // --- 开始修改部分：先读取，再合并，再写入 ---
+                // 1. 读取原始文件的所有内容
+                val originalContent = originalFile.readText()
+
+                // 获取作者名字
+                author =
+                    getSharedPreferences("conf", MODE_PRIVATE).getString("author", "").toString()
+
+                // 2. 定义要写入开头的额外内容
+                // 你可以根据需要修改 headerContent 的内容
+                val headerContent =
+                    "-- name: $scripName\n-- descript: $scriptDescription\n-- package: $currentPackageName\n-- author: $author\n\n"
+
+                // 3. 将新内容和原始内容合并
+                val mergedContent = headerContent + originalContent
+
+                // 4. 将合并后的内容写入到目标文件，这会覆盖目标文件原有内容
+                destinationFile.writeText(mergedContent)
+                // --- 结束修改部分 ---
+
+                destinationFile
+            } catch (e: Exception) {
+                e.printStackTrace()
+                println("文件操作失败：${e.message}")
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "文件复制或写入失败: ${e.message}", Toast.LENGTH_LONG)
+                        .show()
+                }
+                null
+            }
+
+            copiedFile?.let { fileToShare ->
+                withContext(Dispatchers.Main) {
+                    try {
+                        val fileUri: Uri = getFileUri(context, fileToShare)
+
+                        val shareIntent: Intent = Intent().apply {
+                            action = Intent.ACTION_SEND
+                            putExtra(Intent.EXTRA_STREAM, fileUri)
+                            type = mimeType
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+
+                        val chooser = Intent.createChooser(shareIntent, title)
+                        if (shareIntent.resolveActivity(context.packageManager) != null) {
+                            context.startActivity(chooser)
+                        } else {
+                            Toast.makeText(context, "没有应用可以分享此文件！", Toast.LENGTH_SHORT)
+                                .show()
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        Toast.makeText(
+                            context,
+                            "分享文件时发生错误: ${e.message}",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun getFileUri(context: Context, file: File): Uri {
+        return FileProvider.getUriForFile(context, FILE_PROVIDER_AUTHORITY, file)
     }
 
 

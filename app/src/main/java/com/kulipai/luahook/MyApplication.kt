@@ -4,8 +4,6 @@ import LanguageUtil
 import android.app.Application
 import android.content.pm.PackageManager
 import android.content.res.Configuration
-import android.os.Build
-import android.util.Log
 import com.google.android.material.color.DynamicColors
 import com.kulipai.luahook.fragment.AppInfo
 import com.kulipai.luahook.fragment.getInstalledApps
@@ -14,13 +12,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import androidx.core.content.edit
-import com.kulipai.luahook.util.LShare
-import com.kulipai.luahook.util.ShellManager
-import com.kulipai.luahook.util.ShellManager.Mode
-import com.kulipai.luahook.util.d
-import com.topjohnwu.superuser.Shell
-import rikka.shizuku.Shizuku
 
 
 class MyApplication : Application() {
@@ -49,12 +40,8 @@ class MyApplication : Application() {
                 val appName = pm.getApplicationLabel(applicationInfo).toString()
                 val icon = pm.getApplicationIcon(applicationInfo)
                 val versionName = packageInfo.versionName ?: "N/A"
-                val versionCode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                val versionCode =
                     packageInfo.longVersionCode
-                } else {
-                    @Suppress("DEPRECATION")
-                    packageInfo.versionCode.toLong()
-                }
 
                 appInfoList.add(
                     AppInfo(

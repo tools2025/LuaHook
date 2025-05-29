@@ -184,18 +184,26 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
             }
         }
 
-        globals["findClass"] = object : TwoArgFunction() {
-            override fun call(self: LuaValue, classLoader: LuaValue): LuaValue {
+        globals["findClass"] = object : VarArgFunction() {
+            override fun invoke(args: Varargs): LuaValue {
                 return try {
                     // 确保 self 是字符串
-                    val className = self.checkjstring()
-                    val loader = classLoader.checkuserdata(ClassLoader::class.java) as ClassLoader
+                    val className = args.checkjstring(1)
+                    var loader : ClassLoader
+                    if(args.narg()==1){
+                        loader = lpparam.classLoader
+                    }else{
+                        loader = args.checkuserdata(2,ClassLoader::class.java) as ClassLoader
+
+                    }
 
                     // 查找类
                     val clazz = XposedHelpers.findClass(className, loader)
                     CoerceJavaToLua.coerce(clazz) // 返回 Java Class 对象
                 } catch (e: Exception) {
+
                     ("findClass error: ${e.message}").d()
+                    LuaError("findClass error: ${e.message}")
                     NIL
                 }
             }
@@ -1329,11 +1337,12 @@ class HookLib(private val lpparam: LoadPackageParam) : OneArgFunction() {
             }
         }
 
+        globals["hookctor"] = globals["hookcotr"]
 
 
 
 
-        globals["createProxy"] = object : VarArgFunction() {
+            globals["createProxy"] = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
                 // --- CORRECTED ARGUMENT PARSING ---
 

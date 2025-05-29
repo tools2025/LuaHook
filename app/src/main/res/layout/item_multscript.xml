@@ -72,12 +72,12 @@
                 android:text="Name" />
 
             <TextView
-                android:id="@+id/packageName"
+                android:id="@+id/description"
                 style="@style/TextAppearance.Material3.TitleSmall"
                 android:layout_width="wrap_content"
 
                 android:layout_height="wrap_content"
-                android:text="描述" />
+                android:text="暂无描述" />
 
 
 
