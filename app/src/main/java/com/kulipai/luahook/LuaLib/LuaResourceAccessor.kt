@@ -8,6 +8,7 @@ import org.luaj.lib.VarArgFunction
 import org.luaj.lib.jse.CoerceJavaToLua
 import com.kulipai.luahook.util.d // 假设这是你的日志工具
 import org.luaj.Globals
+import org.luaj.LuaError
 import java.lang.reflect.Modifier
 
 /**
@@ -38,8 +39,8 @@ class LuaResourceBridge {
                     val drawable = ResourceHelper.getDrawableByName(context, resourceName, packageName)
                     return if (drawable != null) CoerceJavaToLua.coerce(drawable) else LuaValue.NIL
                 } catch (e: Exception) {
-                    "Lua::getDrawable - Error: ${e.message}".d()
-                    e.printStackTrace()
+                    "Lua::getDrawable - Error".d()
+                    throw LuaError(e)
                     return LuaValue.NIL
                 }
             }
@@ -60,8 +61,8 @@ class LuaResourceBridge {
                     val resId = ResourceHelper.getResourceId(context, resourceName, resourceType)
                     return LuaValue.valueOf(resId)
                 } catch (e: Exception) {
-                    "Lua::getResourceId - Error: ${e.message}".d()
-                    e.printStackTrace()
+                    "Lua::getResourceId - Error".d()
+                    throw LuaError(e)
                     return LuaValue.valueOf(0) // 返回0表示未找到或出错
                 }
             }
@@ -81,8 +82,8 @@ class LuaResourceBridge {
                     val str = ResourceHelper.getStringByName(context, resourceName)
                     return if (str != null) LuaValue.valueOf(str) else LuaValue.NIL
                 } catch (e: Exception) {
-                    "Lua::getString - Error: ${e.message}".d()
-                    e.printStackTrace()
+                    "Lua::getString - Error".d()
+                    throw LuaError(e)
                     return LuaValue.NIL
                 }
             }
@@ -105,8 +106,8 @@ class LuaResourceBridge {
                     // 这里直接返回值，由Lua端判断
                     return LuaValue.valueOf(colorInt)
                 } catch (e: Exception) {
-                    "Lua::getColor - Error: ${e.message}".d()
-                    e.printStackTrace()
+                    "Lua::getColor - Error".d()
+                    throw LuaError(e)
                     return LuaValue.valueOf(0) // 返回0表示出错
                 }
             }
@@ -130,8 +131,8 @@ class LuaResourceBridge {
                     }
                     return luaTable
                 } catch (e: Exception) {
-                    "Lua::getRConstants - Error: ${e.message}".d()
-                    e.printStackTrace()
+                    "Lua::getRConstants - Error".d()
+                    throw LuaError(e)
                     return LuaTable() // 返回空表表示出错
                 }
             }
@@ -165,7 +166,8 @@ object ResourceHelper {
                 try {
                     context.packageManager.getResourcesForApplication(targetPackageName)
                 } catch (e: Exception) {
-                    println("ResourceHelper: Failed to get resources for package $targetPackageName - ${e.message}")
+                    ("ResourceHelper: Failed to get resources for package $targetPackageName").d()
+                    throw LuaError(e)
                     return null // 获取外部包资源失败
                 }
             } else {
@@ -175,7 +177,7 @@ object ResourceHelper {
             val resId = resources.getIdentifier(resourceName, "drawable", targetPackageName)
 
             if (resId == 0) {
-                println("ResourceHelper: Drawable resource ID not found for '$resourceName' in package '$targetPackageName'")
+                ("ResourceHelper: Drawable resource ID not found for '$resourceName' in package '$targetPackageName'").d()
                 return null
             }
 
@@ -190,11 +192,12 @@ object ResourceHelper {
             }
             */
         } catch (e: Resources.NotFoundException) {
-            println("ResourceHelper: Drawable resource not found for '$resourceName' (ID: ${context.resources.getIdentifier(resourceName, "drawable", packageName ?: context.packageName)}) - ${e.message}")
+            ("ResourceHelper: Drawable resource not found for '$resourceName' (ID: ${context.resources.getIdentifier(resourceName, "drawable", packageName ?: context.packageName)})").d()
+            throw LuaError(e)
             return null
         } catch (e: Exception) {
-            println("ResourceHelper: Error getting drawable '$resourceName': ${e.javaClass.name}: ${e.message}")
-            e.printStackTrace()
+            println("ResourceHelper: Error getting drawable '$resourceName': ${e.javaClass.name}")
+            throw LuaError(e)
             return null
         }
     }
@@ -203,8 +206,8 @@ object ResourceHelper {
         return try {
             context.resources.getIdentifier(resourceName, resourceType, context.packageName)
         } catch (e: Exception) {
-            println("ResourceHelper: Error getting resource ID for '$resourceName' (type: $resourceType): ${e.message}")
-            e.printStackTrace()
+            ("ResourceHelper: Error getting resource ID for '$resourceName' (type: $resourceType)").d()
+            throw LuaError(e)
             0 // Return 0 for failure
         }
     }
@@ -213,15 +216,17 @@ object ResourceHelper {
         return try {
             val resId = getResourceId(context, resourceName, "string")
             if (resId == 0) {
-                println("ResourceHelper: String resource ID not found for '$resourceName'")
+                ("ResourceHelper: String resource ID not found for '$resourceName'").d()
                 return null
             }
             context.resources.getString(resId)
         } catch (e: Resources.NotFoundException) {
-            println("ResourceHelper: String resource not found for '$resourceName' (ID: ${getResourceId(context, resourceName, "string")}) - ${e.message}")
+            ("ResourceHelper: String resource not found for '$resourceName' (ID: ${getResourceId(context, resourceName, "string")})").d()
+            throw LuaError(e)
             return null
         } catch (e: Exception) {
-            println("ResourceHelper: Error getting string '$resourceName': ${e.message}")
+            ("ResourceHelper: Error getting string '$resourceName'").d()
+            throw LuaError(e)
             e.printStackTrace()
             null
         }
@@ -231,7 +236,8 @@ object ResourceHelper {
         return try {
             val resId = getResourceId(context, resourceName, "color")
             if (resId == 0) {
-                println("ResourceHelper: Color resource ID not found for '$resourceName'")
+                ("ResourceHelper: Color resource ID not found for '$resourceName'").d()
+
                 return 0 // Return 0 for failure (ambiguous with black color)
             }
             // 使用兼容性方法获取Color
@@ -245,10 +251,12 @@ object ResourceHelper {
             }
             */
         } catch (e: Resources.NotFoundException) {
-            println("ResourceHelper: Color resource not found for '$resourceName' (ID: ${getResourceId(context, resourceName, "color")}) - ${e.message}")
+            ("ResourceHelper: Color resource not found for '$resourceName' (ID: ${getResourceId(context, resourceName, "color")})").d()
+            throw LuaError(e)
             return 0 // Return 0 for failure
         } catch (e: Exception) {
-            println("ResourceHelper: Error getting color '$resourceName': ${e.message}")
+            ("ResourceHelper: Error getting color '$resourceName'").d()
+            throw LuaError(e)
             e.printStackTrace()
             0 // Return 0 for failure
         }
@@ -274,168 +282,17 @@ object ResourceHelper {
                         result[name] = value
                     } catch (e: Exception) {
                         // 忽略获取单个常量失败的情况
-                        println("ResourceHelper: Error getting R constant value for '${field.name}': ${e.message}")
+                        ("ResourceHelper: Error getting R constant value for '${field.name}'").d()
                     }
                 }
             }
         } catch (e: ClassNotFoundException) {
-            println("ResourceHelper: R class not found for type '$resourceType' in package '${context.packageName}': ${e.message}")
+            ("ResourceHelper: R class not found for type '$resourceType' in package '${context.packageName}'").d()
             // 这可能是因为类型名称错误（如 "layout" 而不是 "layouts"），或者R文件结构不同
         } catch (e: Exception) {
-            println("ResourceHelper: Error getting R class constants for type '$resourceType': ${e.message}")
-            e.printStackTrace()
+            ("ResourceHelper: Error getting R class constants for type '$resourceType'").d()
+            throw LuaError(e)
         }
         return result
     }
 }
-
-// --- 如何在 Xposed 环境中使用 ---
-
-/*
-// 假设在你的 Xposed Hook 类中
-import de.robv.android.xposed.IXposedHookLoadPackage
-import de.robv.android.xposed.XC_MethodHook
-import de.robv.android.xposed.XposedHelpers
-import de.robv.android.xposed.callbacks.XC_LoadPackage
-import android.app.Application
-import android.content.Context
-import org.luaj.Globals
-import org.luaj.lib.jse.JsePlatform // 或者其他 Lua 环境
-
-class MyXposedHook : IXposedHookLoadPackage {
-
-    private var luaGlobals: Globals? = null
-    private var hostAppContext: Context? = null
-
-    override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
-        // 仅 Hook 目标应用
-        if (lpparam.packageName != "com.target.app") {
-            return
-        }
-
-        // 获取 Application Context 的一种方式
-        XposedHelpers.findAndHookMethod(
-            Application::class.java, "attach", Context::class.java,
-            object : XC_MethodHook() {
-                override fun afterHookedMethod(param: MethodHookParam) {
-                    super.afterHookedMethod(param)
-                    hostAppContext = param.args[0] as? Context ?: (param.thisObject as Application).applicationContext
-
-                    if (hostAppContext != null && luaGlobals == null) {
-                        // 初始化 Lua 环境 (这里仅为示例)
-                        luaGlobals = JsePlatform.standardGlobals() // 或者你使用的特定Lua环境
-
-                        // 创建并注册资源访问表
-                        val resourceBridge = LuaResourceBridge()
-                        resourceBridge.registerTo(luaGlobals!!) // 使用默认名称 "resources"
-
-                        println("Xposed Hook: Lua environment initialized and resource bridge registered.")
-
-                        // 在这里可以加载并执行你的 Lua 脚本
-                        // luaGlobals.loadfile("path/to/your/script.lua").call()
-                    }
-                }
-            }
-        )
-
-        // --- 示例：Hook某个方法，并在其中执行Lua代码 ---
-        // XposedHelpers.findAndHookMethod("com.target.app.SomeClass", lpparam.classLoader, "someMethod", String::class.java, object : XC_MethodHook() {
-        //     override fun beforeHookedMethod(param: MethodHookParam) {
-        //         if (luaGlobals != null && hostAppContext != null) {
-        //             // 准备传递给 Lua 的参数
-        //             val luaContext = CoerceJavaToLua.coerce(hostAppContext)
-        //             val someArg = LuaValue.valueOf(param.args[0] as String)
-        //
-        //             // 假设你的 Lua 脚本中有一个名为 onSomeMethodCalled 的函数
-        //             val luaFunction = luaGlobals.get("onSomeMethodCalled")
-        //             if (!luaFunction.isnil()) {
-        //                 try {
-        //                     // 调用 Lua 函数，传递 Context 和其他参数
-        //                     luaFunction.call(luaContext, someArg)
-        //                 } catch (e: Exception) {
-        //                     println("Xposed Hook: Error calling Lua function 'onSomeMethodCalled': ${e.message}")
-        //                     e.printStackTrace()
-        //                 }
-        //             }
-        //         }
-        //     }
-        // })
-    }
-}
-*/
-
-// --- Lua 脚本示例 ---
-/*
--- lua_script.lua
-
--- 假设 KT 层已经将 Context 对象传递给了这个脚本，或者通过某个函数可以获取
--- local hostContext = getHostContext() -- 这是一个假设的函数，你需要自己实现如何传递Context
-
--- 使用注册的 'resources' 表
-if resources then
-    print("KT Resources table found!")
-
-    -- 示例1：获取字符串 (需要有效的 Context 对象)
-    local appNameResId = resources.getResourceId(hostContext, "app_name", "string")
-    if appNameResId and appNameResId ~= 0 then
-        local appName = resources.getString(hostContext, "app_name")
-        if appName then
-            print("App Name: " .. appName)
-        else
-            print("Failed to get string for 'app_name'")
-        end
-    else
-        print("Resource ID for 'app_name' not found.")
-    end
-
-    -- 示例2：获取 Drawable (需要有效的 Context 对象)
-    -- 注意：直接在Lua中使用Drawable对象可能意义不大，除非你有特定的库或方法来处理它
-    -- 通常更有用的是获取资源ID，然后在需要的地方使用它（例如，在其他Java调用中）
-    local launcherIcon = resources.getDrawable(hostContext, "ic_launcher")
-    if launcherIcon then
-        print("Got launcher icon Drawable object: " .. tostring(launcherIcon))
-        -- 你可能无法直接在纯Lua中显示这个Drawable
-        -- 可以尝试获取它的类名等信息
-        print("Icon Class: " .. launcherIcon:getClass():getName())
-    else
-        print("Failed to get drawable 'ic_launcher'")
-    end
-
-    -- 示例3：获取颜色 (需要有效的 Context 对象)
-    local primaryColor = resources.getColor(hostContext, "colorPrimary")
-    if primaryColor and primaryColor ~= 0 then -- 检查非0，因为0可能是有效颜色（透明黑）也可能是错误
-        print(string.format("Primary Color (int): %d (Hex: #%08x)", primaryColor, primaryColor))
-    else
-        print("Failed to get color 'colorPrimary'")
-    end
-
-    -- 示例4：获取指定包名的资源 (假设目标包已安装且有权限访问)
-    -- local otherAppIcon = resources.getDrawable(hostContext, "some_icon", "com.other.app")
-    -- if otherAppIcon then
-    --     print("Got icon from another app!")
-    -- else
-    --     print("Failed to get icon from com.other.app")
-    -- end
-
-    -- 示例5: 获取所有 drawable 资源的名称和 ID
-    local drawableConstants = resources.getRConstants(hostContext, "drawable")
-    if drawableConstants then
-        print("Drawable Resources:")
-        local count = 0
-        for name, id in pairs(drawableConstants) do
-            print(string.format("  %s = %d", name, id))
-            count = count + 1
-            if count > 10 then -- 限制打印数量
-                 print("  ... and more")
-                 break
-            end
-        end
-    else
-        print("Failed to get drawable constants.")
-    end
-
-else
-    print("KT Resources table ('resources') not found in Lua globals!")
-end
-
-*/

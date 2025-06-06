@@ -13,6 +13,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.luaj.Globals
+import org.luaj.LuaError
 import org.luaj.LuaValue
 import org.luaj.lib.ThreeArgFunction
 import org.luaj.lib.TwoArgFunction
@@ -28,49 +29,38 @@ class LuaDrawableLoader(val handler: Handler = Handler(Looper.getMainLooper())) 
     // 同步网络图像
     val loadDrawableSync = object : TwoArgFunction() {
         override fun call(urlValue: LuaValue, cacheValue: LuaValue): LuaValue {
-            try {
-                val url = urlValue.checkjstring()
-                val cache = cacheValue.optboolean(true)
+            val url = urlValue.checkjstring()
+            val cache = cacheValue.optboolean(true)
 //                "开始同步加载: $url, 缓存: $cache".d()
-                val drawable = DrawableHelper.loadDrawableSync(url, cache)
-                return if (drawable != null) CoerceJavaToLua.coerce(drawable) else LuaValue.NIL
-            } catch (e: Exception) {
-                "loadDrawableSync Lua函数异常: ${e.javaClass.name}: ${e.message}".d()
-                e.printStackTrace()
-                return LuaValue.NIL
-            }
+            val drawable = DrawableHelper.loadDrawableSync(url, cache)
+            return if (drawable != null) CoerceJavaToLua.coerce(drawable) else NIL
         }
     }
 
     // 异步网络图像
     val loadDrawableAsync = object : ThreeArgFunction() {
         override fun call(urlValue: LuaValue, cacheValue: LuaValue, callback: LuaValue): LuaValue {
-            try {
-                val url = urlValue.checkjstring()
-                val cache = cacheValue.optboolean(true)
+            val url = urlValue.checkjstring()
+            val cache = cacheValue.optboolean(true)
 //                "开始异步加载: $url, 缓存: $cache".d()
-                DrawableHelper.loadDrawableAsync(url, cache) { drawable ->
-                    handler.post {
-                        try {
-                            if (!callback.isnil()) {
-                                if (drawable != null) {
-                                    callback.call(CoerceJavaToLua.coerce(drawable))
-                                } else {
-                                    callback.call(LuaValue.NIL)
-                                }
+            DrawableHelper.loadDrawableAsync(url, cache) { drawable ->
+                handler.post {
+                    try {
+                        if (!callback.isnil()) {
+                            if (drawable != null) {
+                                callback.call(CoerceJavaToLua.coerce(drawable))
+                            } else {
+                                callback.call(NIL)
                             }
-                        } catch (e: Exception) {
-                            "异步回调处理异常: ${e.javaClass.name}: ${e.message}".d()
-                            e.printStackTrace()
                         }
+                    } catch (e: Exception) {
+                        "异步回调处理异常: ${e.javaClass.name}".d()
+                        throw LuaError(e)
                     }
                 }
-                return LuaValue.NIL
-            } catch (e: Exception) {
-                "loadDrawableAsync Lua函数异常: ${e.javaClass.name}: ${e.message}".d()
-                e.printStackTrace()
-                return LuaValue.NIL
             }
+            return NIL
+
         }
     }
 
@@ -82,11 +72,10 @@ class LuaDrawableLoader(val handler: Handler = Handler(Looper.getMainLooper())) 
                 val cache = cacheValue.optboolean(true)
 //                "开始加载本地文件: $path, 缓存: $cache".d()
                 val drawable = DrawableHelper.loadDrawableFromFile(path, cache)
-                return if (drawable != null) CoerceJavaToLua.coerce(drawable) else LuaValue.NIL
+                return if (drawable != null) CoerceJavaToLua.coerce(drawable) else NIL
             } catch (e: Exception) {
-                "loadDrawableFromFile Lua函数异常: ${e.javaClass.name}: ${e.message}".d()
-                e.printStackTrace()
-                return LuaValue.NIL
+                "loadDrawableFromFile Lua函数异常: ${e.javaClass.name}".d()
+                throw LuaError(e)
             }
         }
     }
@@ -97,11 +86,10 @@ class LuaDrawableLoader(val handler: Handler = Handler(Looper.getMainLooper())) 
             try {
                 val key = if (!keyValue.isnil()) keyValue.checkjstring() else null
                 val clearAll = allValue.optboolean(false)
-                return LuaValue.valueOf(DrawableHelper.clearCache(key, clearAll))
+                return valueOf(DrawableHelper.clearCache(key, clearAll))
             } catch (e: Exception) {
                 "clearDrawableCache Lua函数异常: ${e.javaClass.name}: ${e.message}".d()
-                e.printStackTrace()
-                return LuaValue.valueOf(false)
+                throw LuaError(e)
             }
         }
     }
@@ -134,7 +122,7 @@ object DrawableHelper {
                 .build()
         } catch (e: Exception) {
             "OkHttpClient初始化失败: ${e.javaClass.name}: ${e.message}".d()
-            e.printStackTrace()
+//            throw LuaError(e)
             // 创建一个基本的OkHttpClient作为后备
             OkHttpClient()
         }
@@ -257,8 +245,8 @@ object DrawableHelper {
 //            "同步加载成功: $url".d()
             return drawable
         } catch (e: Throwable) {
-            "同步加载未捕获异常: ${e.javaClass.name}: ${e.message}".d()
-            e.printStackTrace()
+            "同步加载未捕获异常: ${e.javaClass.name}".d()
+            throw LuaError(e)
             return null
         }
     }
@@ -392,8 +380,8 @@ object DrawableHelper {
                 }
             })
         } catch (e: Throwable) {
-            "异步加载未捕获异常: ${e.javaClass.name}: ${e.message}".d()
-            e.printStackTrace()
+            "异步加载未捕获异常: ${e.javaClass.name}".d()
+            throw LuaError(e)
             callback(null)
         }
     }
@@ -461,8 +449,8 @@ object DrawableHelper {
 //            "本地图片加载成功: $path".d()
             return drawable
         } catch (e: Throwable) {
-            "本地加载未捕获异常: ${e.javaClass.name}: ${e.message}".d()
-            e.printStackTrace()
+            "本地加载未捕获异常: ${e.javaClass.name}".d()
+            throw LuaError(e)
             return null
         }
     }
@@ -489,8 +477,8 @@ object DrawableHelper {
                 false
             }
         } catch (e: Exception) {
-            "清除缓存失败: ${e.javaClass.name}: ${e.message}".d()
-            e.printStackTrace()
+            "清除缓存失败: ${e.javaClass.name}".d()
+            throw LuaError(e)
             false
         }
     }

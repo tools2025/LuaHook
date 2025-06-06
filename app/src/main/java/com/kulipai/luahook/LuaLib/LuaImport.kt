@@ -1,3 +1,5 @@
+import com.kulipai.luahook.util.d
+import com.kulipai.luahook.util.e
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.XposedHelpers.ClassNotFoundError
 import org.luaj.LuaValue
@@ -31,7 +33,7 @@ class LuaImport(
             env.set(simpleName, luaClass)
             luaClass
         } catch (e: Exception) {
-            println("import error: ${e.message}")
+            ("import error: ${e.message}").d()
             NIL
         }
     }

@@ -15,10 +15,12 @@ import com.google.android.material.materialswitch.MaterialSwitch
 import com.kulipai.luahook.Activity.AppsEdit
 import com.kulipai.luahook.R
 import com.kulipai.luahook.util.LShare
+import com.kulipai.luahook.util.d
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlin.collections.MutableMap
 
 class MultScriptAdapter(
     private val conf: MutableList<MutableMap.MutableEntry<String, Any?>>,
@@ -90,14 +92,15 @@ class MultScriptAdapter(
             }
 
             switchWidget.setOnClickListener {
+
                 val innerList = conf[bindingAdapterPosition].value as org.json.JSONArray
 
                 conf[bindingAdapterPosition].setValue(
-                    arrayOf(
+                    org.json.JSONArray(arrayOf(
                         switchWidget.isChecked,
                         innerList[1],
                         innerList[2]
-                    )
+                    ))
                 )
 
                 GlobalScope.launch(Dispatchers.IO) {
