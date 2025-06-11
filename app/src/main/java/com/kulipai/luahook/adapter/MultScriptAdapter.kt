@@ -6,21 +6,22 @@ import android.content.Intent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
 import android.widget.TextView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.kulipai.luahook.Activity.AppsEdit
 import com.kulipai.luahook.R
 import com.kulipai.luahook.util.LShare
-import com.kulipai.luahook.util.d
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import kotlin.collections.MutableMap
+import java.io.File
 
 class MultScriptAdapter(
     private val conf: MutableList<MutableMap.MutableEntry<String, Any?>>,
@@ -36,7 +37,7 @@ class MultScriptAdapter(
     val path = LShare.AppConf + "/" + currentPackageName + ".txt"
 
 
-    @SuppressLint("NotifyDataSetChanged")
+    @SuppressLint("NotifyDataSetChanged", "MissingInflatedId", "InflateParams")
     @OptIn(DelicateCoroutinesApi::class)
     inner class MultScriptViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val card: MaterialCardView = itemView.findViewById(R.id.card)
@@ -61,33 +62,38 @@ class MultScriptAdapter(
 
             }
             card.setOnLongClickListener {
-                MaterialAlertDialogBuilder(context)
-                    .setTitle("提示")
-                    .setMessage("确定删除吗?")
-                    .setPositiveButton("确定") { dialog, _ ->
-                        conf.removeAt(bindingAdapterPosition)
-                        GlobalScope.launch(Dispatchers.IO) {
-                            LShare.writeMap(
-                                path,
-                                conf.associate { it.key to it.value }.toMutableMap()
-                            )
-                        }
-                        notifyDataSetChanged()
-//                        val savedList = LShare.readStringList("/apps.txt")
-////                        savedList.remove(apps[bindingAdapterPosition].packageName)
-//                        LShare.writeStringList("/apps.txt",savedList)
-//                        val availableAppsToShow: List<AppInfo> = apps.filter { appInfo ->
-//                            savedList.contains(appInfo.packageName)
-//                            // 或者写成: appInfo.packageName !in selectedPackagesSet
-//                        }
-//                        apps = availableAppsToShow
-//                        notifyDataSetChanged()
-                        dialog.dismiss()
-                    }
-                    .setNegativeButton("取消") { dialog, _ ->
-                        dialog.dismiss()
-                    }
-                    .show()
+
+                val view = LayoutInflater.from(context).inflate(R.layout.dialog_scriptdetail, null)
+                val bsd_logoText: TextView = view.findViewById<TextView>(R.id.logoText)
+                val bsd_name: TextView = view.findViewById<TextView>(R.id.name)
+                val bsd_description: TextView = view.findViewById<TextView>(R.id.description)
+                val bsd_author: TextView = view.findViewById<TextView>(R.id.author)
+
+                var bsd = BottomSheetDialog(context)
+
+                bsd_logoText.text = conf[bindingAdapterPosition].key[0].toString()
+                bsd_name.text = conf[bindingAdapterPosition].key
+
+                val innerList = conf[bindingAdapterPosition].value as org.json.JSONArray
+
+                bsd_description.text = (innerList[1] as String).takeUnless { it.isEmpty() } ?: "无"
+
+                val param =
+                    LShare.parseParameters(read(LShare.DIR + "/" + LShare.AppScript + "/" + currentPackageName + "/" + conf[bindingAdapterPosition].key + ".lua"))
+
+                bsd_author.text = param?.author ?: "无"
+
+
+                val window = bsd.window
+                window?.setFlags(
+                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+                )
+                bsd.setContentView(view)
+                bsd.show()
+
+
+
                 true
             }
 
@@ -96,11 +102,13 @@ class MultScriptAdapter(
                 val innerList = conf[bindingAdapterPosition].value as org.json.JSONArray
 
                 conf[bindingAdapterPosition].setValue(
-                    org.json.JSONArray(arrayOf(
-                        switchWidget.isChecked,
-                        innerList[1],
-                        innerList[2]
-                    ))
+                    org.json.JSONArray(
+                        arrayOf(
+                            switchWidget.isChecked,
+                            innerList[1],
+                            innerList[2]
+                        )
+                    )
                 )
 
                 GlobalScope.launch(Dispatchers.IO) {
@@ -142,5 +150,41 @@ class MultScriptAdapter(
         notifyDataSetChanged() // 通知 RecyclerView 更新数据
     }
 
+    @OptIn(DelicateCoroutinesApi::class)
+    @SuppressLint("NotifyDataSetChanged")
+    fun removeItem(position: Int, context: Context) {
+        MaterialAlertDialogBuilder(context)
+            .setTitle("提示")
+            .setMessage("确定删除吗?")
+            .setPositiveButton("确定") { dialog, _ ->
+                LShare.rm(LShare.AppScript + "/" + currentPackageName + "/" + conf[position].key + ".lua")
+                conf.removeAt(position)
+                GlobalScope.launch(Dispatchers.IO) {
+                    LShare.writeMap(
+                        path,
+                        conf.associate { it.key to it.value }.toMutableMap()
+                    )
 
+                }
+                notifyDataSetChanged()
+                dialog.dismiss()
+            }
+            .setNegativeButton("取消") { dialog, _ ->
+                notifyDataSetChanged()
+                dialog.dismiss()
+            }
+            .setOnDismissListener {
+                notifyDataSetChanged()
+            }
+            .show()
+
+
+    }
+
+    fun read(path: String): String {
+        if (File(path).exists()) {
+            return File(path).readText()
+        }
+        return ""
+    }
 }

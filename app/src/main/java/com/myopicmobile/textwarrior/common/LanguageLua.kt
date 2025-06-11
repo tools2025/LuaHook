@@ -57,6 +57,10 @@ class LanguageLua private constructor() : Language() {
             package_lpparam.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
         )
         super.addBasePackage(
+            "suparam",
+            package_suparam.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        )
+        super.addBasePackage(
             "DexKitBridge",
             package_DexKitBridge.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }
                 .toTypedArray()
@@ -166,6 +170,8 @@ class LanguageLua private constructor() : Language() {
 
         private const val package_lpparam =
             "packageName|classLoader|appInfo|isFirstApplication|processName"
+        private const val package_suparam =
+            "startsSystemServer|modulePath"
         private const val package_http = "get|post|upload|delete|put|postJson|head|download"
         private const val package_sp = "clear|getAll|remove|contains|get|set"
         private const val package_xsp = "getAll|contains|get|reload"
@@ -199,6 +205,7 @@ class LanguageLua private constructor() : Language() {
             "sp",
             "xsp",
             "lpparam",
+            "suparam",
             "json",
             "imports",
 //            "new",

@@ -9,7 +9,10 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:animateLayoutChanges="true"
+
+        >
 
 
         <com.google.android.material.card.MaterialCardView
@@ -71,6 +74,46 @@
 
             </LinearLayout>
 
+        </com.google.android.material.card.MaterialCardView>
+
+
+        <com.google.android.material.card.MaterialCardView
+            android:visibility="gone"
+            android:id="@+id/how_to_activate"
+            android:layout_width="match_parent"
+            style="@style/Widget.Material3.CardView.Outlined"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="16dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+
+            app:cardCornerRadius="16dp"
+
+   >
+            <LinearLayout
+                android:padding="24dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/TextAppearance.Material3.TitleMedium"
+                android:textStyle="bold"
+                android:text="如何激活模块"
+                />
+
+            <TextView
+
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/TextAppearance.Material3.BodyMedium"
+
+                android:text="@string/how_to_activate"
+                android:textIsSelectable="true"
+                />
+            </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
         <com.google.android.material.divider.MaterialDivider
