@@ -76,8 +76,11 @@ class MainActivity : AppCompatActivity() {
                 Shizuku.addRequestPermissionResultListener(requestPermissionResultListener)
                 updatePermissionStatus()
 
+
             }
         }
+
+
 
 //        performShizukuOperation()
 

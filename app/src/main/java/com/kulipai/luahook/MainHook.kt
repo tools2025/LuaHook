@@ -45,10 +45,14 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
     lateinit var SelectAppsString: String
 
     lateinit var SelectAppsList: MutableList<String>
+    lateinit var suparam: IXposedHookZygoteInit.StartupParam
+
 
     override fun initZygote(startupParam: IXposedHookZygoteInit.StartupParam) {
 
         XpHelper.initZygote(startupParam)
+        suparam = startupParam
+
 
 
     }
@@ -62,7 +66,6 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
                 "canHook",
                 object : XC_MethodHook() {
                     override fun beforeHookedMethod(param: MethodHookParam?) {
-
                     }
 
                     override fun afterHookedMethod(param: MethodHookParam?) {
@@ -173,6 +176,7 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
         globals["XposedBridge"] = CoerceJavaToLua.coerce(XposedBridge::class.java)
         globals["DexKitBridge"] = CoerceJavaToLua.coerce(DexKitBridge::class.java)
         globals["this"] = CoerceJavaToLua.coerce(this)
+        globals["suparam"] = CoerceJavaToLua.coerce(suparam)
         HookLib(lpparam, scriptName).call(globals)
         LuaJson().call(globals)
         LuaHttp().call(globals)

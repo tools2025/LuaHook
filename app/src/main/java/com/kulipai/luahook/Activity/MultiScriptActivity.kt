@@ -1,17 +1,26 @@
 package com.kulipai.luahook.Activity
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.RectF
 import android.os.Bundle
+import android.util.TypedValue
 import android.view.LayoutInflater
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.AttrRes
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.widget.doBeforeTextChanged
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.MaterialToolbar
@@ -78,6 +87,70 @@ class MultiScriptActivity : AppCompatActivity() {
         rec.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
         adapter = MultScriptAdapter(ScriptList, currentPackageName, appName, this, launcher)
         rec.adapter = adapter
+
+        val itemTouchHelperCallback = object : ItemTouchHelper.SimpleCallback(
+            0, // 不支持拖拽移动
+            ItemTouchHelper.LEFT // 允许向左滑动
+        ) {
+            override fun onMove(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                target: RecyclerView.ViewHolder
+            ): Boolean {
+                // 如果不需要拖拽排序，返回 false
+                return false
+            }
+
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+
+                val position = viewHolder.bindingAdapterPosition
+                // 执行删除操作
+                // 假设您的适配器有一个删除方法
+                adapter.removeItem(position,this@MultiScriptActivity)
+                // removeItem 方法内部会调用 notifyItemRemoved(position) 来更新 UI
+            }
+
+            @SuppressLint("ResourceType")
+            override fun onChildDraw(
+                c: Canvas,
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                dX: Float,
+                dY: Float,
+                actionState: Int,
+                isCurrentlyActive: Boolean
+            ) {
+                // 可选：在这里绘制滑动时的背景、图标等
+                // 例如，您可以在滑动时显示一个红色的背景和删除图标
+                val itemView = viewHolder.itemView
+                if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
+                    val p = Paint()
+                    p.color = getDynamicColor(this@MultiScriptActivity, androidx.appcompat.R.attr.colorError)
+                    val background = RectF(
+                        itemView.right + dX, itemView.top.toFloat(),
+                        itemView.right.toFloat(), itemView.bottom.toFloat()
+                    )
+                    c.drawRect(background, p)
+
+                    // 绘制删除图标（示例，您可能需要加载实际的 Drawable）
+                    val deleteIcon = getDrawable(R.drawable.delete_24px)
+                    val iconMargin = (itemView.height - deleteIcon!!.intrinsicHeight) / 2
+                    val iconTop = itemView.top + (itemView.height - deleteIcon.intrinsicHeight) / 2
+                    val iconBottom = iconTop + deleteIcon.intrinsicHeight
+                    val iconLeft = itemView.right - iconMargin - deleteIcon.intrinsicWidth
+                    val iconRight = itemView.right - iconMargin
+
+                    deleteIcon.setBounds(iconLeft, iconTop, iconRight, iconBottom)
+                    deleteIcon.setTint(getDynamicColor(this@MultiScriptActivity,
+                        com.google.android.material.R.attr.colorOnError))
+                    deleteIcon.draw(c)
+                }
+                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
+            }
+        }
+
+        val itemTouchHelper = ItemTouchHelper(itemTouchHelperCallback)
+        itemTouchHelper.attachToRecyclerView(rec)
 
 
 
@@ -153,6 +226,15 @@ class MultiScriptActivity : AppCompatActivity() {
     }
 
 
+    fun getDynamicColor(context: Context, @AttrRes colorAttributeResId: Int): Int {
+        val typedValue = TypedValue()
+        context.theme.resolveAttribute(colorAttributeResId, typedValue, true)
+        return if (typedValue.resourceId != 0) {
+            ContextCompat.getColor(context, typedValue.resourceId)
+        } else {
+            typedValue.data
+        }
+    }
     fun transformBooleanValuesToJsonArrayInMaps(
         dataList: MutableList<MutableMap.MutableEntry<String, Any?>>
     ) {

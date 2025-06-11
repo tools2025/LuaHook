@@ -385,7 +385,7 @@ class AppsFragment : Fragment() {
     @OptIn(DelicateCoroutinesApi::class)
     fun loadScript(script: String) {
         // 解析参数
-        val param = parseParameters(script)
+        val param = LShare.parseParameters(script)
         if (param?.name.isNullOrEmpty() || param.packageName.isNullOrEmpty()) {
             Toast.makeText(requireActivity(), "脚本格式错误！", Toast.LENGTH_SHORT).show()
         } else {
@@ -429,70 +429,7 @@ class AppsFragment : Fragment() {
     }
 
 
-    // 定义一个数据类来存储解析后的参数
-    data class FileParameters(
-        val name: String? = null,
-        val descript: String? = null,
-        val packageName: String? = null, // 注意：'package' 是 Kotlin 的关键字，用 packageName
-        val author: String? = null,
-        val otherParams: Map<String, String> = emptyMap() // 用于存储其他未定义的参数
-    )
 
-    /**
-     * 从文件内容的开头解析标准参数。
-     * 参数格式：-- key: value
-     *
-     * @param fileContent 文件的完整内容字符串。
-     * @return 包含解析后参数的 FileParameters 对象。
-     */
-    fun parseParameters(fileContent: String): FileParameters? {
-        try {
-            val lines = fileContent.split("\n") // 将文件内容按行分割
-            val parsedParams = mutableMapOf<String, String>()
-
-            // 遍历文件开头的行，直到遇到不符合参数格式的行
-            for (line in lines) {
-                val trimmedLine = line.trim() // 去除行首尾空格
-
-                // 检查是否是参数行
-                if (trimmedLine.startsWith("--")) {
-                    // 移除 "--" 前缀
-                    val content = trimmedLine.substring(2).trim()
-
-                    // 查找第一个冒号的位置
-                    val colonIndex = content.indexOf(":")
-
-                    if (colonIndex != -1) {
-                        val key = content.substring(0, colonIndex).trim()
-                        val value = content.substring(colonIndex + 1).trim()
-                        parsedParams[key] = value
-                    } else {
-                        // 如果一行以 -- 开头但没有冒号，则停止解析参数
-                        break
-                    }
-                } else if (trimmedLine.isEmpty()) {
-                    // 忽略空行
-                    continue
-                } else {
-                    // 遇到不以 "--" 开头且非空的行，表示参数部分结束
-                    break
-                }
-            }
-
-            return FileParameters(
-                name = parsedParams["name"],
-                descript = parsedParams["descript"],
-                packageName = parsedParams["package"], // 对应文件中的 "package"
-                author = parsedParams["author"],
-                otherParams = parsedParams.filterKeys {
-                    it != "name" && it != "descript" && it != "package" && it != "author"
-                }
-            )
-        } catch (e: Exception) {
-            Toast.makeText(requireActivity(), "脚本格式异常！", Toast.LENGTH_SHORT).show()
-        }
-        return null
-    }
 
 
 }

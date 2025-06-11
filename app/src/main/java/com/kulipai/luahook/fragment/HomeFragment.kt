@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.os.Handler
 import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
@@ -21,6 +22,11 @@ import com.google.android.material.card.MaterialCardView
 import com.kulipai.luahook.Activity.EditActivity
 import com.kulipai.luahook.R
 import com.kulipai.luahook.util.ShellManager
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 
 fun canHook(): Boolean {
@@ -61,6 +67,7 @@ class HomeFragment : Fragment() {
     }
 
 
+    @OptIn(DelicateCoroutinesApi::class)
     @SuppressLint("MissingInflatedId", "SetTextI18n")
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -70,6 +77,7 @@ class HomeFragment : Fragment() {
 
         val view = inflater.inflate(R.layout.home, container, false)
         val card1: MaterialCardView by lazy { view.findViewById(R.id.card1) }
+        val howToActivateCard: MaterialCardView by lazy { view.findViewById(R.id.how_to_activate) }
         val card: MaterialCardView by lazy { view.findViewById(R.id.card) }
         val img: ImageView by lazy { view.findViewById(R.id.img) }
         val status: TextView by lazy { view.findViewById(R.id.status) }
@@ -137,6 +145,13 @@ class HomeFragment : Fragment() {
                     )
                 )
 
+            } else {
+
+                //显示教程
+                GlobalScope.launch(Dispatchers.Main) {
+                    delay(400)
+                    howToActivateCard.visibility = View.VISIBLE
+                }
             }
 
         }

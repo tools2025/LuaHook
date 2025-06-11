@@ -1,4 +1,5 @@
 package com.kulipai.luahook
+import AppCrashHandler
 import DataRepository.ShellInit
 import LanguageUtil
 import android.app.Application
@@ -83,6 +84,7 @@ class MyApplication : Application() {
     }
     override fun onCreate() {
         super.onCreate()
+        AppCrashHandler.init(this)
         DynamicColors.applyToActivitiesIfAvailable(this)
         instance = this
         LanguageUtil.applyLanguage(this)

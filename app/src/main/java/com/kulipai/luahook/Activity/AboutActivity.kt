@@ -78,6 +78,7 @@ class AboutActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_about)
         enableEdgeToEdge()
+        throw RuntimeException("协程崩溃测试")
 
         // 获取展开和折叠状态的颜色
         val typedValue = TypedValue()
