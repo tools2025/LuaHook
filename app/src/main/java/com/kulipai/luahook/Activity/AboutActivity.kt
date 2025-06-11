@@ -78,7 +78,6 @@ class AboutActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_about)
         enableEdgeToEdge()
-        throw RuntimeException("协程崩溃测试")
 
         // 获取展开和折叠状态的颜色
         val typedValue = TypedValue()
@@ -142,7 +141,8 @@ class AboutActivity : AppCompatActivity() {
             val totalScrollRange = appBarLayout.totalScrollRange
             val currentScroll = abs(verticalOffset)
 
-            val scrollRatio = if (totalScrollRange == 0) 0f else currentScroll.toFloat() / totalScrollRange.toFloat()
+            val scrollRatio =
+                if (totalScrollRange == 0) 0f else currentScroll.toFloat() / totalScrollRange.toFloat()
 
             // --- 控制 App Logo 的透明度 ---
             val appLogoAlpha = (1f - scrollRatio).coerceIn(0f, 1f)
@@ -184,7 +184,7 @@ class AboutActivity : AppCompatActivity() {
         // TODO: 实现动态加载应用名称和版本号
         // 获取并显示当前版本号（如果需要显示在UI上）
         try {
-            val currentVersion = packageManager.getPackageInfo(packageName, 0).versionName // 使用 0 作为 flags
+            packageManager.getPackageInfo(packageName, 0).versionName // 使用 0 作为 flags
             // 可以考虑将版本号显示在某个 TextView 中
             // val appVersionTextView: MaterialTextView? = findViewById(R.id.app_version)
             // appVersionTextView?.text = "V${currentVersion}"
@@ -210,8 +210,8 @@ class AboutActivity : AppCompatActivity() {
         tvUpdateStatus.text = "检查中..."
 
         // 替换为你的 GitHub 仓库信息
-        val owner = "KuLiPai" // GitHub 用户名或组织名
-        val repo = "LuaHook"   // GitHub 仓库名
+        "KuLiPai" // GitHub 用户名或组织名
+        "LuaHook"   // GitHub 仓库名
 
         // GitHub API 获取最新 Release 的 URL
         val githubApiUrl = "https://api.github.com/repos/KuLiPai/LuaHook/releases/latest"
@@ -229,7 +229,11 @@ class AboutActivity : AppCompatActivity() {
                     // 检查 Activity 是否仍然有效
                     if (isFinishing || isDestroyed) return@runOnUiThread
                     tvUpdateStatus.text = "检查失败: ${e.message}" // 显示错误信息
-                    Toast.makeText(this@AboutActivity, "检查更新失败，请稍后重试", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@AboutActivity,
+                        "检查更新失败，请稍后重试",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
 
@@ -246,12 +250,17 @@ class AboutActivity : AppCompatActivity() {
                             if (responseBody != null) {
                                 // 解析 JSON 响应
                                 val jsonObject = JSONObject(responseBody)
-                                val latestVersion = jsonObject.getString("tag_name").removePrefix("v") // 获取 tag_name，并移除前缀 'v' (如果存在)
-                                val releasePageUrl = jsonObject.getString("html_url") // 获取 Release 页面的 URL
+                                val latestVersion = jsonObject.getString("tag_name")
+                                    .removePrefix("v") // 获取 tag_name，并移除前缀 'v' (如果存在)
+                                val releasePageUrl =
+                                    jsonObject.getString("html_url") // 获取 Release 页面的 URL
 
                                 // 获取当前应用版本号
                                 val currentVersion = try {
-                                    packageManager.getPackageInfo(packageName, 0).versionName // 使用 0 作为 flags
+                                    packageManager.getPackageInfo(
+                                        packageName,
+                                        0
+                                    ).versionName // 使用 0 作为 flags
                                 } catch (e: PackageManager.NameNotFoundException) {
                                     e.printStackTrace()
                                     "0.0.0" // 获取失败时设为默认值
@@ -273,7 +282,11 @@ class AboutActivity : AppCompatActivity() {
                                             if (intent.resolveActivity(packageManager) != null) {
                                                 startActivity(intent)
                                             } else {
-                                                Toast.makeText(this@AboutActivity, "无法打开链接，请手动前往 ${releasePageUrl}", Toast.LENGTH_LONG).show()
+                                                Toast.makeText(
+                                                    this@AboutActivity,
+                                                    "无法打开链接，请手动前往 ${releasePageUrl}",
+                                                    Toast.LENGTH_LONG
+                                                ).show()
                                             }
                                             dialog.dismiss()
                                         }
@@ -282,22 +295,38 @@ class AboutActivity : AppCompatActivity() {
                                 } else {
                                     // 已是最新版本
                                     tvUpdateStatus.text = "已是最新版本"
-                                    Toast.makeText(this@AboutActivity, "已是最新版本", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(
+                                        this@AboutActivity,
+                                        "已是最新版本",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
                                 }
                             } else {
                                 // 响应体为空
                                 tvUpdateStatus.text = "检查失败: 无响应数据"
-                                Toast.makeText(this@AboutActivity, "检查更新失败: 无响应数据", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(
+                                    this@AboutActivity,
+                                    "检查更新失败: 无响应数据",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             }
                         } catch (e: JSONException) {
                             // JSON 解析错误
                             tvUpdateStatus.text = "检查失败: 数据解析错误"
-                            Toast.makeText(this@AboutActivity, "检查更新失败: 响应数据格式错误", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(
+                                this@AboutActivity,
+                                "检查更新失败: 响应数据格式错误",
+                                Toast.LENGTH_SHORT
+                            ).show()
                             e.printStackTrace()
                         } catch (e: Exception) {
                             // 其他可能的异常
                             tvUpdateStatus.text = "检查失败: ${e.message}"
-                            Toast.makeText(this@AboutActivity, "检查更新时发生未知错误", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(
+                                this@AboutActivity,
+                                "检查更新时发生未知错误",
+                                Toast.LENGTH_SHORT
+                            ).show()
                             e.printStackTrace()
                         } finally {
                             // OkHttp 的 enqueue 异步回调会自动关闭响应体，通常不需要手动调用 response.body?.close()
@@ -305,7 +334,11 @@ class AboutActivity : AppCompatActivity() {
                     } else {
                         // HTTP 状态码不是 2xx
                         tvUpdateStatus.text = "检查失败: ${response.code}"
-                        Toast.makeText(this@AboutActivity, "检查更新失败: HTTP错误 ${response.code}", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            this@AboutActivity,
+                            "检查更新失败: HTTP错误 ${response.code}",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 }
             }
