@@ -207,7 +207,7 @@ class AboutActivity : AppCompatActivity() {
     // --- 检查更新函数 (使用 OkHttp 获取 GitHub Release) ---
     private fun checkUpdate() {
         // 立即更新状态文本
-        tvUpdateStatus.text = "检查中..."
+        tvUpdateStatus.text = resources.getString(R.string.checking)
 
         // 替换为你的 GitHub 仓库信息
         "KuLiPai" // GitHub 用户名或组织名
