@@ -29,7 +29,6 @@
     <string name="cancel">取消</string>
     <string name="language">语言</string>
     <string name="follow_system">跟随系统</string>
-    <string name="appearance">界面外观</string>
     <string name="setting">设置</string>
     <string name="senior">高级</string>
     <string name="developers">开发者</string>
@@ -42,12 +41,12 @@
     <string name="update_available">发现新版本，点击更新！</string>
     <string name="no_update_available">当前已是最新版本</string>
     <string name="update_check_failed">检查更新失败，请稍后再试</string>
-    <string name="update_dialog_message">有新版本可用：%s\n\n请点击更新按钮下载安装。</string>
     <string name="className">类名</string>
     <string name="funcName">方法名</string>
     <string name="param">参数</string>
     <string name="funcSign">方法签名</string>
     <string name="plugins">插件</string>
-    <string name="how_to_activate">1.通过Shizuku激活\n2.通过Root激活\n详细教程请移步官网:\nhttps://luahook.kulipai.top/activate.html
-    </string>
+    <string name="how_to_activate">"1.通过Shizuku激活 2.通过Root激活 详细教程请移步官网: https://luahook.kulipai.top/activate.html     "</string>
+    <string name="appearance">界面外观</string>
+    <string name="update_dialog_message">有新版本可用：%s  请点击更新按钮下载安装。</string>
 </resources>
