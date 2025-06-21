@@ -30,6 +30,7 @@
     <string name="cancel">Cancel</string>
     <string name="language">Language</string>
     <string name="follow_system">Follow the system</string>
+    <string name="how_to_activate">1. Activate via Shizuku 2. Activate via Root For detailed instructions, please visit the official website: https://luahook.kulipai.top/activate.html</string>
     <string name="appearance">Appearance</string>
     <string name="setting">Setting</string>
     <string name="senior">Senior</string>
@@ -38,4 +39,17 @@
     <string name="open_source_protocol2">Review the open source protocols used by the project</string>
     <string name="tipping">Tipping</string>
     <string name="tipping2">To make LuaHook bring you better service</string>
+    <string name="check_update_title">Check for updates</string>
+    <string name="check_update_subtitle">Check the latest version of the app</string>
+    <string name="update_available">Found a new version, click Update!</string>
+    <string name="no_update_available">Currently the latest version</string>
+    <string name="update_check_failed">Checking for updates failed, please try again later</string>
+    <string name="update_dialog_message">A new version is available: %s Please click the Update button to download and install.</string>
+    <string name="className">Class name</string>
+    <string name="funcName">Method name</string>
+    <string name="param">Parameter</string>
+    <string name="funcSign">Method signature</string>
+    <string name="funcSign">method signature</string>
+    <string name="plugins">Plugins</string>
+    <string name="plugins">Plugins</string>
 </resources>
