@@ -1,3 +1,5 @@
+import com.android.build.api.dsl.AndroidResources
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -7,7 +9,7 @@ plugins {
 android {
 
     namespace = "com.kulipai.luahook"
-    compileSdk = 35
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
     buildFeatures {
         buildConfig = true    // 开启BuildConfig类的生成
@@ -16,8 +18,8 @@ android {
 
     defaultConfig {
         applicationId = "com.kulipai.luahook"
-        minSdk = 28
-        targetSdk = 35
+        minSdk = libs.versions.minSdk.get().toInt()
+        targetSdk = 36
         versionCode = 22
         versionName = "3.8"
 
@@ -46,7 +48,7 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
-    aaptOptions {
+    fun AndroidResources.() {
         additionalParameters += listOf("--package-id", "0x69", "--allow-reserved-package-id")
     }
 }
