@@ -11,9 +11,13 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/libxposed" />
+            <option value="$PROJECT_DIR$/libxposed/api" />
+            <option value="$PROJECT_DIR$/libxposed/checks" />
+            <option value="$PROJECT_DIR$/libxposed/interface" />
+            <option value="$PROJECT_DIR$/libxposed/service" />
           </set>
         </option>
-        <option name="resolveExternalAnnotations" value="false" />
       </GradleProjectSettings>
     </option>
   </component>

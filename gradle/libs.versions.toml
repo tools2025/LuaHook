@@ -1,11 +1,12 @@
 [versions]
 agp = "8.9.1"
+annotation = "1.9.1"
 api = "82"
 apiVersion = "13.1.5"
 core = "6.0.0"
 dexkit = "2.0.5"
 fragmentKtx = "1.8.7"
-kotlin = "2.1.20"
+kotlin = "2.2.0"
 coreKtx = "1.16.0"
 junit = "4.13.2"
 junitVersion = "1.2.1"
@@ -22,8 +23,12 @@ provider = "13.1.5"
 rippleComponentsAndroid = "a7b66126c6"
 rippleInsets = "1.1.0"
 xphelper = "2.7"
+compileSdk = "35"
+minSdk = "28"
+lint = "31.5.1"
 
 [libraries]
+androidx-annotation = { module = "androidx.annotation:annotation", version.ref = "annotation" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-fragment-ktx = { module = "androidx.fragment:fragment-ktx", version.ref = "fragmentKtx" }
 androidx-lifecycle-viewmodel-ktx = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycleViewmodelKtx" }
@@ -46,8 +51,12 @@ ripple-components-android = { module = "com.github.ConcerroX:ripple-components-a
 ripple-insets = { module = "com.github.ConcerroX:ripple-insets", version.ref = "rippleInsets" }
 shizuku-api = { module = "dev.rikka.shizuku:api", version.ref = "apiVersion" }
 xphelper = { module = "com.github.suzhelan:XpHelper", version.ref = "xphelper" }
+lint-api = { module = "com.android.tools.lint:lint-api", version.ref = "lint" }
+lint-checks = { module = "com.android.tools.lint:lint-checks", version.ref = "lint" }
+kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
 
 [plugins]
+agp-lib = { id = "com.android.library", version.ref = "agp" }
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
-
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

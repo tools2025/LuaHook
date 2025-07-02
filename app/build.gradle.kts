@@ -34,14 +34,7 @@ android {
             )
         }
     }
-    signingConfigs {
-        create("release") {
-            storeFile = file(System.getProperty("user.dir") + "/release.keystore")
-            storePassword = project.findProperty("MY_STORE_PASSWORD") as String?
-            keyAlias = project.findProperty("MY_KEY_ALIAS") as String?
-            keyPassword = project.findProperty("MY_KEY_PASSWORD") as String?
-        }
-    }
+
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -83,4 +76,10 @@ dependencies {
     implementation(libs.androidx.preference.ktx)
     implementation(libs.shizuku.api)
     implementation(libs.provider) // 如果你需要使用 ShizukuProvider
+
+    //Xposed service 100
+    compileOnly(project(":libxposed:api"))
+    implementation(project(":libxposed:service"))
+
+
 }
