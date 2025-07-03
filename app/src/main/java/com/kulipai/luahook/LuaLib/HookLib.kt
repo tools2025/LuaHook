@@ -1,5 +1,6 @@
 import android.content.pm.PackageManager
 import android.os.Build
+import com.kulipai.luahook.LPParam
 import com.kulipai.luahook.util.d
 import com.kulipai.luahook.util.e
 import de.robv.android.xposed.XC_MethodHook
@@ -21,7 +22,7 @@ import java.lang.reflect.Modifier
 import java.lang.reflect.Proxy
 
 
-class HookLib(private val lpparam: LoadPackageParam, private val scriptName: String = "") :
+class HookLib(private val lpparam: LPParam, private val scriptName: String = "") :
     OneArgFunction() {
 
     override fun call(globals: LuaValue): LuaValue {

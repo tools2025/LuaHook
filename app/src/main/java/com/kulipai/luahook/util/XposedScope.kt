@@ -30,16 +30,17 @@ object XposedScope {
     fun requestManyScope(context: Context, pkgList: MutableList<String>, index: Int) {
         var pkg = ""
         withService {
+            pkgList -= it.scope
             if (index<pkgList.size){
                 pkg = pkgList[index]
 
                 it.requestScope(pkg,
                     object : XposedService.OnScopeEventListener {
-                        override fun onScopeRequestPrompted(packageName: String) {
-                            runOnUiThread {
-
-                            }
-                        }
+//                        override fun onScopeRequestPrompted(packageName: String) {
+//                            runOnUiThread {
+//
+//                            }
+//                        }
 
                         override fun onScopeRequestApproved(packageName: String) {
                             runOnUiThread {
@@ -50,21 +51,21 @@ object XposedScope {
                             }
                         }
 
-                        override fun onScopeRequestDenied(packageName: String) {
-                            runOnUiThread {
-                            }
-                        }
-
-                        override fun onScopeRequestTimeout(packageName: String) {
-                            runOnUiThread {
-                            }
-                        }
-
-                        override fun onScopeRequestFailed(packageName: String, message: String) {
-                            runOnUiThread {
-
-                            }
-                        }
+//                        override fun onScopeRequestDenied(packageName: String) {
+//                            runOnUiThread {
+//                            }
+//                        }
+//
+//                        override fun onScopeRequestTimeout(packageName: String) {
+//                            runOnUiThread {
+//                            }
+//                        }
+//
+//                        override fun onScopeRequestFailed(packageName: String, message: String) {
+//                            runOnUiThread {
+//
+//                            }
+//                        }
                     }
 
                 )

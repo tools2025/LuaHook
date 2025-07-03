@@ -8,14 +8,19 @@ import LuaJson
 import LuaResourceBridge
 import LuaSharedPreferences
 import Luafile
+import android.annotation.SuppressLint
+import android.content.pm.ApplicationInfo
 import com.kulipai.luahook.util.LShare
+import com.kulipai.luahook.util.d
 import com.kulipai.luahook.util.e
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.IXposedHookZygoteInit
-import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
+import io.github.libxposed.api.XposedInterface
+import io.github.libxposed.api.XposedModule
+import io.github.libxposed.api.XposedModuleInterface
 import org.json.JSONArray
 import org.json.JSONObject
 import org.luaj.Globals
@@ -28,8 +33,37 @@ import top.sacz.xphelper.dexkit.DexFinder
 import java.io.File
 
 
-class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
+lateinit var  LPParam_processName: String
 
+interface LPParam {
+    val packageName: String
+    val classLoader: ClassLoader
+    val appInfo: ApplicationInfo
+    val isFirstApplication: Boolean
+    val processName: String
+
+}
+
+
+class LoadPackageParamWrapper(val origin: LoadPackageParam) : LPParam {
+    override val packageName get() = origin.packageName
+    override val classLoader get() = origin.classLoader
+    override val appInfo: ApplicationInfo get() = origin.appInfo
+    override val processName: String get() = origin.processName
+    override val isFirstApplication: Boolean get() = origin.isFirstApplication
+}
+
+class ModuleInterfaceParamWrapper(val origin: XposedModuleInterface.PackageLoadedParam) : LPParam {
+    override val packageName get() = origin.packageName
+    override val classLoader get() = origin.classLoader
+    override val appInfo: ApplicationInfo get() = origin.applicationInfo
+    override val processName: String get() = LPParam_processName
+    override val isFirstApplication: Boolean get() = origin.isFirstPackage
+
+}
+
+
+class MainHook(base: XposedInterface, param: XposedModuleInterface.ModuleLoadedParam) : IXposedHookZygoteInit, IXposedHookLoadPackage, XposedModule(base, param) {
     companion object {
 //        init {
 //            System.loadLibrary("dexkit")
@@ -48,37 +82,44 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
     lateinit var suparam: IXposedHookZygoteInit.StartupParam
 
 
+
+    //api 100
+    init {
+        LPParam_processName=param.processName
+    }
+
+
+
+    @SuppressLint("DiscouragedPrivateApi")
+    override fun onPackageLoaded(lpparam: XposedModuleInterface.PackageLoadedParam) {
+        super.onPackageLoaded(lpparam)
+        suparam = createStartupParam(this.applicationInfo.sourceDir)
+        XpHelper.initZygote(suparam)
+
+        LuaHook_init(ModuleInterfaceParamWrapper(lpparam))
+
+    }
+
+
+
+
     override fun initZygote(startupParam: IXposedHookZygoteInit.StartupParam) {
 
         XpHelper.initZygote(startupParam)
         suparam = startupParam
 
-
-
     }
 
 
-    private fun canHook(lpparam: LoadPackageParam) {
-        if (lpparam.packageName == MODULE_PACKAGE) {
-            XposedHelpers.findAndHookMethod(
-                "com.kulipai.luahook.fragment.HomeFragmentKt",
-                lpparam.classLoader,
-                "canHook",
-                object : XC_MethodHook() {
-                    override fun beforeHookedMethod(param: MethodHookParam?) {
-                    }
-
-                    override fun afterHookedMethod(param: MethodHookParam?) {
-                        if (param != null) {
-                            param.result = true
-                        }
-                    }
-                }
-            )
-        }
-    }
 
     override fun handleLoadPackage(lpparam: LoadPackageParam) {
+        LuaHook_init(LoadPackageParamWrapper(lpparam))
+
+
+    }
+
+
+    fun LuaHook_init(lpparam: LPParam) {
 
         SelectAppsString = read(PATH + "/apps.txt").replace("\n", "")
 
@@ -89,8 +130,6 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
         } else {
             SelectAppsList = mutableListOf()
         }
-
-        canHook(lpparam)
 
 
         //全局脚本
@@ -134,9 +173,7 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
             }
         }
 
-
     }
-
 
     fun simplifyLuaError(raw: String): String {
         val lines = raw.lines()
@@ -166,7 +203,7 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
     }
 
 
-    fun CreateGlobals(lpparam: LoadPackageParam, scriptName: String = ""): Globals {
+    fun CreateGlobals(lpparam: LPParam, scriptName: String = ""): Globals {
         val globals: Globals = JsePlatform.standardGlobals()
 
         //加载Lua模块
@@ -215,6 +252,21 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
             mutableMapOf()
         }
 
+    }
+
+
+    fun createStartupParam(modulePath: String): IXposedHookZygoteInit.StartupParam {
+        val clazz = IXposedHookZygoteInit.StartupParam::class.java
+        val constructor = clazz.getDeclaredConstructor()
+        constructor.isAccessible = true
+        val instance = constructor.newInstance()
+
+        // 设置字段值
+        val fieldModulePath = clazz.getDeclaredField("modulePath")
+        fieldModulePath.isAccessible = true
+        fieldModulePath.set(instance, modulePath)
+
+        return instance
     }
 
 

@@ -91,6 +91,11 @@ class LanguageLua private constructor() : Language() {
             package_sp.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
         )
 
+        super.addBasePackage(
+            "XpHelper",
+         package_XpHelper.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        )
+
 
         super.addBasePackage(
             "xsp",
@@ -174,6 +179,7 @@ class LanguageLua private constructor() : Language() {
             "startsSystemServer|modulePath"
         private const val package_http = "get|post|upload|delete|put|postJson|head|download"
         private const val package_sp = "clear|getAll|remove|contains|get|set"
+        private const val package_XpHelper = "initContext|initZygote|setConfigPath|setConfigPassword|injectResourcesToContext|moduleApkPath"
         private const val package_xsp = "getAll|contains|get|reload"
         private const val package_DexKitBridge =
             "close|initFullCache|setThreadNum|getDexNum|exportDexFile|batchFindClassUsingStrings|batchFindMethodUsingStrings|findClass|findMethod|findField|getClassData|getMethodData|getFieldData|getCallMethods|getInvokeMethods|create"
@@ -225,6 +231,7 @@ class LanguageLua private constructor() : Language() {
             "findClass",
             "DexFinder",
             "hookAll",
+            "XpHelper",
             "arrayOf",
             "callMethod",
             "getStaticField",
