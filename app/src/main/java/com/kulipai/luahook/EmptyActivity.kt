@@ -13,6 +13,7 @@ import android.app.Application
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import com.kulipai.luahook.LuaLib.LuaActivity
 //import androidx.activity.enableEdgeToEdge
 import com.kulipai.luahook.util.d
 import de.robv.android.xposed.XposedBridge
@@ -51,15 +52,13 @@ class EmptyActivity : BaseActivity() {
         globals["DexKitBridge"] = CoerceJavaToLua.coerce(DexKitBridge::class.java)
         globals["this"] = CoerceJavaToLua.coerce(this)
         globals["activity"] = CoerceJavaToLua.coerce(this)
-        globals["loadlayout"] = CoerceJavaToLua.coerce(loadlayout(this,globals))
+        LuaActivity(this).call(globals)
         LuaJson().call(globals)
         LuaHttp().call(globals)
         Luafile().call(globals)
         LuaSharedPreferences().call(globals)
         globals["imports"] = LuaImport(this::class.java.classLoader!!, this::class.java.classLoader!!, globals)
-
         LuaResourceBridge().registerTo(globals)
-
         LuaDrawableLoader().registerTo(globals)
         return globals
     }

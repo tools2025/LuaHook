@@ -13,6 +13,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.kulipai.luahook.LuaLib.LuaActivity
 import com.kulipai.luahook.R
 import com.kulipai.luahook.util.d
 import com.myopicmobile.textwarrior.common.LuaParser
@@ -111,7 +112,7 @@ class ScriptSetActivity : AppCompatActivity() {
             }
         })
         globals["activity"] = CoerceJavaToLua.coerce(this)
-        globals["loadlayout"] = CoerceJavaToLua.coerce(loadlayout(this, globals))
+        LuaActivity(this).call(globals)
         LuaJson().call(globals)
         LuaHttp().call(globals)
         Luafile().call(globals)

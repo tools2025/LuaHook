@@ -10,6 +10,7 @@ import LuaSharedPreferences
 import Luafile
 import android.annotation.SuppressLint
 import android.content.pm.ApplicationInfo
+import com.kulipai.luahook.LuaLib.LuaActivity
 import com.kulipai.luahook.util.LShare
 import com.kulipai.luahook.util.d
 import com.kulipai.luahook.util.e
@@ -213,15 +214,14 @@ class MainHook(base: XposedInterface, param: XposedModuleInterface.ModuleLoadedP
         globals["DexKitBridge"] = CoerceJavaToLua.coerce(DexKitBridge::class.java)
         globals["this"] = CoerceJavaToLua.coerce(this)
         globals["suparam"] = CoerceJavaToLua.coerce(suparam)
+        LuaActivity(null).call(globals)
         HookLib(lpparam, scriptName).call(globals)
         LuaJson().call(globals)
         LuaHttp().call(globals)
         Luafile().call(globals)
         LuaSharedPreferences().call(globals)
         globals["imports"] = LuaImport(lpparam.classLoader, this::class.java.classLoader!!, globals)
-
         LuaResourceBridge().registerTo(globals)
-
         LuaDrawableLoader().registerTo(globals)
         return globals
     }

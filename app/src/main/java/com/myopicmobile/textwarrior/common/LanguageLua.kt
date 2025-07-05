@@ -226,6 +226,7 @@ class LanguageLua private constructor() : Language() {
             "resources",
             "hookcotr",
             "hookctor",
+            "injectActivity",
             "XposedBridge",
             "XposedHelpers",
 //            "createProxy",
