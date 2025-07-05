@@ -31,3 +31,4 @@
 # 保留整个 LuaJ 库
 -keep class org.luaj.** { *; }
 -dontwarn org.luaj.**
+-keep class androidx.** { *; }
