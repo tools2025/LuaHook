@@ -25,6 +25,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import org.luaj.Globals
 import org.luaj.LuaValue
+import org.luaj.android.loadlayout
 import org.luaj.lib.jse.CoerceJavaToLua
 import org.luaj.lib.jse.JsePlatform
 import org.luckypray.dexkit.DexKitBridge
@@ -114,8 +115,6 @@ class MainHook(base: XposedInterface, param: XposedModuleInterface.ModuleLoadedP
 
     override fun handleLoadPackage(lpparam: LoadPackageParam) {
         LuaHook_init(LoadPackageParamWrapper(lpparam))
-
-
     }
 
 

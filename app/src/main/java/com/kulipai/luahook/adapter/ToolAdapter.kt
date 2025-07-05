@@ -15,6 +15,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import com.kulipai.luahook.R
 import com.kulipai.luahook.util.d
+import java.util.regex.Pattern
 
 class ToolAdapter(
     private val symbols: List<String>,
@@ -184,15 +185,54 @@ class ToolAdapter(
 //                        }
 //                        bottomSheetDialog.show()
                         MaterialAlertDialogBuilder(context)
-                            .setTitle("导入方法签名")
+                            .setTitle("导入Smali")
                             .setView(view)
                             .setPositiveButton("确定") { dialog, which ->
                                 val input: String =
                                     view.findViewById<TextInputEditText>(R.id.input).text.toString()
 
-                                var methodInfo: MethodInfo
                                 try {
-                                    methodInfo = parseMethodSignature(input)
+                                    if(input.startsWith("invoke")) {
+                                        val InvokeInfo = parseDalvikInstruction(input)!!
+                                        var invokelua =""
+                                        if(InvokeInfo.get("methodName") == "<init>") {
+                                            invokelua = """
+                                                imports "${InvokeInfo["className"].toString()}"
+                                                ${InvokeInfo["className"].toString().substringAfterLast(".")}()
+                                            """.trimIndent()
+                                        }else if(input.startsWith("invoke-static")) {
+                                            invokelua = """
+                                                imports "${InvokeInfo["className"].toString()}"
+                                                ${InvokeInfo["className"].toString().substringAfterLast(".")}.${InvokeInfo["methodName"].toString()}()
+                                            """.trimIndent()
+                                        }else{
+                                            invokelua = """
+                                                imports "${InvokeInfo["className"].toString()}"
+                                                ${InvokeInfo["className"].toString().substringAfterLast(".")}().${InvokeInfo["methodName"].toString()}()
+                                            """.trimIndent()
+                                        }
+                                        editor.insert(editor.selectionStart, invokelua)
+                                        dialog.dismiss()
+
+                                    }else{
+
+                                        val methodInfo = parseMethodSignature(input)
+                                        val par = methodInfo.parameterTypes
+                                        par.size.toString().d()
+                                        var p =
+                                            if (par.isEmpty()) "" else "\n" + par.joinToString(",") { "\"${it.trim()}\"" } + ","
+
+                                        var hookLua: String
+                                        if (methodInfo.methodName == "<init>") {
+                                            hookLua =
+                                                "hookcotr(\"${methodInfo.className}\",\nlpparam.classLoader,$p\nfunction(it)\n\nend,\nfunction(it)\n\nend)"
+                                        } else {
+                                            hookLua =
+                                                "hook(\"${methodInfo.className}\",\nlpparam.classLoader,\n\"${methodInfo.methodName}\",$p\nfunction(it)\n\nend,\nfunction(it)\n\nend)"
+                                        }
+                                        editor.insert(editor.selectionStart, hookLua)
+                                        dialog.dismiss()
+                                    }
 
                                 } catch (e: Exception) {
                                     Toast.makeText(context, "参数错误", Toast.LENGTH_SHORT).show()
@@ -200,23 +240,7 @@ class ToolAdapter(
                                 }
 
 
-                                val par = methodInfo.parameterTypes
-                                par.size.toString().d()
-                                var p =
-                                    if (par.isEmpty()) "" else "\n" + par.joinToString(",") { "\"${it.trim()}\"" } + ","
 
-                                var hookLua: String
-                                if (methodInfo.methodName == "<init>") {
-                                    hookLua =
-                                        "hookcotr(\"${methodInfo.className}\",\nlpparam.classLoader,$p\nfunction(it)\n\nend,\nfunction(it)\n\nend)"
-                                } else {
-                                    hookLua =
-                                        "hook(\"${methodInfo.className}\",\nlpparam.classLoader,\n\"${methodInfo.methodName}\",$p\nfunction(it)\n\nend,\nfunction(it)\n\nend)"
-
-                                }
-
-                                editor.insert(editor.selectionStart, hookLua)
-                                dialog.dismiss()
                             }
                             .setNegativeButton("取消") { dialog, which ->
                                 dialog.dismiss()
@@ -732,6 +756,55 @@ class ToolAdapter(
 
     override fun getItemCount(): Int {
         return symbols.size
+    }
+
+
+
+    fun parseDalvikInstruction(instruction: String): Map<String, String>? {
+        // 匹配 invoke-direct
+        val directPattern = Pattern.compile("invoke-direct \\{([^}]+)\\}, L([^;]+);->([^\\(]+)\\((.*)\\)(.*)\\s*?")
+        // 匹配 invoke-virtual
+        val virtualPattern = Pattern.compile("invoke-virtual \\{([^}]+)\\}, L([^;]+);->([^\\(]+)\\((.*)\\)(.*)\\s*?")
+        // 匹配 invoke-static
+        val staticPattern = Pattern.compile("invoke-static \\{([^}]+)\\}, L([^;]+);->([^\\(]+)\\((.*)\\)(.*)\\s*?")
+
+        val directMatcher = directPattern.matcher(instruction)
+        if (directMatcher.matches()) {
+            return mapOf(
+                "instructionType" to "invoke-direct",
+                "registers" to directMatcher.group(1), // p1
+                "className" to directMatcher.group(2).replace('/', '.'), // Ljava/lang/StringBuilder -> java.lang.StringBuilder
+                "methodName" to directMatcher.group(3), // <init>
+                "parameters" to directMatcher.group(4), // 参数类型，这里是空
+                "returnType" to directMatcher.group(5) // 返回类型，这里是 V
+            )
+        }
+
+        val virtualMatcher = virtualPattern.matcher(instruction)
+        if (virtualMatcher.matches()) {
+            return mapOf(
+                "instructionType" to "invoke-virtual",
+                "registers" to virtualMatcher.group(1), // p1
+                "className" to virtualMatcher.group(2).replace('/', '.'), // Landroid/widget/Toast -> android.widget.Toast
+                "methodName" to virtualMatcher.group(3), // show
+                "parameters" to virtualMatcher.group(4), // 参数类型，这里是空
+                "returnType" to virtualMatcher.group(5) // 返回类型，这里是 V
+            )
+        }
+
+        val staticMatcher = staticPattern.matcher(instruction)
+        if (staticMatcher.matches()) {
+            return mapOf(
+                "instructionType" to "invoke-static",
+                "registers" to staticMatcher.group(1), // p1, p2, v0
+                "className" to staticMatcher.group(2).replace('/', '.'), // Landroid/widget/Toast -> android.widget.Toast
+                "methodName" to staticMatcher.group(3), // makeText
+                "parameters" to staticMatcher.group(4), // 参数类型，Landroid/content/Context;Ljava/lang/CharSequence;I
+                "returnType" to staticMatcher.group(5) // 返回类型，Landroid/widget/Toast;
+            )
+        }
+
+        return null // 如果不匹配任何已知模式则返回 null
     }
 
 

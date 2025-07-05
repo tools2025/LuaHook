@@ -17,7 +17,7 @@ class LanguageLua private constructor() : Language() {
         super.setKeywords(Companion.keywords)
 
         super.setNames(Companion.names)
-        super.setNames(Companion.luaHookKey)
+        super.setNames(luaHookKey)
         super.addBasePackage(
             "io",
             package_io.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
@@ -201,7 +201,9 @@ class LanguageLua private constructor() : Language() {
 
         val luaHookKey = arrayOf(
             "hook",
+            "replace",
 //            "Xposed",
+            "import",
             "log",
             "setField",
             "getField",

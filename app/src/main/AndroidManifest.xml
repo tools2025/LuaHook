@@ -27,6 +27,9 @@
             android:name=".Activity.MultiScriptActivity"
             android:exported="false" />
         <activity
+            android:name=".Activity.ScriptSetActivity"
+            android:exported="false" />
+        <activity
             android:name=".Welcome"
             android:exported="false" />
         <activity

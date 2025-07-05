@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
+import android.widget.Button
 import android.widget.TextView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.recyclerview.widget.RecyclerView
@@ -15,6 +16,7 @@ import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.kulipai.luahook.Activity.AppsEdit
+import com.kulipai.luahook.Activity.ScriptSetActivity
 import com.kulipai.luahook.R
 import com.kulipai.luahook.util.LShare
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -45,6 +47,7 @@ class MultScriptAdapter(
         val description: TextView = itemView.findViewById(R.id.description)
         val logoText: TextView = itemView.findViewById(R.id.logoText)
         val switchWidget: MaterialSwitch = itemView.findViewById(R.id.switchWidget)
+        val setButton: Button = itemView.findViewById(R.id.setButton)
 
 
         init {
@@ -97,6 +100,12 @@ class MultScriptAdapter(
                 true
             }
 
+            setButton.setOnClickListener {
+                val intent = Intent(context, ScriptSetActivity::class.java)
+                intent.putExtra("path", LShare.DIR + LShare.AppScript + "/" + currentPackageName + "/" + conf[bindingAdapterPosition].key + ".lua")
+                context.startActivity(intent)
+            }
+
             switchWidget.setOnClickListener {
 
                 val innerList = conf[bindingAdapterPosition].value as org.json.JSONArray
@@ -115,6 +124,8 @@ class MultScriptAdapter(
                     LShare.writeMap(path, conf.associate { it.key to it.value }.toMutableMap())
                 }
             }
+
+
 
         }
     }
