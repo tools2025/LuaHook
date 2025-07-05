@@ -140,7 +140,7 @@ class AppsEdit : AppCompatActivity() {
             listOf(
                 "Hook方法",
                 "Hook构造",
-                "方法签名",
+                "导入Smali",
                 "语法转换"
             )
 
@@ -198,6 +198,7 @@ class AppsEdit : AppCompatActivity() {
             ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
         menu?.add(0, 9, 0, "搜索")?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
         menu?.add(0, 15, 0, "分享")?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
+        menu?.add(0, 25, 0, "设置")?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
         return true
     }
 
@@ -298,6 +299,14 @@ class AppsEdit : AppCompatActivity() {
                     )
                 }
 
+                true
+            }
+
+            25 -> {
+
+                val intent = Intent(this, ScriptSetActivity::class.java)
+                intent.putExtra("path", LShare.DIR + LShare.AppScript + "/" + currentPackageName + "/" + scripName + ".lua")
+                startActivity(intent)
                 true
             }
 

@@ -22,6 +22,8 @@ import com.kulipai.luahook.MyApplication
 import com.kulipai.luahook.R
 import com.kulipai.luahook.fragment.AppInfo
 import com.kulipai.luahook.util.LShare
+import com.kulipai.luahook.util.XposedScope
+import com.kulipai.luahook.util.d
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -56,7 +58,7 @@ class SelectApps : AppCompatActivity() {
         }
 
         val selectedPackageNames = LShare.readStringList("/apps.txt")
-        selectApps = selectedPackageNames
+        selectApps = selectedPackageNames.toMutableList()
 
         adapter = SelectAppsAdapter(emptyList(), this, selectApps) // 先传空列表
         rec.layoutManager = LinearLayoutManager(this)
@@ -118,10 +120,10 @@ class SelectApps : AppCompatActivity() {
 
         fab.setOnClickListener {
             LShare.writeStringList("/apps.txt", selectApps)
+            XposedScope.requestManyScope(this,
+                (selectApps-selectedPackageNames).toMutableList(),0)
             finish()
         }
-
-
     }
 
 

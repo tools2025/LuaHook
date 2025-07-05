@@ -8,6 +8,8 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.Menu
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
@@ -33,13 +35,27 @@ import com.kulipai.luahook.fragment.HomeFragment
 import com.kulipai.luahook.fragment.PluginsFragment
 import com.kulipai.luahook.util.LShare
 import com.kulipai.luahook.util.ShellManager
+import com.kulipai.luahook.util.XposedScope
+import com.kulipai.luahook.util.d
 import com.topjohnwu.superuser.Shell
+import io.github.libxposed.api.XposedInterface
+import io.github.libxposed.api.XposedModule
+import io.github.libxposed.api.XposedModuleInterface
+import io.github.libxposed.service.XposedProvider
+import io.github.libxposed.service.XposedService
+import io.github.libxposed.service.XposedServiceHelper
 import kotlinx.coroutines.launch
 import rikka.shizuku.Shizuku
 import rikka.sui.Sui
+import java.io.FileWriter
+import kotlin.random.Random
+
 
 
 class MainActivity : AppCompatActivity() {
+
+
+
 
 
     private val shizukuRequestCode = 100
@@ -80,11 +96,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-
-
-//        performShizukuOperation()
-
-//        LShare.init(this)
 
 
         // 注册 ActivityResultLauncher

@@ -156,7 +156,7 @@ class MultiScriptActivity : AppCompatActivity() {
 
 
         fab.setOnClickListener {
-            var view = LayoutInflater.from(this).inflate(R.layout.dialog_two_edit, null)
+            val view = LayoutInflater.from(this).inflate(R.layout.dialog_two_edit, null)
             val inputLayout = view.findViewById<TextInputLayout>(R.id.text_input_layout)
             val edit = view.findViewById<TextInputEditText>(R.id.edit)
             val inputLayout2 = view.findViewById<TextInputLayout>(R.id.text_input_layout2)
@@ -198,8 +198,8 @@ class MultiScriptActivity : AppCompatActivity() {
 
 
     fun ReadConf(): MutableList<MutableMap.MutableEntry<String, Any?>> {
-        var path = LShare.AppConf + "/" + currentPackageName + ".txt"
-        var list = LShare.readMap(path).entries.toMutableList()
+        val path = LShare.AppConf + "/" + currentPackageName + ".txt"
+        val list = LShare.readMap(path).entries.toMutableList()
         transformBooleanValuesToJsonArrayInMaps(list)
         return list
 

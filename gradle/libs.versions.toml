@@ -1,29 +1,36 @@
 [versions]
-agp = "8.9.1"
+agp = "8.11.0"
+annotation = "1.9.1"
+
 api = "82"
 apiVersion = "13.1.5"
 core = "6.0.0"
-dexkit = "2.0.5"
-fragmentKtx = "1.8.7"
-kotlin = "2.1.20"
+dexkit = "2.0.6"
+fragmentKtx = "1.8.8"
+kotlin = "2.2.0"
 coreKtx = "1.16.0"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
-appcompat = "1.7.0"
+appcompat = "1.7.1"
 libsu = "3.1.0"
-lifecycleViewmodelKtx = "2.9.0"
-material = "1.14.0-alpha01"
+lifecycleViewmodelKtx = "2.9.1"
+material = "1.14.0-alpha02"
 activity = "1.10.1"
 constraintlayout = "2.2.1"
-okhttp = "4.12.0"
+okhttp = "5.0.0"
 preferenceKtx = "1.2.1"
 provider = "13.1.5"
 rippleComponentsAndroid = "a7b66126c6"
 rippleInsets = "1.1.0"
 xphelper = "2.7"
+compileSdk = "36"
+minSdk = "28"
+buildToolsVersion = "35.0.0"
+lint = "31.11.0"
 
 [libraries]
+androidx-annotation = { module = "androidx.annotation:annotation", version.ref = "annotation" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-fragment-ktx = { module = "androidx.fragment:fragment-ktx", version.ref = "fragmentKtx" }
 androidx-lifecycle-viewmodel-ktx = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycleViewmodelKtx" }
@@ -46,8 +53,12 @@ ripple-components-android = { module = "com.github.ConcerroX:ripple-components-a
 ripple-insets = { module = "com.github.ConcerroX:ripple-insets", version.ref = "rippleInsets" }
 shizuku-api = { module = "dev.rikka.shizuku:api", version.ref = "apiVersion" }
 xphelper = { module = "com.github.suzhelan:XpHelper", version.ref = "xphelper" }
+lint-api = { module = "com.android.tools.lint:lint-api", version.ref = "lint" }
+lint-checks = { module = "com.android.tools.lint:lint-checks", version.ref = "lint" }
+kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
 
 [plugins]
+agp-lib = { id = "com.android.library", version.ref = "agp" }
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
-
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

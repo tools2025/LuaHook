@@ -17,7 +17,7 @@ class LanguageLua private constructor() : Language() {
         super.setKeywords(Companion.keywords)
 
         super.setNames(Companion.names)
-        super.setNames(Companion.luaHookKey)
+        super.setNames(luaHookKey)
         super.addBasePackage(
             "io",
             package_io.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
@@ -61,12 +61,12 @@ class LanguageLua private constructor() : Language() {
             package_suparam.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
         )
         super.addBasePackage(
-            "DexKitBridge",
+            "dexkitbridge",
             package_DexKitBridge.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }
                 .toTypedArray()
         )
         super.addBasePackage(
-            "DexFinder",
+            "dexfinder",
             package_DexFinder.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
         )
         super.addBasePackage(
@@ -89,6 +89,11 @@ class LanguageLua private constructor() : Language() {
         super.addBasePackage(
             "sp",
             package_sp.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        )
+
+        super.addBasePackage(
+            "xphelper",
+         package_XpHelper.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
         )
 
 
@@ -174,6 +179,7 @@ class LanguageLua private constructor() : Language() {
             "startsSystemServer|modulePath"
         private const val package_http = "get|post|upload|delete|put|postJson|head|download"
         private const val package_sp = "clear|getAll|remove|contains|get|set"
+        private const val package_XpHelper = "initContext|initZygote|setConfigPath|setConfigPassword|injectResourcesToContext|moduleApkPath"
         private const val package_xsp = "getAll|contains|get|reload"
         private const val package_DexKitBridge =
             "close|initFullCache|setThreadNum|getDexNum|exportDexFile|batchFindClassUsingStrings|batchFindMethodUsingStrings|findClass|findMethod|findField|getClassData|getMethodData|getFieldData|getCallMethods|getInvokeMethods|create"
@@ -195,7 +201,9 @@ class LanguageLua private constructor() : Language() {
 
         val luaHookKey = arrayOf(
             "hook",
+            "replace",
 //            "Xposed",
+            "import",
             "log",
             "setField",
             "getField",
@@ -218,6 +226,7 @@ class LanguageLua private constructor() : Language() {
             "resources",
             "hookcotr",
             "hookctor",
+            "injectActivity",
             "XposedBridge",
             "XposedHelpers",
 //            "createProxy",
@@ -225,6 +234,7 @@ class LanguageLua private constructor() : Language() {
             "findClass",
             "DexFinder",
             "hookAll",
+            "XpHelper",
             "arrayOf",
             "callMethod",
             "getStaticField",

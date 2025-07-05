@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.os.Handler
 import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
@@ -22,16 +21,13 @@ import com.google.android.material.card.MaterialCardView
 import com.kulipai.luahook.Activity.EditActivity
 import com.kulipai.luahook.R
 import com.kulipai.luahook.util.ShellManager
+import com.kulipai.luahook.util.XposedScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-
-fun canHook(): Boolean {
-    return true
-}
 
 class HomeFragment : Fragment() {
 
@@ -83,13 +79,20 @@ class HomeFragment : Fragment() {
         val status: TextView by lazy { view.findViewById(R.id.status) }
         val version: TextView by lazy { view.findViewById(R.id.version) }
 
+        var frameworkName = ""
+
         version.text =
             getAppVersionName(requireContext()).toString() + " (" + getAppVersionCode(requireContext()).toString() + ")"
 
+        XposedScope.withService {
+            frameworkName = " + " + it.frameworkName
+        }
         // 观察 LiveData，当数据变化时自动更新 UI
         viewModel.data.observe(requireActivity()) {
             if (ShellManager.getMode() == ShellManager.Mode.ROOT) {
-                status.text = "Root"
+
+
+                status.text = "Root$frameworkName"
 //            status.text="Root模式"+resources.getString(R.string.Xposed_status_ok)
                 card.setCardBackgroundColor(
                     getDynamicColor(
@@ -118,7 +121,7 @@ class HomeFragment : Fragment() {
                 )
 
             } else if (ShellManager.getMode() == ShellManager.Mode.SHIZUKU) {
-                status.text = "Shizuku"
+                status.text = "Shizuku" + frameworkName
                 card.setCardBackgroundColor(
                     getDynamicColor(
                         requireContext(),

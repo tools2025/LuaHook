@@ -1,3 +1,5 @@
+import com.android.build.api.dsl.AndroidResources
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -7,7 +9,7 @@ plugins {
 android {
 
     namespace = "com.kulipai.luahook"
-    compileSdk = 35
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
     buildFeatures {
         buildConfig = true    // 开启BuildConfig类的生成
@@ -16,8 +18,8 @@ android {
 
     defaultConfig {
         applicationId = "com.kulipai.luahook"
-        minSdk = 28
-        targetSdk = 35
+        minSdk = libs.versions.minSdk.get().toInt()
+        targetSdk = 36
         versionCode = 23
         versionName = "3.9"
 
@@ -34,14 +36,7 @@ android {
             )
         }
     }
-    signingConfigs {
-        create("release") {
-            storeFile = file(System.getProperty("user.dir") + "/release.keystore")
-            storePassword = project.findProperty("MY_STORE_PASSWORD") as String?
-            keyAlias = project.findProperty("MY_KEY_ALIAS") as String?
-            keyPassword = project.findProperty("MY_KEY_PASSWORD") as String?
-        }
-    }
+
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -53,7 +48,7 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
-    aaptOptions {
+    fun AndroidResources.() {
         additionalParameters += listOf("--package-id", "0x69", "--allow-reserved-package-id")
     }
 }
@@ -83,4 +78,10 @@ dependencies {
     implementation(libs.androidx.preference.ktx)
     implementation(libs.shizuku.api)
     implementation(libs.provider) // 如果你需要使用 ShizukuProvider
+
+    //Xposed service 100
+    compileOnly(project(":libxposed:api"))
+    implementation(project(":libxposed:service"))
+
+
 }
