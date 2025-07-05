@@ -12,8 +12,8 @@ pluginManagement {
     }
     // 在这里集中管理所有插件的版本
     plugins {
-        id("com.android.application") version "8.9.1"
-        id("com.android.library") version "8.9.1"
+        id("com.android.application") version "8.11.0"
+        id("com.android.library") version "8.11.0"
         id("org.jetbrains.kotlin.android") version "2.2.0"
         id("org.jetbrains.kotlin.jvm") version "2.2.0"
     }

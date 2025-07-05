@@ -61,12 +61,12 @@ class LanguageLua private constructor() : Language() {
             package_suparam.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
         )
         super.addBasePackage(
-            "DexKitBridge",
+            "dexkitbridge",
             package_DexKitBridge.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }
                 .toTypedArray()
         )
         super.addBasePackage(
-            "DexFinder",
+            "dexfinder",
             package_DexFinder.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
         )
         super.addBasePackage(
@@ -92,7 +92,7 @@ class LanguageLua private constructor() : Language() {
         )
 
         super.addBasePackage(
-            "XpHelper",
+            "xphelper",
          package_XpHelper.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
         )
 
