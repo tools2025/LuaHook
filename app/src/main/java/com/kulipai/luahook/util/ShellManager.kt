@@ -29,6 +29,12 @@ object ShellManager {
      */
     fun init(context: Context, onInitialized: (() -> Unit)? = null) {
 
+        // MOUNT_MASTER 标志
+        Shell.setDefaultBuilder(
+            Shell.Builder.create()
+                .setFlags(Shell.FLAG_MOUNT_MASTER)
+        )
+
         Shell.getShell {
             if (it.isRoot) {
                 rootShell = it
