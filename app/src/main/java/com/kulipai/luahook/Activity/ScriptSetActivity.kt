@@ -9,13 +9,17 @@ import LuaSharedPreferences
 import Luafile
 import android.os.Bundle
 import android.os.PersistableBundle
+import android.view.Gravity
+import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.kulipai.luahook.LuaLib.LuaActivity
+import com.kulipai.luahook.MainHook.Companion.MODULE_PACKAGE
 import com.kulipai.luahook.R
 import com.kulipai.luahook.util.d
+import com.kulipai.luahook.util.e
 import com.myopicmobile.textwarrior.common.LuaParser
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
@@ -45,7 +49,16 @@ class ScriptSetActivity : AppCompatActivity() {
         val func = extractLuaFunctionByLabel(script, "set")
         func?.let {
             val callfunc = getFunctionName(func)
-            CreateGlobals().load("$func\n$callfunc()").call()
+            try {
+                CreateGlobals().load("$func\n$callfunc()").call()
+            } catch (e: Exception) {
+                val err = simplifyLuaError(e.toString())
+                val errText = TextView(this)
+                errText.text = err
+                errText.gravity = Gravity.CENTER
+                setContentView(errText)
+                "${path.substringAfterLast("/")}:@set@:$err".e()
+            }
         }
 
 
@@ -121,6 +134,34 @@ class ScriptSetActivity : AppCompatActivity() {
         LuaResourceBridge().registerTo(globals)
         LuaDrawableLoader().registerTo(globals)
         return globals
+    }
+
+
+    fun simplifyLuaError(raw: String): String {
+        val lines = raw.lines()
+
+        // 1. 优先提取第一条真正的错误信息（不是 traceback）
+        val primaryErrorLine = lines.firstOrNull { it.trim().matches(Regex(""".*:\d+ .+""")) }
+
+        if (primaryErrorLine != null) {
+            val match = Regex(""".*:(\d+) (.+)""").find(primaryErrorLine)
+            if (match != null) {
+                val (lineNum, msg) = match.destructured
+                return "line $lineNum: $msg"
+            }
+        }
+
+        // 2. 其次从 traceback 提取（防止所有匹配失败）
+        val fallbackLine = lines.find { it.trim().matches(Regex(""".*:\d+: .*""")) }
+        if (fallbackLine != null) {
+            val match = Regex(""".*:(\d+): (.+)""").find(fallbackLine)
+            if (match != null) {
+                val (lineNum, msg) = match.destructured
+                return "line $lineNum: $msg"
+            }
+        }
+
+        return raw.lines().firstOrNull()?.take(100) ?: "未知错误"
     }
 
 }
