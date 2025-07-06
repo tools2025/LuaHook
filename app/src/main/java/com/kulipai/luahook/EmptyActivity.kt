@@ -7,6 +7,7 @@ import LuaImport
 import LuaJson
 import LuaResourceBridge
 import LuaSharedPreferences
+import LuaTask
 import Luafile
 import android.adservices.ondevicepersonalization.LogReader
 import android.app.Application
@@ -60,6 +61,7 @@ class EmptyActivity : BaseActivity() {
         globals["imports"] = LuaImport(this::class.java.classLoader!!, this::class.java.classLoader!!, globals)
         LuaResourceBridge().registerTo(globals)
         LuaDrawableLoader().registerTo(globals)
+        LuaTask().call(globals)
         return globals
     }
 

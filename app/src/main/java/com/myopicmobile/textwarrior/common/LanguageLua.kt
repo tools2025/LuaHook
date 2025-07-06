@@ -236,6 +236,7 @@ class LanguageLua private constructor() : Language() {
             "hookAll",
             "XpHelper",
             "arrayOf",
+            "Task",
             "callMethod",
             "getStaticField",
             "setStaticField"

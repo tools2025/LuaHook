@@ -7,6 +7,7 @@ import LuaImport
 import LuaJson
 import LuaResourceBridge
 import LuaSharedPreferences
+import LuaTask
 import Luafile
 import android.annotation.SuppressLint
 import android.content.pm.ApplicationInfo
@@ -223,6 +224,7 @@ class MainHook(base: XposedInterface, param: XposedModuleInterface.ModuleLoadedP
         globals["imports"] = LuaImport(lpparam.classLoader, this::class.java.classLoader!!, globals)
         LuaResourceBridge().registerTo(globals)
         LuaDrawableLoader().registerTo(globals)
+        LuaTask().call(globals)
         return globals
     }
 

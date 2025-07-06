@@ -6,6 +6,7 @@ import LuaImport
 import LuaJson
 import LuaResourceBridge
 import LuaSharedPreferences
+import LuaTask
 import Luafile
 import android.os.Bundle
 import android.os.PersistableBundle
@@ -133,6 +134,7 @@ class ScriptSetActivity : AppCompatActivity() {
         globals["imports"] = LuaImport(this::class.java.classLoader!!, this::class.java.classLoader!!, globals)
         LuaResourceBridge().registerTo(globals)
         LuaDrawableLoader().registerTo(globals)
+        LuaTask().call(globals)
         return globals
     }
 
