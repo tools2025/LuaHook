@@ -32,3 +32,6 @@
 -keep class org.luaj.** { *; }
 -dontwarn org.luaj.**
 -keep class androidx.** { *; }
+-keep class com.google.android.material.** { *; }
+-keep class io.github.libxposed.** { *; }
+-keep class dx.** { *; }
