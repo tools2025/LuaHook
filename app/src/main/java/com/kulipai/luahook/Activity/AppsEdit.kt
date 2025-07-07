@@ -138,10 +138,10 @@ class AppsEdit : AppCompatActivity() {
 
         val tool =
             listOf(
-                "Hook方法",
-                "Hook构造",
-                "方法签名",
-                "语法转换"
+                resources.getString(R.string.hook_method),
+                resources.getString(R.string.hook_constructor),
+                resources.getString(R.string.funcSign),
+                resources.getString(R.string.grammer_converse)
             )
 
         ToolRec.layoutManager =
@@ -169,7 +169,7 @@ class AppsEdit : AppCompatActivity() {
 
 
             saveScript(editor.text.toString())
-            Toast.makeText(this, "保存成功", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, resources.getString(R.string.save_ok), Toast.LENGTH_SHORT).show()
         }
 
 
@@ -270,12 +270,12 @@ class AppsEdit : AppCompatActivity() {
 
                     }
                     MaterialAlertDialogBuilder(this)
-                        .setTitle("作者信息")
+                        .setTitle(resources.getString(R.string.author_info))
                         .setView(view)
-                        .setPositiveButton("确定", { dialog, which ->
+                        .setPositiveButton(resources.getString(R.string.sure), { dialog, which ->
 
                             if (edit.text.isNullOrEmpty()) {
-                                edit.error = "请输入昵称"
+                                edit.error = resources.getString(R.string.input_id)
                             } else {
                                 getSharedPreferences("conf", MODE_PRIVATE).edit {
                                     putString("author", edit.text.toString())
@@ -287,7 +287,7 @@ class AppsEdit : AppCompatActivity() {
                                 )
                             }
                         })
-                        .setNegativeButton("取消", { dialog, which ->
+                        .setNegativeButton(resources.getString(R.string.cancel), { dialog, which ->
                             dialog.dismiss()
                         })
                         .show()
@@ -345,7 +345,7 @@ class AppsEdit : AppCompatActivity() {
     fun shareFileFromTmp(
         context: Context,
         sourceFilePath: String,
-        title: String = "分享文件",
+        title: String = resources.getString(R.string.share_doc),
         mimeType: String = "*/*"
     ) {
         (context as? androidx.lifecycle.LifecycleOwner)?.lifecycleScope?.launch(Dispatchers.IO) {
@@ -355,7 +355,7 @@ class AppsEdit : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(
                         context,
-                        "源文件不存在或无读取权限: $sourceFilePath",
+                        resources.getString(R.string.source_file_not_exist)+"$sourceFilePath",
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -389,7 +389,7 @@ class AppsEdit : AppCompatActivity() {
                 destinationFile
             } catch (e: Exception) {
                 e.printStackTrace()
-                println("文件操作失败：${e.message}")
+                println(resources.getString(R.string.file_operation_failed)+"${e.message}")
                 withContext(Dispatchers.Main) {
                     Toast.makeText(context, "文件复制或写入失败: ${e.message}", Toast.LENGTH_LONG)
                         .show()
@@ -413,14 +413,14 @@ class AppsEdit : AppCompatActivity() {
                         if (shareIntent.resolveActivity(context.packageManager) != null) {
                             context.startActivity(chooser)
                         } else {
-                            Toast.makeText(context, "没有应用可以分享此文件！", Toast.LENGTH_SHORT)
+                            Toast.makeText(context, resources.getString(R.string.no_apps_share), Toast.LENGTH_SHORT)
                                 .show()
                         }
                     } catch (e: Exception) {
                         e.printStackTrace()
                         Toast.makeText(
                             context,
-                            "分享文件时发生错误: ${e.message}",
+                            resources.getString(R.string.errors_sharing)+"${e.message}",
                             Toast.LENGTH_LONG
                         ).show()
                     }
