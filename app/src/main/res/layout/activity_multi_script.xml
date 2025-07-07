@@ -18,7 +18,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:navigationIcon="@drawable/arrow_back_24px"
-            app:title="脚本管理" />
+            app:title="@string/script_mng" />
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.recyclerview.widget.RecyclerView

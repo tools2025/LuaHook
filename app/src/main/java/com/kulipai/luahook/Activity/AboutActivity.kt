@@ -200,7 +200,7 @@ class AboutActivity : AppCompatActivity() {
         if (intent.resolveActivity(packageManager) != null) {
             startActivity(intent)
         } else {
-            Toast.makeText(this, "无法打开链接，请确保已安装浏览器", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, resources.getString(R.string.cant_open_links), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -228,10 +228,10 @@ class AboutActivity : AppCompatActivity() {
                 runOnUiThread {
                     // 检查 Activity 是否仍然有效
                     if (isFinishing || isDestroyed) return@runOnUiThread
-                    tvUpdateStatus.text = "检查失败: ${e.message}" // 显示错误信息
+                    tvUpdateStatus.text = resources.getString(R.string.check_failed)+"${e.message}" // 显示错误信息
                     Toast.makeText(
                         this@AboutActivity,
-                        "检查更新失败，请稍后重试",
+                        resources.getString(R.string.check_update_false),
                         Toast.LENGTH_SHORT
                     ).show()
                 }
@@ -269,11 +269,11 @@ class AboutActivity : AppCompatActivity() {
                                 // 比较版本号
                                 if (compareVersions(latestVersion, currentVersion ?: "0.0.0") > 0) {
                                     // 有新版本
-                                    tvUpdateStatus.text = "有新版本: $latestVersion"
+                                    tvUpdateStatus.text = resources.getString(R.string.new_version) +"$latestVersion"
                                     AlertDialog.Builder(this@AboutActivity)
-                                        .setTitle("发现新版本")
-                                        .setMessage("当前版本: $currentVersion\n最新版本: $latestVersion\n\n是否前往 GitHub Release 页面查看并更新？")
-                                        .setPositiveButton("前往 GitHub Release") { dialog, _ ->
+                                        .setTitle(resources.getString(R.string.find_new_version))
+                                        .setMessage(resources.getString(R.string.current_version)+"$currentVersion"+resources.getString(R.string.n_latest_version)+"$latestVersion"+resources.getString(R.string.if_goto_github))
+                                        .setPositiveButton(resources.getString(R.string.goto_github_release)) { dialog, _ ->
                                             // 打开 Release 页面链接
                                             val intent = Intent(
                                                 Intent.ACTION_VIEW,
@@ -284,47 +284,47 @@ class AboutActivity : AppCompatActivity() {
                                             } else {
                                                 Toast.makeText(
                                                     this@AboutActivity,
-                                                    "无法打开链接，请手动前往 ${releasePageUrl}",
+                                                     resources.getString(R.string.cant_open_link_goto)+"${releasePageUrl}",
                                                     Toast.LENGTH_LONG
                                                 ).show()
                                             }
                                             dialog.dismiss()
                                         }
-                                        .setNegativeButton("取消") { dialog, _ -> dialog.dismiss() }
+                                        .setNegativeButton(resources.getString(R.string.cancel)) { dialog, _ -> dialog.dismiss() }
                                         .show()
                                 } else {
                                     // 已是最新版本
-                                    tvUpdateStatus.text = "已是最新版本"
+                                    tvUpdateStatus.text = resources.getString(R.string.latest_version)
                                     Toast.makeText(
                                         this@AboutActivity,
-                                        "已是最新版本",
+                                        resources.getString(R.string.latest_version),
                                         Toast.LENGTH_SHORT
                                     ).show()
                                 }
                             } else {
                                 // 响应体为空
-                                tvUpdateStatus.text = "检查失败: 无响应数据"
+                                tvUpdateStatus.text = resources.getString(R.string.check_failed_no_data)
                                 Toast.makeText(
                                     this@AboutActivity,
-                                    "检查更新失败: 无响应数据",
+                                    resources.getString(R.string.check_update_failed_no_data),
                                     Toast.LENGTH_SHORT
                                 ).show()
                             }
                         } catch (e: JSONException) {
                             // JSON 解析错误
-                            tvUpdateStatus.text = "检查失败: 数据解析错误"
+                            tvUpdateStatus.text = resources.getString(R.string.check_failed_data_parse_error)
                             Toast.makeText(
                                 this@AboutActivity,
-                                "检查更新失败: 响应数据格式错误",
+                                resources.getString(R.string.check_update_failed_data_format),
                                 Toast.LENGTH_SHORT
                             ).show()
                             e.printStackTrace()
                         } catch (e: Exception) {
                             // 其他可能的异常
-                            tvUpdateStatus.text = "检查失败: ${e.message}"
+                            tvUpdateStatus.text = resources.getString(R.string.check_failed)+"${e.message}"
                             Toast.makeText(
                                 this@AboutActivity,
-                                "检查更新时发生未知错误",
+                                resources.getString(R.string.check_update_unknown_error),
                                 Toast.LENGTH_SHORT
                             ).show()
                             e.printStackTrace()
@@ -333,10 +333,10 @@ class AboutActivity : AppCompatActivity() {
                         }
                     } else {
                         // HTTP 状态码不是 2xx
-                        tvUpdateStatus.text = "检查失败: ${response.code}"
+                        tvUpdateStatus.text = resources.getString(R.string.check_failed)+"${response.code}"
                         Toast.makeText(
                             this@AboutActivity,
-                            "检查更新失败: HTTP错误 ${response.code}",
+                            resources.getString(R.string.check_update_failed_http)+"${response.code}",
                             Toast.LENGTH_SHORT
                         ).show()
                     }

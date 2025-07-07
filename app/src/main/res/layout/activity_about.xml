@@ -165,7 +165,7 @@
                                     <com.google.android.material.textview.MaterialTextView
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:text="苦小怕"
+                                        android:text="@string/Kuxiaopa"
                                         android:textAppearance="?attr/textAppearanceBodyMedium" />
 
                                     <com.google.android.material.textview.MaterialTextView
@@ -219,7 +219,7 @@
                                     <com.google.android.material.textview.MaterialTextView
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:text="翻译、部分界面设计"
+                                        android:text="@string/trans_design"
                                         android:textAppearance="?attr/textAppearanceBodyMedium" />
 
                                 </LinearLayout>
@@ -261,8 +261,7 @@
                                     <com.google.android.material.textview.MaterialTextView
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:text="帕帝天秀
-"
+                                        android:text="@string/paditianxiu"
                                         android:textAppearance="?attr/textAppearanceBodyMedium" />
 
                                     <com.google.android.material.textview.MaterialTextView

@@ -165,7 +165,7 @@ class HomeFragment : Fragment() {
                 val intent = Intent(requireActivity(), EditActivity::class.java)
                 startActivity(intent)
             } else {
-                Toast.makeText(requireContext(), "未激活模块", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), resources.getString(R.string.Inactive_modules), Toast.LENGTH_SHORT).show()
             }
         }
 

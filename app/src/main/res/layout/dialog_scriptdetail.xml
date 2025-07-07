@@ -89,7 +89,7 @@
                     style="@style/TextAppearance.Material3.LabelMedium"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="名称" />
+                    android:text="@string/name" />
 
                 <TextView
                     android:id="@+id/name"
@@ -147,7 +147,7 @@
                     style="@style/TextAppearance.Material3.LabelMedium"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="描述" />
+                    android:text="@string/describe" />
 
                 <TextView
                     android:id="@+id/description"
@@ -206,14 +206,14 @@
                     style="@style/TextAppearance.Material3.LabelMedium"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="作者" />
+                    android:text="@string/author" />
 
                 <TextView
                     android:id="@+id/author"
                     style="@style/TextAppearance.Material3.BodyMedium"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="苦小怕" />
+                    android:text="@string/Kuxiaopa" />
 
 
             </LinearLayout>

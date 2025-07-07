@@ -101,7 +101,7 @@
                 android:layout_height="wrap_content"
                 style="@style/TextAppearance.Material3.TitleMedium"
                 android:textStyle="bold"
-                android:text="如何激活模块"
+                android:text="@string/how_activate"
                 />
 
             <TextView
