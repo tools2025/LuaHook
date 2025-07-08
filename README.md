@@ -54,5 +54,59 @@ Alternatively, you can directly submit issues and suggestions on the project's I
 
 [NeLuaJ](https://github.com/znzsofficial/NeLuaJ)
 
-LuaAppX
+**支持/Support**
+
+微信赞赏方式
+
+使用LuaHook勾选微信增加脚本
+
+```lua
+imports "top.sacz.xphelper.dexkit.FieldFinder"
+imports "java.lang.reflect.Modifier"
+imports "top.sacz.xphelper.dexkit.bean.MethodInfo"
+hook("android.app.Application",
+lpparam.classLoader,
+"attach",
+"android.content.Context",
+function(it)end,
+function(it)
+  XpHelper.initContext(it.thisObject)
+  XpHelper.injectResourcesToContext(it.thisObject)
+  local loader=invoke(it.thisObject,"getClassLoader")
+  DexFinder=DexFinder.INSTANCE
+  DexFinder.create(lpparam.appInfo.sourceDir)
+  local mInfo=new(MethodInfo)
+  mInfo.setUsedString({"MicroMsg.QRCodeHandler","qbar_string_scan_source"})
+  mInfo.setParamCount(2)
+  local Finder=mInfo.generate()
+  local method=Finder.firstOrNull()
+  hook(method,function(it)
+    it.args[1].putString("result_code_name","WX_CODE")
+    end,function(it)
+  end)
+end)
+```
+
+打开微信扫一扫，扫描下面二维码进行赞赏:)
+
+![wechat](app/src/main/res/drawable/wechat_qr.png)
+
+其他赞赏方式/Other Ways
+
+Ton
+```text
+UQCT4SxRvop52iLADb8_TcuoGFlr8UqC4QNTlIraRcljm-Us
+```
+
+USDT(TRC20)
+```text
+TLhumaxCuCJYddWwfAyS9ZyVWeFbwUfydm
+```
+
+TRX(TRC20)
+```text
+TGGvqp4zx9VNT6HaijAQxQT8uFibs1etxt
+```
+
+
 
