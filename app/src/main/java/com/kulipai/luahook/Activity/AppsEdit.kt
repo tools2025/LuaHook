@@ -198,6 +198,7 @@ class AppsEdit : AppCompatActivity() {
             ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
         menu?.add(0, 9, 0, "搜索")?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
         menu?.add(0, 15, 0, "分享")?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
+
         return true
     }
 

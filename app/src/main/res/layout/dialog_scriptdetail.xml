@@ -213,7 +213,7 @@
                     style="@style/TextAppearance.Material3.BodyMedium"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/Kuxiaopa" />
+                    android:text="@string/KuLiPai" />
 
 
             </LinearLayout>

@@ -61,8 +61,8 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     fun showLanguagePickerDialog(context: Context) {
-        val languages = arrayOf("English", resources.getString(R.string.simplified_chinese))
-        val languageCodes = arrayOf(LanguageUtil.LANGUAGE_ENGLISH, LanguageUtil.LANGUAGE_CHINESE)
+        val languages = arrayOf("English", "简体中文","繁體中文")
+        val languageCodes = arrayOf(LanguageUtil.LANGUAGE_ENGLISH, LanguageUtil.LANGUAGE_CHINESE,LanguageUtil.LANGUAGE_CHINESE_TRADITIONAL)
         val currentLanguage = LanguageUtil.getCurrentLanguage(context)
         val checkedItem = languageCodes.indexOf(currentLanguage)
 

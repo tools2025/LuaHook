@@ -7,13 +7,15 @@ object LanguageUtil {
 
     private const val KEY_LANGUAGE = "key_language"
     const val LANGUAGE_CHINESE = "zh"
+    const val LANGUAGE_CHINESE_TRADITIONAL  = "zh-TW"
     const val LANGUAGE_ENGLISH = "en"
-    const val LANGUAGE_DEFAULT = "" // 表示默认语言
+    const val LANGUAGE_DEFAULT = "zh" // 表示默认语言
 
     // 设置语言
     fun changeLanguage(context: Context, language: String) {
         val locale = when (language) {
             LANGUAGE_CHINESE -> Locale.SIMPLIFIED_CHINESE
+            LANGUAGE_CHINESE_TRADITIONAL -> Locale.TRADITIONAL_CHINESE
             LANGUAGE_ENGLISH -> Locale.ENGLISH
             else -> Locale.getDefault()
         }

@@ -49,17 +49,13 @@
     <string name="funcName">Method name</string>
     <string name="param">Parameter</string>
     <string name="funcSign">Method signature</string>
-    <string name="funcSign">ethod signature</string>
     <string name="plugins">Plugins</string>
-    <string name="plugins">Plugins</string>
-    <string name="cant_open_links">Unable to open the link, please make sure the browser is installed</string>
     <string name="cant_open_links">Unable to open the link, please make sure the browser is installed</string>
     <string name="no_power">Permission denied</string>
     <string name="checking">Checking...</string>
     <string name="check_update_false">Checking for updates failed, please try again later</string>
     <string name="new_version">There is a new version</string>
     <string name="find_new_version">New version found</string>
-    <string name="find_new_version">new version found</string>
     <string name="goto_github_release">Go to GitHub Releases</string>
     <string name="cant_open_link_goto">Unable to open the link, please go to</string>
     <string name="latest_version">Already the latest version</string>
@@ -78,7 +74,6 @@
     <string name="grammer_converse">Grammar conversion</string>
     <string name="author_info">Author information</string>
     <string name="existed">Already exists</string>
-    <string name="simplified_chinese">Simplified Chinese</string>
     <string name="sure">Sure</string>
     <string name="input_id">Please enter a nickname</string>
     <string name="share_doc">Share files</string>
@@ -100,18 +95,14 @@
     <string name="Inactive_modules">Module not activated</string>
     <string name="unknown_file">unknown file</string>
     <string name="read_file_failed">Failed to read file:</string>
-    <string name="read_file_failed">Failed to read file:</string>
     <string name="script_format_error">Script format error!</string>
-    <string name="script_format_error">Script format error!</string>
-    <string name="error_happen">An error occurred</string>
     <string name="error_happen">An error occurred</string>
     <string name="luahook_error_restart">LuaHook encountered an error and needs to be restarted.</string>
     <string name="error_message">Here\'s information about this error that you can send to the developers to help us fix the issue faster. Theory does not contain private information.</string>
     <string name="restart_luahook">Restart LuaHook</string>
     <string name="send_error_massage">Send error message</string>
     <string name="close">closure</string>
-    <string name="Kuxiaopa">KuLiPai</string>
-    <string name="Kuxiaopa">KuLiPa</string>
+    <string name="KuLiPai">KuLiPai</string>
     <string name="trans_design">Translation, partial interface design</string>
     <string name="paditianxiu">Padi</string>
     <string name="name">Name</string>
@@ -121,4 +112,5 @@
     <string name="scan_support">Scan the QR code to support KuLiPai !</string>
     <string name="script_mng">Script management</string>
     <string name="author">Author</string>
+    <string name="xposeddescription">A Lua module that implements hook.</string>
 </resources>

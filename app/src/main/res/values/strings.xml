@@ -46,9 +46,9 @@
     <string name="param">参数</string>
     <string name="funcSign">方法签名</string>
     <string name="plugins">插件</string>
-    <string name="how_to_activate">1.通过Shizuku激活\n2.通过Root激活\n详细教程请移步官网:\nhttps://luahook.kulipai.top/activate.html
-    </string>
-    <string name="xposeddescription">一个Lua实现Hook的模块</string>
+
+    <string name="appearance">界面外观</string>
+    <string name="update_dialog_message">有新版本可用：%s  请点击更新按钮下载安装。</string>
     <string name="cant_open_links">无法打开链接，请确保已安装浏览器</string>
     <string name="no_power">没有权限</string>
     <string name="checking">检查中...</string>
@@ -101,7 +101,7 @@
     <string name="restart_luahook">重启 LuaHook</string>
     <string name="send_error_massage">发送错误信息</string>
     <string name="close">关闭</string>
-    <string name="Kuxiaopa">苦小怕</string>
+    <string name="KuLiPai">苦小怕</string>
     <string name="trans_design">翻译、部分界面设计</string>
     <string name="paditianxiu">帕帝天秀</string>
     <string name="name">名称</string>
@@ -111,4 +111,7 @@
     <string name="scan_support">扫码以支持苦小怕吧！</string>
     <string name="script_mng">脚本管理</string>
     <string name="author">作者</string>
+    <string name="how_to_activate">1.通过Shizuku激活\n2.通过Root激活\n详细教程请移步官网:\nhttps://luahook.kulipai.top/activate.html
+    </string>
+    <string name="xposeddescription">一个Lua实现Hook的模块</string>
 </resources>
