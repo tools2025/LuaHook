@@ -145,7 +145,7 @@
                                 android:layout_height="wrap_content"
                                 android:gravity="center_vertical"
                                 android:orientation="horizontal"
-                                android:paddingHorizontal="16dp"
+                                android:paddingHorizontal="12dp"
                                 android:paddingVertical="12dp">
 
                                 <com.google.android.material.imageview.ShapeableImageView
@@ -233,7 +233,7 @@
                             android:clickable="true"
                             android:focusable="true"
                             app:cardElevation="0dp"
-                            app:shapeAppearanceOverlay="@style/ShapeAppearance.App.Card.BottomRounded"
+                            app:shapeAppearanceOverlay="@style/ShapeAppearance.App.Card.NoRounded"
                             app:strokeWidth="0dp">
 
                             <LinearLayout
@@ -274,6 +274,55 @@
 
                         </com.google.android.material.card.MaterialCardView>
 
+                        <com.google.android.material.card.MaterialCardView
+                            android:id="@+id/eleven"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:clickable="true"
+                            android:focusable="true"
+                            app:cardElevation="0dp"
+                            app:shapeAppearanceOverlay="@style/ShapeAppearance.App.Card.BottomRounded"
+                            app:strokeWidth="0dp">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal"
+                                android:paddingHorizontal="12dp"
+                                android:paddingVertical="12dp">
+
+                                <com.google.android.material.imageview.ShapeableImageView
+
+                                    android:layout_width="40dp"
+                                    android:layout_height="40dp"
+                                    android:layout_marginEnd="16dp"
+                                    android:scaleType="centerCrop"
+                                    android:src="@drawable/eleven"
+                                    app:shapeAppearanceOverlay="@style/ShapeAppearance.App.CircleImageView" />
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical">
+
+                                    <com.google.android.material.textview.MaterialTextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="Eleven"
+                                        android:textAppearance="?attr/textAppearanceBodyMedium" />
+
+                                    <com.google.android.material.textview.MaterialTextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="@string/translate"
+                                        android:textAppearance="?attr/textAppearanceBodyMedium" />
+                                </LinearLayout>
+                            </LinearLayout>
+
+                        </com.google.android.material.card.MaterialCardView>
+
+
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -308,6 +357,36 @@
             <!--                        android:textColor="?android:attr/textColorSecondary" />-->
             <!--                </LinearLayout>-->
             <!--            </com.google.android.material.card.MaterialCardView>-->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/github_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginBottom="12dp"
+                app:cardCornerRadius="@dimen/card_corner_radius"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/repository"
+                        android:textAppearance="?attr/textAppearanceTitleMedium" />
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="@string/github_repo"
+                        android:textAppearance="?attr/textAppearanceBodyMedium"
+                        android:textColor="?android:attr/textColorSecondary" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
 
             <com.google.android.material.card.MaterialCardView
@@ -340,6 +419,7 @@
                         android:textColor="?android:attr/textColorSecondary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
+
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/card_check_update"
