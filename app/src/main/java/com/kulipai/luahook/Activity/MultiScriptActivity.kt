@@ -74,7 +74,7 @@ class MultiScriptActivity : AppCompatActivity() {
         if (intent != null) {
             currentPackageName = intent.getStringExtra("packageName").toString()
             appName = intent.getStringExtra("appName").toString()
-            toolbar.title = appName + resources.getString(R.string.script_manage)
+            toolbar.title = appName +" "+ resources.getString(R.string.script_manage)
         }
 
         toolbar.setNavigationOnClickListener {

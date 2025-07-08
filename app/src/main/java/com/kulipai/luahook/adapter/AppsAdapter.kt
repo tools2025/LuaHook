@@ -44,9 +44,9 @@ class AppsAdapter(private var apps: List<AppInfo>, private val context: Context)
             card.setOnLongClickListener {
 
                 MaterialAlertDialogBuilder(context)
-                    .setTitle("提示")
-                    .setMessage("确定删除吗?")
-                    .setPositiveButton("确定") { dialog, _ ->
+                    .setTitle(context.resources.getString(R.string.tips))
+                    .setMessage(context.resources.getString(R.string.confirm_deletion))
+                    .setPositiveButton(context.resources.getString(R.string.sure)) { dialog, _ ->
                         val savedList = LShare.readStringList("/apps.txt")
                         savedList.remove(apps[bindingAdapterPosition].packageName)
                         LShare.writeStringList("/apps.txt",savedList)
@@ -58,7 +58,7 @@ class AppsAdapter(private var apps: List<AppInfo>, private val context: Context)
                         notifyDataSetChanged()
                         dialog.dismiss()
                     }
-                    .setNegativeButton("取消") { dialog, _ ->
+                    .setNegativeButton(context.resources.getString(R.string.cancel)) { dialog, _ ->
                         dialog.dismiss()
                     }
                     .show()

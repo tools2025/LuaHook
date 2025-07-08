@@ -23,7 +23,7 @@ class AppCrashHandler(private val context: Context, private val defaultHandler: 
      */
     override fun uncaughtException(t: Thread, e: Throwable) {
         // 打印异常堆栈，用于调试
-        e.printStackTrace()
+//        e.printStackTrace()
 
         // 捕获错误信息
         val errorMessage = e.localizedMessage ?: "未知错误"

@@ -65,9 +65,9 @@ class ToolAdapter(
 //                        }
 //                        bottomSheetDialog.show()
                         MaterialAlertDialogBuilder(context)
-                            .setTitle("Hook方法")
+                            .setTitle(context.resources.getString(R.string.hook_method))
                             .setView(view)
-                            .setPositiveButton("确定") { dialog, which ->
+                            .setPositiveButton(context.resources.getString(R.string.sure)) { dialog, which ->
                                 val className: String =
                                     view.findViewById<TextInputEditText>(R.id.className).text.toString()
                                 val funcName: String =
@@ -83,7 +83,7 @@ class ToolAdapter(
                                 editor.insert(editor.selectionStart, hookLua)
                                 dialog.dismiss()
                             }
-                            .setNegativeButton("取消") { dialog, which ->
+                            .setNegativeButton(context.resources.getString(R.string.cancel)) { dialog, which ->
                                 dialog.dismiss()
                             }
                             .show()
@@ -115,9 +115,9 @@ class ToolAdapter(
 //                        }
 //                        bottomSheetDialog.show()
                         MaterialAlertDialogBuilder(context)
-                            .setTitle("Hook构造函数")
+                            .setTitle(context.resources.getString(R.string.hook_constructor))
                             .setView(view)
-                            .setPositiveButton("确定") { dialog, which ->
+                            .setPositiveButton(context.resources.getString(R.string.sure)) { dialog, which ->
                                 val className: String =
                                     view.findViewById<TextInputEditText>(R.id.className).text.toString()
                                 val param: String =
@@ -132,7 +132,7 @@ class ToolAdapter(
                                 editor.insert(editor.selectionStart, hookLua)
                                 dialog.dismiss()
                             }
-                            .setNegativeButton("取消") { dialog, which ->
+                            .setNegativeButton(context.resources.getString(R.string.cancel)) { dialog, which ->
                                 dialog.dismiss()
                             }
                             .show()
@@ -156,7 +156,7 @@ class ToolAdapter(
 //                                methodInfo = parseMethodSignature(input)
 //
 //                            } catch (e: Exception) {
-//                                Toast.makeText(context, "参数错误", Toast.LENGTH_SHORT).show()
+//                                Toast.makeText(context, context.resources.getString(R.string.param_err), Toast.LENGTH_SHORT).show()
 //                                return@setOnClickListener
 //                            }
 //
@@ -185,9 +185,9 @@ class ToolAdapter(
 //                        }
 //                        bottomSheetDialog.show()
                         MaterialAlertDialogBuilder(context)
-                            .setTitle("导入Smali")
+                            .setTitle(context.resources.getString(R.string.import_smali))
                             .setView(view)
-                            .setPositiveButton("确定") { dialog, which ->
+                            .setPositiveButton(context.resources.getString(R.string.sure)) { dialog, which ->
                                 val input: String =
                                     view.findViewById<TextInputEditText>(R.id.input).text.toString()
 
@@ -235,14 +235,14 @@ class ToolAdapter(
                                     }
 
                                 } catch (e: Exception) {
-                                    Toast.makeText(context, "参数错误", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, context.resources.getString(R.string.param_err), Toast.LENGTH_SHORT).show()
                                     return@setPositiveButton
                                 }
 
 
 
                             }
-                            .setNegativeButton("取消") { dialog, which ->
+                            .setNegativeButton(context.resources.getString(R.string.cancel)) { dialog, which ->
                                 dialog.dismiss()
                             }
                             .show()
@@ -710,9 +710,9 @@ class ToolAdapter(
 
 
                         MaterialAlertDialogBuilder(context)
-                            .setTitle("语法转换")
-                            .setMessage("请确认是否需要将 Lua 语法转换为 Luaj++ 语法。如果当前内容已经是 Luaj++ 语法，请勿重复转换。")
-                            .setPositiveButton("确定") { dialog, which ->
+                            .setTitle(context.resources.getString(R.string.grammer_converse))
+                            .setMessage(context.resources.getString(R.string.confirm_converse))
+                            .setPositiveButton(context.resources.getString(R.string.sure)) { dialog, which ->
                                 editor.setText(
                                     convertLuaColonToDot(
                                         convertImportToImports(
@@ -724,7 +724,7 @@ class ToolAdapter(
                                 )
                                 dialog.dismiss()
                             }
-                            .setNegativeButton("取消") { dialog, which ->
+                            .setNegativeButton(context.resources.getString(R.string.cancel)) { dialog, which ->
                                 dialog.dismiss()
                             }
                             .show()

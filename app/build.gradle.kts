@@ -48,7 +48,8 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
-    fun AndroidResources.() {
+
+    aaptOptions {
         additionalParameters += listOf("--package-id", "0x69", "--allow-reserved-package-id")
     }
 }

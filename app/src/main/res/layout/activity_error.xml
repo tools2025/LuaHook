@@ -104,6 +104,7 @@
                         style="@style/TextAppearance.Material3.BodyLarge"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="@color/white"
                         android:layout_marginStart="8dp"
                         android:text="@string/restart_luahook" />
                 </LinearLayout>
@@ -133,6 +134,7 @@
                         android:src="@drawable/send_24px" />
 
                     <TextView
+                        android:textColor="@color/white"
                         style="@style/TextAppearance.Material3.BodyLarge"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -165,6 +167,7 @@
                         android:src="@drawable/close_24px" />
 
                     <TextView
+                        android:textColor="@color/white"
                         style="@style/TextAppearance.Material3.BodyLarge"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"

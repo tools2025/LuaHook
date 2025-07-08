@@ -69,9 +69,9 @@
     <string name="current_version">Current version:</string>
     <string name="n_latest_version">\\nLatest version</string>
     <string name="if_goto_github">\\n\\nDo you want to go to GitHub Release page to view and update?</string>
-    <string name="hook_method">Hook method</string>
-    <string name="hook_constructor">Hook construction</string>
-    <string name="grammer_converse">Grammar conversion</string>
+    <string name="hook_method">Hook Method</string>
+    <string name="hook_constructor">Hook Ctor</string>
+    <string name="grammer_converse">Grammar Conversion</string>
     <string name="author_info">Author information</string>
     <string name="existed">Already exists</string>
     <string name="sure">Sure</string>
@@ -86,9 +86,9 @@
     <string name="Tag12">Get R resources</string>
     <string name="Tag13">hook construction method</string>
     <string name="Tag14">Create a proxy createProxy</string>
-    <string name="script_manage">Multiple script management</string>
+    <string name="script_manage">Script Manager</string>
     <string name="script_name">Script name</string>
-    <string name="description">Description (optional)</string>
+    <string name="description">Description(optional)</string>
     <string name="new_script">New script</string>
     <string name="input_sth">Please enter content</string>
     <string name="tips">hint</string>
@@ -113,4 +113,13 @@
     <string name="script_mng">Script management</string>
     <string name="author">Author</string>
     <string name="xposeddescription">A Lua module that implements hook.</string>
+    <string name="share">Share</string>
+    <string name="confirm_deletion">Are you sure you want to delete?</string>
+    <string name="import_smali">Import Smali</string>
+    <string name="param_err">Parameter error</string>
+    <string name="confirm_converse">Please confirm if it is necessary to convert Lua syntax to Luaj++ syntax. If the current content is already in Luaj++ syntax, do not convert it again.</string>
+    <string name="translate">Translate</string>
+    <string name="contribution_luahook">If you like this project and wish to support it, we\'d greatly appreciate your contributions! A Pull Request, a valuable discussion, or even a suggestion for a single line of code means more to us than financial donations. Of course, if you genuinely wish to show your appreciation through a monetary contribution, we are equally grateful.</string>
+    <string name="repository">Repository</string>
+    <string name="github_repo">Github open source repository address</string>
 </resources>

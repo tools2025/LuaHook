@@ -51,8 +51,10 @@ class AboutActivity : AppCompatActivity() {
 //    开源协议部分
 //    private val cardLicense: MaterialCardView by lazy { findViewById(R.id.card_license) }
 
+    private val github_card: MaterialCardView by lazy { findViewById(R.id.github_card) }
     private val developerKuliPaiRow: MaterialCardView by lazy { findViewById(R.id.developer_kuli_pai_row) }
     private val padi: MaterialCardView by lazy { findViewById(R.id.padi) }
+    private val eleven: MaterialCardView by lazy { findViewById(R.id.eleven) }
     private val developerAnotherRow: MaterialCardView by lazy { findViewById(R.id.developer_another_row) }
 
     private val cardCheckUpdate: MaterialCardView by lazy { findViewById(R.id.card_check_update) }
@@ -100,12 +102,16 @@ class AboutActivity : AppCompatActivity() {
         }
 
         // --- 开发者卡片点击事件 ---
+        val LuaHookGithubUrl = "https://github.com/KuLiPai/LuaHook"
         val kuliPaiGithubUrl = "https://github.com/KuLiPai"
         val anotherDeveloperGithubUrl = "https://github.com/Samzhaohx"
         val padiGithub = "https://github.com/paditianxiu"
+        val elevenGithub = "https://github.com/imconfident11"
+        github_card.setOnClickListener { openGithubUrl(LuaHookGithubUrl) }
         developerKuliPaiRow.setOnClickListener { openGithubUrl(kuliPaiGithubUrl) }
         developerAnotherRow.setOnClickListener { openGithubUrl(anotherDeveloperGithubUrl) }
         padi.setOnClickListener { openGithubUrl(padiGithub) }
+        eleven.setOnClickListener { openGithubUrl(elevenGithub) }
 
         // --- 许可协议卡片功能 ---
 //        cardLicense.setOnClickListener {
@@ -384,7 +390,7 @@ class AboutActivity : AppCompatActivity() {
                         50f, 50f, Shader.TileMode.CLAMP
                     )
                     // 确保 mainLayout 不为 null
-                    mainLayout?.setRenderEffect(renderEffect)
+                    mainLayout.setRenderEffect(renderEffect)
                 } catch (e: Exception) {
                     e.printStackTrace()
                     // 处理不支持 RenderEffect 的情况，或者模糊值过大的情况
@@ -396,7 +402,7 @@ class AboutActivity : AppCompatActivity() {
                 // 移除高斯模糊
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     // 确保 mainLayout 不为 null
-                    mainLayout?.setRenderEffect(null)
+                    mainLayout.setRenderEffect(null)
                 }
             }
         }
@@ -413,66 +419,5 @@ class AboutActivity : AppCompatActivity() {
             popupWindow.showAtLocation(anchor.rootView, Gravity.CENTER, 0, 0)
         }
     }
-
-    // 为了代码的完整性，保留了 XML 中使用的字符串资源占位符。
-    // 你需要在 res/values/strings.xml 中定义这些字符串：
-    /*
-    <resources>
-        <string name="app_name">LuaHook</string>
-        <string name="about">关于</string>
-        <string name="developers">开发者</string>
-        <string name="open_source_protocol">开源协议</string>
-        <string name="open_source_protocol2">点击查看许可详情</string> // 示例文本
-        <string name="tipping">赞赏</string>
-        <string name="tipping2">如果觉得应用好用，请作者喝杯咖啡吧！</string> // 示例文本
-        <string name="check_update_title">检查更新</string>
-        <string name="check_update_subtitle">点击检查最新版本</string>
-        <string name="update_available">发现新版本！</string>
-        <string name="no_update_available">已是最新版本</string>
-        <string name="update_dialog_message">有新版本 %s 可用，是否前往下载？</string> // 示例，%s 会被版本号替换
-        </resources>
-    */
-
-    // 为了代码的完整性，保留了 XML 中使用的 dimen 和 style 占位符。
-    // 你需要在 res/values/dimens.xml 和 res/values/styles.xml (或 themes.xml) 中定义它们：
-    /*
-    res/values/dimens.xml:
-    <resources>
-        <dimen name="card_corner_radius">8dp</dimen> // 示例值
-    </resources>
-
-    res/values/styles.xml (或 themes.xml):
-    <resources>
-        <style name="ShapeAppearance.App.CircleImageView" parent="ShapeAppearance.MaterialComponents.SmallComponent">
-            <item name="cornerFamily">rounded</item>
-            <item name="cornerSize">50%</item>
-        </style>
-         <style name="ShapeAppearance.App.Card.TopRounded" parent="">
-            <item name="cornerFamily">rounded</item>
-            <item name="cornerSizeTopLeft">@dimen/card_corner_radius</item>
-            <item name="cornerSizeTopRight">@dimen/card_corner_radius</item>
-            <item name="cornerSizeBottomLeft">0dp</item>
-            <item name="cornerSizeBottomRight">0dp</item>
-        </style>
-        <style name="ShapeAppearance.App.Card.BottomRounded" parent="">
-            <item name="cornerFamily">rounded</item>
-            <item name="cornerSizeTopLeft">0dp</item>
-            <item name="cornerSizeTopRight">0dp</item>
-            <item name="cornerSizeBottomLeft">@dimen/card_corner_radius</item>
-            <item name="cornerSizeBottomRight">@dimen/card_corner_radius</item>
-        </style>
-        <style name="PopupAnimation">
-            <item name="android:windowEnterAnimation">@anim/fade_in</item> // 假设你有淡入动画
-            <item name="android:windowExitAnimation">@anim/fade_out</item> // 假设你有淡出动画
-        </style>
-         <style name="ThemeOverlay.Material3.Dark.ActionBar" parent="">
-             </style>
-    </resources>
-    */
-
-    // 假设你有 res/drawable/arrow_back_24px.xml 和 res/drawable/kulipai.png, res/drawable/california.png
-    // 假设你有 res/mipmap/ic_launcher.png
-    // 假设你有 res/layout/qrcode.xml (用于赞赏弹窗)
-    // 假设你有 res/anim/fade_in.xml 和 res/anim/fade_out.xml
 
 }

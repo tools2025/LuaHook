@@ -56,7 +56,7 @@ class MainActivity : AppCompatActivity() {
 
 
 
-
+    lateinit var thisLanguage: String
 
     private val shizukuRequestCode = 100
 
@@ -102,7 +102,9 @@ class MainActivity : AppCompatActivity() {
         SettingsLauncher = registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
         ) {
-//            recreate()
+            if (LanguageUtil.getCurrentLanguage(this)!=thisLanguage){
+                recreate()
+            }
         }
 
         //setting
@@ -111,7 +113,9 @@ class MainActivity : AppCompatActivity() {
         toolbar.setOnMenuItemClickListener {
             when (it.itemId) {
                 1 -> {
+                    thisLanguage = LanguageUtil.getCurrentLanguage(this)
                     val itent = Intent(this, SettingsActivity::class.java)
+
                     SettingsLauncher.launch(itent)
                     true
                 }

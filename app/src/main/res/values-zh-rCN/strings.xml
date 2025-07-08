@@ -113,4 +113,13 @@
     <string name="script_mng">脚本管理</string>
     <string name="author">作者</string>
     <string name="xposeddescription">一个Lua实现Hook的模块</string>
+    <string name="share">分享</string>
+    <string name="confirm_deletion">确认删除吗?</string>
+    <string name="import_smali">导入Smali</string>
+    <string name="param_err">参数错误</string>
+    <string name="confirm_converse">请确认是否需要将 Lua 语法转换为 Luaj++ 语法。如果当前内容已经是 Luaj++ 语法，请勿重复转换。</string>
+    <string name="translate">翻译</string>
+    <string name="contribution_luahook">如果你喜欢这个项目并想支持它，我们更希望能收到你的实际贡献！一次PR、一个有价值的 Discussion，甚至是 一行代码的建议，都比金钱更让我们感到有意义。当然，如果你真心想通过捐款来表达对作者的认可，我们也同样心怀感激。</string>
+    <string name="repository">仓库</string>
+    <string name="github_repo">Github开源仓库地址</string>
 </resources>

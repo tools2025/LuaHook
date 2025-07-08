@@ -40,8 +40,8 @@ class ErrorActivity : AppCompatActivity() {
         val btnRestartApp: MaterialCardView = findViewById(R.id.btnRestartApp)
 
         // 从 Intent 中获取错误信息
-        val errorMessage = intent.getStringExtra(EXTRA_ERROR_MESSAGE) ?: "未知的错误发生。"
-        intent.getStringExtra(EXTRA_STACK_TRACE) ?: "无堆栈跟踪信息。"
+        val errorMessage = intent.getStringExtra(EXTRA_ERROR_MESSAGE) ?: "UnKnown"
+        intent.getStringExtra(EXTRA_STACK_TRACE) ?: "No stack_trace"
 
         // 显示错误信息
         tvErrorMessage.text = errorMessage

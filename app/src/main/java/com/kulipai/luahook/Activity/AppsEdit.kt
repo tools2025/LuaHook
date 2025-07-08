@@ -196,9 +196,9 @@ class AppsEdit : AppCompatActivity() {
             ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
         menu?.add(0, 5, 0, resources.getString(R.string.manual))
             ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
-        menu?.add(0, 9, 0, "搜索")?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
-        menu?.add(0, 15, 0, "分享")?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
-
+        menu?.add(0, 9, 0, resources.getString(R.string.search))?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
+        menu?.add(0, 15, 0, resources.getString(R.string.share))?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
+        menu?.add(0, 25, 0, resources.getString(R.string.setting))?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
         return true
     }
 
@@ -303,6 +303,14 @@ class AppsEdit : AppCompatActivity() {
             }
 
 
+            25 -> {
+
+                val intent = Intent(this, ScriptSetActivity::class.java)
+                intent.putExtra("path", LShare.DIR + LShare.AppScript + "/" + currentPackageName + "/" + scripName + ".lua")
+                startActivity(intent)
+                true
+            }
+
             else -> false
         }
     }
@@ -389,8 +397,6 @@ class AppsEdit : AppCompatActivity() {
 
                 destinationFile
             } catch (e: Exception) {
-                e.printStackTrace()
-                println(resources.getString(R.string.file_operation_failed)+"${e.message}")
                 withContext(Dispatchers.Main) {
                     Toast.makeText(context, "文件复制或写入失败: ${e.message}", Toast.LENGTH_LONG)
                         .show()

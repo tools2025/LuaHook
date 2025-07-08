@@ -165,9 +165,9 @@ class MultScriptAdapter(
     @SuppressLint("NotifyDataSetChanged")
     fun removeItem(position: Int, context: Context) {
         MaterialAlertDialogBuilder(context)
-            .setTitle("提示")
-            .setMessage("确定删除吗?")
-            .setPositiveButton("确定") { dialog, _ ->
+            .setTitle(context.resources.getString(R.string.tips))
+            .setMessage(context.resources.getString(R.string.confirm_deletion))
+            .setPositiveButton(context.resources.getString(R.string.sure)) { dialog, _ ->
                 LShare.rm(LShare.AppScript + "/" + currentPackageName + "/" + conf[position].key + ".lua")
                 conf.removeAt(position)
                 GlobalScope.launch(Dispatchers.IO) {
@@ -180,7 +180,7 @@ class MultScriptAdapter(
                 notifyDataSetChanged()
                 dialog.dismiss()
             }
-            .setNegativeButton("取消") { dialog, _ ->
+            .setNegativeButton(context.resources.getString(R.string.cancel)) { dialog, _ ->
                 notifyDataSetChanged()
                 dialog.dismiss()
             }
