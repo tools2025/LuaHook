@@ -46,7 +46,7 @@
     <string name="param">参数</string>
     <string name="funcSign">方法签名</string>
     <string name="plugins">插件</string>
-    <string name="how_to_activate">"1.通过Shizuku激活 2.通过Root激活 详细教程请移步官网: https://luahook.kulipai.top/activate.html     "</string>
+
     <string name="appearance">界面外观</string>
     <string name="update_dialog_message">有新版本可用：%s  请点击更新按钮下载安装。</string>
     <string name="cant_open_links">无法打开链接，请确保已安装浏览器</string>
@@ -112,4 +112,6 @@
     <string name="scan_support">扫码以支持苦小怕吧！</string>
     <string name="script_mng">脚本管理</string>
     <string name="author">作者</string>
+    <string name="how_to_activate">1.通过Shizuku激活\n2.通过Root激活\n详细教程请移步官网:\nhttps://luahook.kulipai.top/activate.html
+    </string>
 </resources>
