@@ -24,7 +24,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_marginTop="12dp"
-            android:text="发生错误"
+            android:text="@string/error_happen"
             android:textColor="@color/white" />
 
 
@@ -57,7 +57,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                android:text="LuaHook 发生错误，需要重启。"
+                android:text="@string/luahook_error_restart"
                 android:textColor="@color/white" />
 
             <TextView
@@ -65,7 +65,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                android:text="以下是有关此错误的信息，您可以将其发送给开发者，帮助我们更快地解决问题。理论不包含隐私信息。"
+                android:text="@string/error_message"
                 android:textColor="@color/white" />
 
             <TextView
@@ -105,7 +105,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
-                        android:text="重启 LuaHook" />
+                        android:text="@string/restart_luahook" />
                 </LinearLayout>
 
             </com.google.android.material.card.MaterialCardView>
@@ -137,7 +137,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
-                        android:text="发送错误信息" />
+                        android:text="@string/send_error_massage" />
                 </LinearLayout>
 
             </com.google.android.material.card.MaterialCardView>
@@ -169,7 +169,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
-                        android:text="关闭" />
+                        android:text="@string/close" />
                 </LinearLayout>
 
             </com.google.android.material.card.MaterialCardView>

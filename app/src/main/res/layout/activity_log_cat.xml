@@ -39,7 +39,7 @@
             android:layout_gravity="center"
             android:visibility="gone"
             style="@style/TextAppearance.Material3.DisplayMedium"
-            android:text="没有权限"
+            android:text="@string/no_power"
             />
         <androidx.recyclerview.widget.RecyclerView
             android:layout_gravity="center"

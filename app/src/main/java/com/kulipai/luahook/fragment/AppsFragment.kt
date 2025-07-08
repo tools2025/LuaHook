@@ -206,7 +206,7 @@ class AppsFragment : Fragment() {
                 val intent = Intent(requireContext(), SelectApps::class.java)
                 launcher.launch(intent)
             } else {
-                Toast.makeText(requireContext(), "未激活模块", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), resources.getString(R.string.Inactive_modules), Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -348,7 +348,7 @@ class AppsFragment : Fragment() {
      */
     fun readFileContent(fileUri: Uri) {
         val stringBuilder = StringBuilder()
-        "未知文件"
+        resources.getString(R.string.unknown_file)
 
         // 获取文件名 (可选)
 //        contentResolver.query(fileUri, null, null, null, null)?.use { cursor ->
@@ -376,7 +376,7 @@ class AppsFragment : Fragment() {
 
 //            fileContentTextView.text = "文件名: $fileName\n\n文件内容:\n${stringBuilder.toString()}"
         } catch (e: Exception) {
-            Log.e("FilePicker", "读取文件失败: ${e.message}", e)
+            Log.e("FilePicker", resources.getString(R.string.read_file_failed)+"${e.message}", e)
 //            fileContentTextView.text = "读取文件失败: ${e.message}"
         }
     }
@@ -387,7 +387,7 @@ class AppsFragment : Fragment() {
         // 解析参数
         val param = LShare.parseParameters(script)
         if (param?.name.isNullOrEmpty() || param.packageName.isNullOrEmpty()) {
-            Toast.makeText(requireActivity(), "脚本格式错误！", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireActivity(), resources.getString(R.string.read_file_failed), Toast.LENGTH_SHORT).show()
         } else {
             // apps列表
             val appList = LShare.readStringList("/apps.txt")

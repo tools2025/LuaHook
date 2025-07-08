@@ -78,11 +78,11 @@ class Manual : AppCompatActivity(), OnCardExpandListener {
                 resources.getString(R.string.Tag7),
                 resources.getString(R.string.Tag8),
                 resources.getString(R.string.Tag9),
-                "new构造方法",
-                "加载网络/本地图片",
-                "获取R类资源",
-                "hook构造方法",
-                "创建代理createProxy"
+                resources.getString(R.string.Tag10),
+                resources.getString(R.string.Tag11),
+                resources.getString(R.string.Tag12),
+                resources.getString(R.string.Tag13),
+                resources.getString(R.string.Tag14),
 
             )
 

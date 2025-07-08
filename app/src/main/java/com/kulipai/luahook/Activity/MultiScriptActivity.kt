@@ -74,7 +74,7 @@ class MultiScriptActivity : AppCompatActivity() {
         if (intent != null) {
             currentPackageName = intent.getStringExtra("packageName").toString()
             appName = intent.getStringExtra("appName").toString()
-            toolbar.title = appName + "多脚本管理"
+            toolbar.title = appName + resources.getString(R.string.script_manage)
         }
 
         toolbar.setNavigationOnClickListener {
@@ -161,8 +161,8 @@ class MultiScriptActivity : AppCompatActivity() {
             val edit = view.findViewById<TextInputEditText>(R.id.edit)
             val inputLayout2 = view.findViewById<TextInputLayout>(R.id.text_input_layout2)
             val edit2 = view.findViewById<TextInputEditText>(R.id.edit2)
-            inputLayout.hint = "脚本名称"
-            inputLayout2.hint = "描述(可选)"
+            inputLayout.hint = resources.getString(R.string.script_name)
+            inputLayout2.hint = resources.getString(R.string.description)
             edit.doBeforeTextChanged { text, start, count, after ->
                 // text: 改变前的内容
                 // start: 改变开始的位置
@@ -172,20 +172,20 @@ class MultiScriptActivity : AppCompatActivity() {
 
             }
             MaterialAlertDialogBuilder(this)
-                .setTitle("新建脚本")
+                .setTitle(resources.getString(R.string.new_script))
                 .setView(view)
-                .setPositiveButton("确定", { dialog, which ->
+                .setPositiveButton(resources.getString(R.string.sure), { dialog, which ->
 
                     if (edit.text.isNullOrEmpty()) {
-                        edit.error = "请输入内容"
+                        edit.error = resources.getString(R.string.input_sth)
                     } else if (ScriptList.any { entry -> entry.key == edit.text.toString() }) {
-                        edit.error = "已存在"
+                        edit.error = resources.getString(R.string.existed)
                     } else {
                         // TODO 内容过长判断
                         CreateScript(edit.text.toString(), edit2.text.toString())
                     }
                 })
-                .setNegativeButton("取消", { dialog, which ->
+                .setNegativeButton(resources.getString(R.string.cancel), { dialog, which ->
                     dialog.dismiss()
                 })
                 .show()
