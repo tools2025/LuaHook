@@ -75,11 +75,10 @@ function(it)
   local loader=invoke(it.thisObject,"getClassLoader")
   DexFinder=DexFinder.INSTANCE
   DexFinder.create(lpparam.appInfo.sourceDir)
-  local mInfo=new(MethodInfo)
-  mInfo.setUsedString({"MicroMsg.QRCodeHandler","qbar_string_scan_source"})
-  mInfo.setParamCount(2)
-  local Finder=mInfo.generate()
-  local method=Finder.firstOrNull()
+  local method=MethodInfo() {
+    UsedString={"MicroMsg.QRCodeHandler","qbar_string_scan_source"},
+    ParamCount=2,
+  }.generate().firstOrNull()
   hook(method,function(it)
     it.args[1].putString("result_code_name","WX_CODE")
     end,function(it)
