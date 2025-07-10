@@ -30,7 +30,7 @@
     <string name="cancel">取消</string>
     <string name="language">語言</string>
     <string name="follow_system">跟隨系統</string>
-    <string name="how_to_activate">"1.通過Shizuku激活 2.通過Root激活 詳細教程請移步官網: https://luahook.kulipai.top/activate.html     "</string>
+    <string name="how_to_activate">1.通過Shizuku激活\n2.通過Root激活\n詳細教程請移步官網: \nhttps://luahook.kulipai.top/activate.html</string>
     <string name="appearance">界面外觀</string>
     <string name="setting">設置</string>
     <string name="senior">高級</string>

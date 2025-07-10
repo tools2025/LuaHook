@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.os.IBinder
 import android.os.RemoteException
 import android.util.Log
+import androidx.annotation.experimental.Experimental
 import com.kulipai.luahook.BuildConfig
 import com.kulipai.luahook.IUserService
 import com.kulipai.luahook.UserService
@@ -30,10 +31,15 @@ object ShellManager {
     fun init(context: Context, onInitialized: (() -> Unit)? = null) {
 
         // MOUNT_MASTER 标志
-        Shell.setDefaultBuilder(
-            Shell.Builder.create()
-                .setFlags(Shell.FLAG_MOUNT_MASTER)
-        )
+        try {
+            Shell.setDefaultBuilder(
+                Shell.Builder.create()
+                    .setFlags(Shell.FLAG_MOUNT_MASTER)
+            )
+        }catch (_: Exception) {
+            
+        }
+
 
         Shell.getShell {
             if (it.isRoot) {
