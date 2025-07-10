@@ -19,6 +19,7 @@ import com.kulipai.luahook.R
 import com.kulipai.luahook.adapter.LogAdapter
 import com.kulipai.luahook.util.LogcatHelper
 import com.kulipai.luahook.util.ShellManager
+import com.kulipai.luahook.util.d
 import kotlinx.coroutines.launch
 
 
@@ -28,7 +29,7 @@ class LogCatActivity : AppCompatActivity() {
 
     private val toolbar: MaterialToolbar by lazy { findViewById<MaterialToolbar>(R.id.toolbar) }
     private val noPower: TextView by lazy { findViewById<TextView>(R.id.noPower) }
-    private val reresh: FloatingActionButton by lazy { findViewById<FloatingActionButton>(R.id.fab) }
+    private val refresh: FloatingActionButton by lazy { findViewById<FloatingActionButton>(R.id.fab) }
 
     private lateinit var adapter: LogAdapter
 
@@ -78,12 +79,12 @@ class LogCatActivity : AppCompatActivity() {
             LogRecyclerView.visibility = View.INVISIBLE
         }
 
-        reresh.setOnClickListener {
+        refresh.setOnClickListener {
             lifecycleScope.launch {
                 var logs = LogcatHelper.getSystemLogsByTagSince("LuaXposed",
                     getSharedPreferences("cache",MODE_PRIVATE).getString("logClearTime",null)
                 )
-                adapter.updateLogs(logs)
+                adapter.updateLogs(logs as MutableList<String>)
             }
 
         }
@@ -127,7 +128,7 @@ class LogCatActivity : AppCompatActivity() {
                     var logs = LogcatHelper.getSystemLogsByTagSince("LuaXposed",
                         getSharedPreferences("cache",MODE_PRIVATE).getString("logClearTime",null)
                     )
-                    adapter.updateLogs(logs)
+                    adapter.updateLogs(logs as MutableList<String>)
                 }
                 true
             }

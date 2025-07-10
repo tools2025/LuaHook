@@ -1,3 +1,4 @@
+package com.kulipai.luahook.LuaLib
 import android.content.pm.PackageManager
 import android.os.Build
 import com.kulipai.luahook.LPParam
@@ -11,11 +12,15 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import org.luaj.LuaFunction
 import org.luaj.LuaTable
 import org.luaj.LuaValue
+import org.luaj.LuaValue.NONE
 import org.luaj.Varargs
 import org.luaj.lib.OneArgFunction
 import org.luaj.lib.VarArgFunction
 import org.luaj.lib.jse.CoerceJavaToLua
 import org.luaj.lib.jse.CoerceLuaToJava
+import org.luckypray.dexkit.DexKitBridge
+import top.sacz.xphelper.XpHelper
+import top.sacz.xphelper.dexkit.DexFinder
 import java.lang.reflect.Constructor
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
@@ -23,38 +28,16 @@ import java.lang.reflect.Modifier
 import java.lang.reflect.Proxy
 
 
-class HookLib(private val lpparam: LPParam, private val scriptName: String = "") :
-    OneArgFunction() {
+class HookLib(private val lpparam: LPParam, private val scriptName: String = "") {
 
-    override fun call(globals: LuaValue): LuaValue {
+    fun registerTo(globals: LuaValue) {
+        globals["XpHelper"] = CoerceJavaToLua.coerce(XpHelper::class.java)
+        globals["DexFinder"] = CoerceJavaToLua.coerce(DexFinder::class.java)
+        globals["XposedHelpers"] = CoerceJavaToLua.coerce(XposedHelpers::class.java)
+        globals["XposedBridge"] = CoerceJavaToLua.coerce(XposedBridge::class.java)
+        globals["DexKitBridge"] = CoerceJavaToLua.coerce(DexKitBridge::class.java)
 
-        globals["pcall"] = object : VarArgFunction() {
-            override fun invoke(args: Varargs): Varargs {
-                if (args.narg() < 1 || !args.arg1().isfunction()) {
-                    return varargsOf(
-                        FALSE,
-                        valueOf("first argument must be a function")
-                    )
-                }
 
-                val func = args.arg1().checkfunction()
-                val funcArgs = args.subargs(2) // Get all arguments after the function
-
-                try {
-                    // Execute the function with provided arguments
-                    val result = func.invoke(funcArgs)
-
-                    // Return true followed by any results from the function
-                    return varargsOf(TRUE, result)
-                } catch (e: Exception) {
-                    // Catch any Lua or Java exceptions
-                    val err = simplifyLuaError(e.toString()).toString()
-
-                    // Return false followed by the error message
-                    return varargsOf(FALSE, valueOf("${lpparam.packageName}:$scriptName:$err"))
-                }
-            }
-        }
 
 
         // 已弃用
@@ -154,81 +137,6 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
         }
 
 
-        globals["print"] = object : VarArgFunction() {
-            override fun invoke(args: Varargs): Varargs {
-                val stringBuilder = StringBuilder()
-                for (i in 1..args.narg()) {
-                    val value = args.arg(i)
-                    stringBuilder.append(valueToString(value))
-                    if (i < args.narg()) {
-                        stringBuilder.append("\t")
-                    }
-                }
-                (stringBuilder.toString()).d()
-                return NONE
-            }
-
-            private fun valueToString(value: LuaValue): String {
-                return when {
-                    value.isnil() -> "nil"
-                    value.isboolean() -> value.checkboolean().toString()
-                    value.isnumber() -> value.checkdouble().toString()
-                    value.isstring() -> value.checkjstring()
-                    value.istable() -> tableToString(value.checktable())
-                    value.isfunction() -> "function: ${value.tojstring()}"
-                    value.isuserdata() -> {
-                        // 处理 Java 对象，尝试调用 toString()
-                        val userdata = value.checkuserdata()
-                        userdata?.toString() ?: "userdata: null"
-                    }
-
-                    else -> value.tojstring() // 其他类型使用 LuaValue 默认的 toString
-                }
-            }
-
-            private fun tableToString(table: LuaTable): String {
-                val tableStringBuilder = StringBuilder()
-                tableStringBuilder.append("{")
-                var first = true
-
-                var k: LuaValue = NIL
-                while (true) {
-                    val n: Varargs = table.next(k)
-                    k = n.arg1() // 获取当前键
-                    if (k.isnil()) { // 如果键是 nil，表示遍历结束
-                        break
-                    }
-                    val v: LuaValue = n.arg(2) // 获取当前值
-
-                    if (!first) {
-                        tableStringBuilder.append(", ")
-                    }
-                    first = false
-
-                    if (k.isstring()) {
-                        tableStringBuilder.append(k.checkjstring())
-                    } else if (k.isnumber()) {
-                        tableStringBuilder.append("[${k.checkint()}]") // 对数字键使用方括号
-                    } else {
-                        tableStringBuilder.append(k.tojstring()) // 其他类型键
-                    }
-                    tableStringBuilder.append(" = ")
-                    tableStringBuilder.append(valueToString(v)) // 递归处理值
-                }
-                tableStringBuilder.append("}")
-                return tableStringBuilder.toString()
-            }
-        }
-
-        globals["log"] = object : OneArgFunction() {
-            override fun call(arg: LuaValue): LuaValue {
-                val message = arg.tojstring()
-                "$scriptName:$message".d()
-                XposedBridge.log("$scriptName:$message")
-                return NIL
-            }
-        }
-
         globals["findClass"] = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
                 // 确保 self 是字符串
@@ -244,6 +152,15 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                 // 查找类
                 val clazz = XposedHelpers.findClass(className, loader)
                 return CoerceJavaToLua.coerce(clazz) // 返回 Java Class 对象
+            }
+        }
+
+        globals["log"] = object : OneArgFunction() {
+            override fun call(arg: LuaValue): LuaValue {
+                val message = arg.tojstring()
+                "$scriptName:$message".d()
+                XposedBridge.log("$scriptName:$message")
+                return NIL
             }
         }
 
@@ -1396,8 +1313,6 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                 }
             }
         }
-
-        return NIL
     }
 
 

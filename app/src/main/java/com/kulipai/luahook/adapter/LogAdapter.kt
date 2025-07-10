@@ -9,7 +9,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.card.MaterialCardView
 import com.kulipai.luahook.R
 
-class LogAdapter(private val logs: MutableList<String>) :
+class LogAdapter(private var logs: MutableList<String>) :
     RecyclerView.Adapter<LogAdapter.LogViewHolder>() {
 
     inner class LogViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -38,9 +38,8 @@ class LogAdapter(private val logs: MutableList<String>) :
     }
 
     @SuppressLint("NotifyDataSetChanged")
-    fun updateLogs(newLogs: List<String>) {
-        logs.clear()
-        logs.addAll(newLogs)
+    fun updateLogs(newLogs: MutableList<String>) {
+        logs = newLogs
         notifyDataSetChanged() // 通知 RecyclerView 更新数据
     }
 }

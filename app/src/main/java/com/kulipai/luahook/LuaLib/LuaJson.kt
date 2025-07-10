@@ -1,10 +1,11 @@
+package com.kulipai.luahook.LuaLib
 import org.json.JSONObject
 import org.json.JSONArray
 import org.luaj.*
 import org.luaj.lib.*
 
-class LuaJson : OneArgFunction() {
-    override fun call(env: LuaValue): LuaValue {
+object LuaJson {
+    fun registerTo(env: LuaValue): LuaValue {
         val json = LuaTable()
 
         json.set("encode", object : OneArgFunction() {

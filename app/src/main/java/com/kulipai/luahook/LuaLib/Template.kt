@@ -1,3 +1,4 @@
+package com.kulipai.luahook.LuaLib
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -12,22 +13,15 @@ import org.luaj.lib.*
 import org.luaj.lib.VarArgFunction
 import java.io.IOException
 
-class LuaTem : OneArgFunction() {
+object LuaTem {
 
-    private val modName = ""
-    private var mod = LuaTable()
-
-    override fun call(env: LuaValue): LuaValue {
+    fun registerTo(env: LuaValue) {
 
         //func
-        mod["func1"] = object : VarArgFunction() {
+        env["func1"] = object : VarArgFunction() {
 
         }
         //...
-
-
-        env.set(modName, mod)
-        return mod
     }
 
 }

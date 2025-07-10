@@ -1,3 +1,4 @@
+package com.kulipai.luahook.LuaLib
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -17,10 +18,10 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
-class LuaHttp : OneArgFunction() {
+object LuaHttp{
 
     private val client = OkHttpClient()  // 确保 OkHttpClient 实例已定义
-    override fun call(env: LuaValue): LuaValue {
+    fun registerTo(env: LuaValue): LuaValue {
         val http = LuaTable()
 
 

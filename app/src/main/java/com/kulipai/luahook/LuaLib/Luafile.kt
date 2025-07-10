@@ -1,28 +1,20 @@
-import okhttp3.Call
-import okhttp3.Callback
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody
-import okhttp3.Response
-import org.json.JSONObject
-import org.json.JSONArray
-import org.luaj.*
-import org.luaj.lib.*
-import org.luaj.lib.VarArgFunction
+package com.kulipai.luahook.LuaLib
+import org.luaj.LuaTable
+import org.luaj.LuaValue
+import org.luaj.lib.OneArgFunction
+import org.luaj.lib.TwoArgFunction
 import java.io.File
-import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import java.nio.file.StandardOpenOption
 
-class Luafile : OneArgFunction() {
+object Luafile{
 
     private val modName = "file"
     private var file = LuaTable()
 
-    override fun call(env: LuaValue): LuaValue {
+    fun registerTo(env: LuaValue): LuaValue {
 
         file["isFile"]= object : OneArgFunction() {
             override fun call(path: LuaValue): LuaValue =

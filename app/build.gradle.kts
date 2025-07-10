@@ -21,7 +21,7 @@ android {
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = 36
         versionCode = 27
-        versionName = "3.9.3"
+        versionName = "3.9.3-debug"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

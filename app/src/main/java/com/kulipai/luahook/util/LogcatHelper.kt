@@ -24,7 +24,7 @@ object LogcatHelper {
                     mutableListOf()
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
+//                e.printStackTrace()
                 mutableListOf()
             }
         }

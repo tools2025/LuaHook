@@ -95,10 +95,10 @@
                     android:padding="16dp">
 
                     <ImageView
-
                         android:layout_width="24dp"
                         android:layout_height="24dp"
-                        android:src="@drawable/refresh_24px" />
+                        android:src="@drawable/refresh_24px"
+                        app:tint="@color/white" />
 
                     <TextView
                         style="@style/TextAppearance.Material3.BodyLarge"
@@ -113,6 +113,7 @@
 
 
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/sendErrMsg"
                 style="@style/Widget.Material3.CardView.Outlined"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -128,7 +129,7 @@
                     android:padding="16dp">
 
                     <ImageView
-
+                        app:tint="@color/white"
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:src="@drawable/send_24px" />
@@ -146,6 +147,7 @@
 
 
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/closeApp"
                 style="@style/Widget.Material3.CardView.Outlined"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -161,7 +163,7 @@
                     android:padding="16dp">
 
                     <ImageView
-
+                        app:tint="@color/white"
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:src="@drawable/close_24px" />

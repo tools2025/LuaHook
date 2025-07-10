@@ -1,19 +1,15 @@
+package com.kulipai.luahook.LuaLib
 import android.content.Context
+import androidx.core.content.edit
 import de.robv.android.xposed.XSharedPreferences
 import org.luaj.LuaTable
 import org.luaj.LuaValue
 import org.luaj.Varargs
-import org.luaj.lib.OneArgFunction
 import org.luaj.lib.VarArgFunction
-import androidx.core.content.edit
 
-class LuaSharedPreferences(
-) : OneArgFunction() {
+object LuaSharedPreferences {
 
-    private var mod =
-        LuaTable()
-
-    override fun call(globals: LuaValue): LuaValue {
+    fun registerTo(globals: LuaValue) {
 
         // 封装 Android 原生的 SharedPreferences 给 Lua 使用
         val sp = LuaTable()
@@ -328,8 +324,5 @@ class LuaSharedPreferences(
         // 将封装好的 xsp 表注册到 Lua 全局变量 globals 中
         globals["xsp"] = xsp
 
-        // 返回一个 LuaValue，通常库函数返回 nil 或者一个表示库的表
-        // 由于我们将 sp 和 xsp 直接注册到了 globals，这里返回 mod (空的) 或 NIL 都可以
-        return mod // 或者 LuaValue.NIL
     }
 }

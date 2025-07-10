@@ -1,20 +1,13 @@
 package com.kulipai.luahook
 
-import HookLib
-import LuaDrawableLoader
-import LuaHttp
-import LuaImport
-import LuaJson
-import LuaResourceBridge
-import LuaSharedPreferences
-import LuaTask
-import Luafile
 import android.adservices.ondevicepersonalization.LogReader
 import android.app.Application
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import com.kulipai.luahook.LuaLib.LuaActivity
+import com.kulipai.luahook.LuaLib.LuaImport
+import com.kulipai.luahook.LuaLib.LuaUtil
 //import androidx.activity.enableEdgeToEdge
 import com.kulipai.luahook.util.d
 import de.robv.android.xposed.XposedBridge
@@ -53,15 +46,10 @@ class EmptyActivity : BaseActivity() {
         globals["DexKitBridge"] = CoerceJavaToLua.coerce(DexKitBridge::class.java)
         globals["this"] = CoerceJavaToLua.coerce(this)
         globals["activity"] = CoerceJavaToLua.coerce(this)
-        LuaActivity(this).call(globals)
-        LuaJson().call(globals)
-        LuaHttp().call(globals)
-        Luafile().call(globals)
-        LuaSharedPreferences().call(globals)
-        globals["imports"] = LuaImport(this::class.java.classLoader!!, this::class.java.classLoader!!, globals)
-        LuaResourceBridge().registerTo(globals)
-        LuaDrawableLoader().registerTo(globals)
-        LuaTask().call(globals)
+        LuaActivity(this).registerTo(globals)
+
+        LuaImport(this::class.java.classLoader!!, this::class.java.classLoader!!).registerTo(globals)
+        LuaUtil.LoadBasicLib(globals)
         return globals
     }
 
