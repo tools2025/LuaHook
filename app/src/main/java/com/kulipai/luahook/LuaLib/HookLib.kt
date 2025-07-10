@@ -1,6 +1,5 @@
 package com.kulipai.luahook.LuaLib
-import android.content.pm.PackageManager
-import android.os.Build
+
 import com.kulipai.luahook.LPParam
 import com.kulipai.luahook.util.d
 import com.kulipai.luahook.util.e
@@ -8,7 +7,6 @@ import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
-import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import org.luaj.LuaFunction
 import org.luaj.LuaTable
 import org.luaj.LuaValue
@@ -36,8 +34,6 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
         globals["XposedHelpers"] = CoerceJavaToLua.coerce(XposedHelpers::class.java)
         globals["XposedBridge"] = CoerceJavaToLua.coerce(XposedBridge::class.java)
         globals["DexKitBridge"] = CoerceJavaToLua.coerce(DexKitBridge::class.java)
-
-
 
 
         // 已弃用
@@ -482,19 +478,153 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
         // 单独错误处理
         globals["hook"] = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
-                val classNameOrClassOrMethod = args.arg(1)
-                var classLoader: ClassLoader? = null
+                val classNameOrTableOrMethod = args.arg(1)
+                var classLoader: ClassLoader?
                 val methodName: String
+                if (classNameOrTableOrMethod.istable()) {//table 全新语法
+                    val table = classNameOrTableOrMethod.checktable()
+                    val method = table.get("method")
+                    val before = table.get("before")
+                    val after = table.get("after")
+                    if (method.isstring()) {//方法为字符串
+                        val clazz = table.get("class")
+                        classLoader =
+                            table.get("classloader").touserdata(ClassLoader::class.java)
+                                ?: lpparam.classLoader
 
-                if (classNameOrClassOrMethod.isstring()) { /////////string,
+                        val params: LuaTable? = table.get("params").checktable()
+
+                        val paramTypes = mutableListOf<Class<*>>()
+
+                        params?.let {
+                            for (key in it.keys()) {
+                                val param = it.get(key)
+                                when {
+                                    param.isstring() -> {
+                                        // 支持更多类型转换
+                                        val typeStr = param.tojstring()
+                                        val type = parseType(typeStr, classLoader)
+                                        paramTypes.add(type!!)
+                                    }
+                                    // 可以扩展更多类型的处理
+                                    else -> {
+                                        val classObj = safeToJavaClass(param)
+                                        if (classObj != null) {
+                                            paramTypes.add(classObj)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        if (clazz.isstring()) {///////clazz字符串
+
+                            XposedHelpers.findAndHookMethod(
+                                clazz.tojstring(),
+                                classLoader,
+                                method.tojstring(),
+                                *paramTypes.toTypedArray(),
+                                object : XC_MethodHook() {
+                                    override fun beforeHookedMethod(param: MethodHookParam?) {
+                                        before?.takeUnless { it.isnil() }?.let { func ->
+                                            val luaParam = CoerceJavaToLua.coerce(param)
+                                            try {
+                                                func.call(luaParam)
+                                            } catch (e: Exception) {
+                                                val err = simplifyLuaError(e.toString()).toString()
+                                                "${lpparam.packageName}:$scriptName:$err".e()
+                                            }
+
+                                        }
+                                    }
+
+                                    override fun afterHookedMethod(param: MethodHookParam?) {
+                                        after?.takeUnless { it.isnil() }?.let { func ->
+                                            val luaParam = CoerceJavaToLua.coerce(param)
+                                            try {
+                                                func.call(luaParam)
+                                            } catch (e: Exception) {
+                                                val err = simplifyLuaError(e.toString()).toString()
+                                                "${lpparam.packageName}:$scriptName:$err".e()
+                                            }
+                                        }
+                                    }
+                                }
+                            )
+                        } else if (clazz.isuserdata(Class::class.java)) {
+                            XposedHelpers.findAndHookMethod(
+                                clazz.touserdata(Class::class.java),
+                                method.tojstring(),
+                                *paramTypes.toTypedArray(),
+                                object : XC_MethodHook() {
+                                    override fun beforeHookedMethod(param: MethodHookParam?) {
+                                        before?.takeUnless { it.isnil() }?.let { func ->
+                                            val luaParam = CoerceJavaToLua.coerce(param)
+                                            try {
+                                                func.call(luaParam)
+                                            } catch (e: Exception) {
+                                                val err = simplifyLuaError(e.toString()).toString()
+                                                "${lpparam.packageName}:$scriptName:$err".e()
+                                            }
+
+                                        }
+                                    }
+
+                                    override fun afterHookedMethod(param: MethodHookParam?) {
+                                        after?.takeUnless { it.isnil() }?.let { func ->
+                                            val luaParam = CoerceJavaToLua.coerce(param)
+                                            try {
+                                                func.call(luaParam)
+                                            } catch (e: Exception) {
+                                                val err = simplifyLuaError(e.toString()).toString()
+                                                "${lpparam.packageName}:$scriptName:$err".e()
+                                            }
+                                        }
+                                    }
+                                }
+                            )
+                        }
+
+                    } else if (method.isuserdata(Method::class.java)) {
+
+                        XposedBridge.hookMethod(
+                            method.touserdata(Method::class.java),
+                            object : XC_MethodHook() {
+                                override fun beforeHookedMethod(param: MethodHookParam?) {
+                                    before?.takeUnless { it.isnil() }?.let { func ->
+                                        val luaParam = CoerceJavaToLua.coerce(param)
+                                        try {
+                                            func.call(luaParam)
+                                        } catch (e: Exception) {
+                                            val err = simplifyLuaError(e.toString()).toString()
+                                            "${lpparam.packageName}:$scriptName:$err".e()
+                                        }
+                                    }
+                                }
+
+                                override fun afterHookedMethod(param: MethodHookParam?) {
+                                    after?.takeUnless { it.isnil() }?.let { func ->
+                                        val luaParam = CoerceJavaToLua.coerce(param)
+                                        try {
+                                            func.call(luaParam)
+                                        } catch (e: Exception) {
+                                            val err = simplifyLuaError(e.toString()).toString()
+                                            "${lpparam.packageName}:$scriptName:$err".e()
+                                        }
+                                    }
+                                }
+                            }
+                        )
+
+                    }
+
+                } else if (classNameOrTableOrMethod.isstring()) { /////////string,
                     classLoader =
                         args.optuserdata(2, lpparam.javaClass.classLoader) as ClassLoader
-                    val className = classNameOrClassOrMethod.tojstring()
+                    val className = classNameOrTableOrMethod.tojstring()
                     methodName = args.checkjstring(3)
 
-
                     val paramTypes = mutableListOf<Class<*>>()
-
                     if (args.arg(4).istable()) {
                         for (key in args.arg(4).checktable().keys()) {
                             val param = args.arg(4).checktable().get(key)
@@ -502,13 +632,12 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                             when {
 
                                 param.isstring() -> {
-                                    // 支持更多类型转换
                                     val typeStr = param.tojstring()
                                     val type = parseType(typeStr, classLoader)
                                     paramTypes.add(type!!)
 
                                 }
-                                // 可以扩展更多类型的处理
+
                                 else -> {
                                     val classObj = safeToJavaClass(param)
                                     if (classObj != null) {
@@ -554,41 +683,15 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                             override fun beforeHookedMethod(param: MethodHookParam?) {
 
                                 beforeFunc?.let { func ->
-
                                     val luaParam = CoerceJavaToLua.coerce(param)
 
-                                    var modifiedParam: LuaValue? = null
-
                                     try {
-                                        // 允许在Lua中修改参数
-                                        modifiedParam = func.call(luaParam)
+                                        func.call(luaParam)
                                     } catch (e: Exception) {
                                         val err = simplifyLuaError(e.toString()).toString()
                                         "${lpparam.packageName}:$scriptName:$err".e()
                                     }
 
-
-                                    // 如果Lua函数返回了修改后的参数，则替换原参数
-                                    modifiedParam?.isnil()?.let {
-                                        if (!it) {
-                                            // 假设返回的是一个表，包含修改后的参数
-                                            if (modifiedParam.istable()) {
-                                                val table = modifiedParam.checktable()
-                                                val argsTable = table.get("args")
-
-                                                if (argsTable.istable()) {
-                                                    val argsModified = argsTable.checktable()
-                                                    for (i in 1..argsModified.length()) {
-                                                        // 将Lua的参数转换回Java类型
-                                                        param?.args?.set(
-                                                            i - 1,
-                                                            fromLuaValue(argsModified.get(i))
-                                                        )
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
                                 }
                             }
 
@@ -596,32 +699,20 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                 afterFunc?.let { func ->
                                     val luaParam = CoerceJavaToLua.coerce(param)
 
-                                    var modifiedResult: LuaValue? = null
-
                                     try {
-                                        modifiedResult = func.call(luaParam)
+                                        func.call(luaParam)
                                     } catch (e: Exception) {
                                         val err = simplifyLuaError(e.toString()).toString()
                                         "${lpparam.packageName}:$scriptName:$err".e()
                                     }
-                                    // 允许在Lua中修改返回值
 
-
-                                    // 如果Lua函数返回了修改后的结果，则替换原返回值
-                                    modifiedResult?.isnil()?.let {
-                                        if (!it) {
-
-                                            param?.result = fromLuaValue(modifiedResult)
-                                        }
-                                    }
                                 }
                             }
                         }
                     )
 
 
-                } else if (classNameOrClassOrMethod.isuserdata(Method::class.java)) {   ///method
-
+                } else if (classNameOrTableOrMethod.isuserdata(Method::class.java)) {   ///method
 
                     val method = args.arg(1).touserdata(Method::class.java) as Method
                     val beforeFunc = args.optfunction(2, null)
@@ -634,60 +725,24 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                 beforeFunc?.let { func ->
                                     val luaParam = CoerceJavaToLua.coerce(param)
 
-                                    var modifiedParam: LuaValue? = null
-
                                     try {
-                                        // 允许在Lua中修改参数
-                                        modifiedParam = func.call(luaParam)
+                                        func.call(luaParam)
                                     } catch (e: Exception) {
                                         val err = simplifyLuaError(e.toString()).toString()
                                         "${lpparam.packageName}:$scriptName:$err".e()
                                     }
 
-                                    // If Lua function returned modified parameters, replace original parameters
-                                    modifiedParam?.isnil()?.let {
-                                        if (!it) {
-                                            // Assuming return is a table containing modified parameters
-                                            if (modifiedParam.istable()) {
-                                                val table = modifiedParam.checktable()
-                                                val argsTable = table.get("args")
-
-                                                if (argsTable.istable()) {
-                                                    val argsModified = argsTable.checktable()
-                                                    for (i in 1..argsModified.length()) {
-                                                        // Convert Lua parameters back to Java types
-                                                        param?.args?.set(
-                                                            i - 1,
-                                                            fromLuaValue(argsModified.get(i))
-                                                        )
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
                                 }
                             }
 
                             override fun afterHookedMethod(param: MethodHookParam?) {
                                 afterFunc?.let { func ->
                                     val luaParam = CoerceJavaToLua.coerce(param)
-
-
-                                    var modifiedResult: LuaValue? = null
-
                                     try {
-                                        // 允许在Lua中修改参数
-                                        modifiedResult = func.call(luaParam)
+                                        func.call(luaParam)
                                     } catch (e: Exception) {
                                         val err = simplifyLuaError(e.toString()).toString()
                                         "${lpparam.packageName}:$scriptName:$err".e()
-                                    }
-
-                                    // If Lua function returned modified result, replace original result
-                                    modifiedResult?.isnil()?.let {
-                                        if (!it) {
-                                            param?.result = fromLuaValue(modifiedResult)
-                                        }
                                     }
                                 }
                             }
@@ -695,31 +750,125 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                     )
 
                     return TRUE
-
-
                 }
-
-                PackageManager.PERMISSION_GRANTED
-
 
                 return NIL
             }
         }
 
 
-
-
         // 单独错误处理
         globals["replace"] = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
-                val classNameOrClassOrMethod = args.arg(1)
+                val classNameOrTableOrMethod = args.arg(1)
                 var classLoader: ClassLoader? = null
                 val methodName: String
 
-                if (classNameOrClassOrMethod.isstring()) { /////////string,
+                if (classNameOrTableOrMethod.istable()) {//table 全新语法
+                    val table = classNameOrTableOrMethod.checktable()
+                    val method = table.get("method")
+                    val replace = table.get("replace")
+                    if (method.isstring()) {//方法为字符串
+                        val clazz = table.get("class")
+                        classLoader =
+                            table.get("classloader").touserdata(ClassLoader::class.java)
+                                ?: lpparam.classLoader
+
+                        val params: LuaTable? = table.get("params").checktable()
+
+                        val paramTypes = mutableListOf<Class<*>>()
+
+                        params?.let {
+                            for (key in it.keys()) {
+                                val param = it.get(key)
+                                when {
+                                    param.isstring() -> {
+                                        // 支持更多类型转换
+                                        val typeStr = param.tojstring()
+                                        val type = parseType(typeStr, classLoader)
+                                        paramTypes.add(type!!)
+                                    }
+                                    // 可以扩展更多类型的处理
+                                    else -> {
+                                        val classObj = safeToJavaClass(param)
+                                        if (classObj != null) {
+                                            paramTypes.add(classObj)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        if (clazz.isstring()) {///////clazz字符串
+
+                            XposedHelpers.findAndHookMethod(
+                                clazz.tojstring(),
+                                classLoader,
+                                method.tojstring(),
+                                *paramTypes.toTypedArray(),
+                                object : XC_MethodReplacement() {
+                                    override fun replaceHookedMethod(param: MethodHookParam?): Any? {
+                                        replace?.takeUnless { it.isnil() }?.let { func ->
+                                            val luaParam = CoerceJavaToLua.coerce(param)
+                                            try {
+                                                func.call(luaParam)
+                                            } catch (e: Exception) {
+                                                val err = simplifyLuaError(e.toString()).toString()
+                                                "${lpparam.packageName}:$scriptName:$err".e()
+                                            }
+                                        }
+                                        return null
+                                    }
+                                }
+                            )
+                        } else if (clazz.isuserdata(Class::class.java)) {
+                            XposedHelpers.findAndHookMethod(
+                                clazz.touserdata(Class::class.java),
+                                method.tojstring(),
+                                *paramTypes.toTypedArray(),
+                                object : XC_MethodReplacement() {
+                                    override fun replaceHookedMethod(param: MethodHookParam?): Any? {
+                                        replace?.takeUnless { it.isnil() }?.let { func ->
+                                            val luaParam = CoerceJavaToLua.coerce(param)
+                                            try {
+                                                func.call(luaParam)
+                                            } catch (e: Exception) {
+                                                val err = simplifyLuaError(e.toString()).toString()
+                                                "${lpparam.packageName}:$scriptName:$err".e()
+                                            }
+                                        }
+                                        return null
+                                    }
+                                }
+                            )
+                        }
+
+                    } else if (method.isuserdata(Method::class.java)) {
+
+                        XposedBridge.hookMethod(
+                            method.touserdata(Method::class.java),
+                            object : XC_MethodReplacement() {
+                                override fun replaceHookedMethod(param: MethodHookParam?): Any? {
+                                    replace?.takeUnless { it.isnil() }?.let { func ->
+                                        val luaParam = CoerceJavaToLua.coerce(param)
+                                        try {
+                                            func.call(luaParam)
+                                        } catch (e: Exception) {
+                                            val err = simplifyLuaError(e.toString()).toString()
+                                            "${lpparam.packageName}:$scriptName:$err".e()
+                                        }
+                                    }
+                                    return null
+                                }
+                            }
+                        )
+
+                    }
+
+                } else if (classNameOrTableOrMethod.isstring()) { /////////string,
                     classLoader =
                         args.optuserdata(2, lpparam.javaClass.classLoader) as ClassLoader
-                    val className = classNameOrClassOrMethod.tojstring()
+                    val className = classNameOrTableOrMethod.tojstring()
                     methodName = args.checkjstring(3)
 
 
@@ -728,17 +877,14 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                     if (args.arg(4).istable()) {
                         for (key in args.arg(4).checktable().keys()) {
                             val param = args.arg(4).checktable().get(key)
-
                             when {
-
                                 param.isstring() -> {
-                                    // 支持更多类型转换
                                     val typeStr = param.tojstring()
                                     val type = parseType(typeStr, classLoader)
                                     paramTypes.add(type!!)
 
                                 }
-                                // 可以扩展更多类型的处理
+
                                 else -> {
                                     val classObj = safeToJavaClass(param)
                                     if (classObj != null) {
@@ -754,13 +900,12 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                             when {
 
                                 param.isstring() -> {
-                                    // 支持更多类型转换
                                     val typeStr = param.tojstring()
                                     val type = parseType(typeStr, classLoader)
                                     paramTypes.add(type!!)
 
                                 }
-                                // 可以扩展更多类型的处理
+
                                 else -> {
                                     val classObj = safeToJavaClass(param)
                                     if (classObj != null) {
@@ -773,7 +918,6 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
 
 
                     val replaceFunc = args.optfunction(args.narg(), null)
-//                    val afterFunc = args.optfunction(args.narg(), null)
 
                     XposedHelpers.findAndHookMethod(
                         className,
@@ -783,25 +927,12 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                         object : XC_MethodReplacement() {
                             override fun replaceHookedMethod(param: MethodHookParam?): Any? {
                                 replaceFunc?.let { func ->
-//
                                     val luaParam = CoerceJavaToLua.coerce(param)
-
-                                    var modifiedResult: LuaValue? = null
-
                                     try {
-                                        // 允许在Lua中修改参数
-                                        modifiedResult = func.call(luaParam)
+                                        func.call(luaParam)
                                     } catch (e: Exception) {
                                         val err = simplifyLuaError(e.toString()).toString()
                                         "${lpparam.packageName}:$scriptName:$err".e()
-                                    }
-
-
-                                    // 如果Lua函数返回了修改后的结果，则替换原返回值
-                                    modifiedResult?.isnil()?.let {
-                                        if (!it) {
-                                            return fromLuaValue(modifiedResult)
-                                        }
                                     }
                                 }
                                 return null
@@ -810,52 +941,30 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                     )
 
 
-                } else if (classNameOrClassOrMethod.isuserdata(Method::class.java)) {   ///method
-
+                } else if (classNameOrTableOrMethod.isuserdata(Method::class.java)) {   ///method
 
                     val method = args.arg(1).touserdata(Method::class.java) as Method
                     val replaceFunc = args.optfunction(2, null)
-
 
                     XposedBridge.hookMethod(
                         method,
                         object : XC_MethodReplacement() {
                             override fun replaceHookedMethod(param: MethodHookParam?): Any? {
                                 replaceFunc?.let { func ->
-//
                                     val luaParam = CoerceJavaToLua.coerce(param)
-
-                                    var modifiedResult: LuaValue? = null
-
                                     try {
-                                        // 允许在Lua中修改参数
-                                        modifiedResult = func.call(luaParam)
+                                        func.call(luaParam)
                                     } catch (e: Exception) {
                                         val err = simplifyLuaError(e.toString()).toString()
                                         "${lpparam.packageName}:$scriptName:$err".e()
-                                    }
-
-
-                                    // 如果Lua函数返回了修改后的结果，则替换原返回值
-                                    modifiedResult?.isnil()?.let {
-                                        if (!it) {
-                                            return fromLuaValue(modifiedResult)
-                                        }
                                     }
                                 }
                                 return null
                             }
                         }
                     )
-
                     return TRUE
-
-
                 }
-
-                PackageManager.PERMISSION_GRANTED
-
-
                 return NIL
             }
         }
@@ -867,28 +976,101 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
         globals["hookAll"] = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
                 try {
-                    val classNameOrClass = args.arg(1)
+                    val classNameOrTableOrClass = args.arg(1)
                     var classLoader: ClassLoader? = null
                     lateinit var clazz: Class<*>
                     lateinit var method: String
                     lateinit var beforeFunc: LuaFunction
                     lateinit var afterFunc: LuaFunction
 
-                    if (classNameOrClass.isstring()) { // If first arg is a string (class name)
+                    if (classNameOrTableOrClass.istable()) {//table 全新语法
+                        val table = classNameOrTableOrClass.checktable()
+                        val method = table.get("method")
+                        val before = table.get("before")
+                        val after = table.get("after")
+                        val clazz = table.get("class")
+                        classLoader =
+                            table.get("classloader").touserdata(ClassLoader::class.java)
+                                ?: lpparam.classLoader
+
+                        if (clazz.isstring()) {///////clazz字符串
+
+                            XposedBridge.hookAllMethods(
+                                XposedHelpers.findClass(clazz.tojstring(), classLoader),
+                                method.tojstring(),
+                                object : XC_MethodHook() {
+                                    override fun beforeHookedMethod(param: MethodHookParam?) {
+                                        before?.takeUnless { it.isnil() }?.let { func ->
+                                            val luaParam = CoerceJavaToLua.coerce(param)
+                                            try {
+                                                func.call(luaParam)
+                                            } catch (e: Exception) {
+                                                val err = simplifyLuaError(e.toString()).toString()
+                                                "${lpparam.packageName}:$scriptName:$err".e()
+                                            }
+
+                                        }
+                                    }
+
+                                    override fun afterHookedMethod(param: MethodHookParam?) {
+                                        after?.takeUnless { it.isnil() }?.let { func ->
+                                            val luaParam = CoerceJavaToLua.coerce(param)
+                                            try {
+                                                func.call(luaParam)
+                                            } catch (e: Exception) {
+                                                val err = simplifyLuaError(e.toString()).toString()
+                                                "${lpparam.packageName}:$scriptName:$err".e()
+                                            }
+                                        }
+                                    }
+                                }
+                            )
+                        } else if (clazz.isuserdata(Class::class.java)) {
+                            XposedBridge.hookAllMethods(
+                                clazz.touserdata(Class::class.java),
+                                method.tojstring(),
+                                object : XC_MethodHook() {
+                                    override fun beforeHookedMethod(param: MethodHookParam?) {
+                                        before?.takeUnless { it.isnil() }?.let { func ->
+                                            val luaParam = CoerceJavaToLua.coerce(param)
+                                            try {
+                                                func.call(luaParam)
+                                            } catch (e: Exception) {
+                                                val err = simplifyLuaError(e.toString()).toString()
+                                                "${lpparam.packageName}:$scriptName:$err".e()
+                                            }
+
+                                        }
+                                    }
+
+                                    override fun afterHookedMethod(param: MethodHookParam?) {
+                                        after?.takeUnless { it.isnil() }?.let { func ->
+                                            val luaParam = CoerceJavaToLua.coerce(param)
+                                            try {
+                                                func.call(luaParam)
+                                            } catch (e: Exception) {
+                                                val err = simplifyLuaError(e.toString()).toString()
+                                                "${lpparam.packageName}:$scriptName:$err".e()
+                                            }
+                                        }
+                                    }
+                                }
+                            )
+                        }
+                    } else if (classNameOrTableOrClass.isstring()) { // If first arg is a string (class name)
                         classLoader =
                             args.optuserdata(2, lpparam.javaClass.classLoader) as ClassLoader
-                        val className = classNameOrClass.tojstring()
+                        val className = classNameOrTableOrClass.tojstring()
                         clazz = XposedHelpers.findClass(className, classLoader)
                         method = args.arg(3).toString()
                         beforeFunc = args.optfunction(4, null)
                         afterFunc = args.optfunction(5, null)
-                    } else if (classNameOrClass.isuserdata(Class::class.java)) {
+                    } else if (classNameOrTableOrClass.isuserdata(Class::class.java)) {
                         clazz = args.arg(1).touserdata(Class::class.java) as Class<*>
                         method = args.arg(2).toString()
                         beforeFunc = args.optfunction(3, null)
                         afterFunc = args.optfunction(4, null)
                     }
-
 
                     XposedBridge.hookAllMethods(
                         clazz,
@@ -897,38 +1079,11 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                             override fun beforeHookedMethod(param: MethodHookParam?) {
                                 beforeFunc?.let { func ->
                                     val luaParam = CoerceJavaToLua.coerce(param)
-
-                                    var modifiedParam: LuaValue? = null
-
                                     try {
-                                        // 允许在Lua中修改参数
-                                        modifiedParam = func.call(luaParam)
+                                        func.call(luaParam)
                                     } catch (e: Exception) {
                                         val err = simplifyLuaError(e.toString()).toString()
                                         "${lpparam.packageName}:$scriptName:$err".e()
-                                    }
-
-
-                                    // If Lua function returned modified parameters, replace original parameters
-                                    modifiedParam?.isnil()?.let {
-                                        if (!it) {
-                                            // Assuming return is a table containing modified parameters
-                                            if (modifiedParam.istable()) {
-                                                val table = modifiedParam.checktable()
-                                                val argsTable = table.get("args")
-
-                                                if (argsTable.istable()) {
-                                                    val argsModified = argsTable.checktable()
-                                                    for (i in 1..argsModified.length()) {
-                                                        // Convert Lua parameters back to Java types
-                                                        param?.args?.set(
-                                                            i - 1,
-                                                            fromLuaValue(argsModified.get(i))
-                                                        )
-                                                    }
-                                                }
-                                            }
-                                        }
                                     }
                                 }
                             }
@@ -936,22 +1091,11 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                             override fun afterHookedMethod(param: MethodHookParam?) {
                                 afterFunc?.let { func ->
                                     val luaParam = CoerceJavaToLua.coerce(param)
-
-                                    var modifiedResult: LuaValue? = null
-
                                     try {
-                                        // 允许在Lua中修改参数
-                                        modifiedResult = func.call(luaParam)
+                                        func.call(luaParam)
                                     } catch (e: Exception) {
                                         val err = simplifyLuaError(e.toString()).toString()
                                         "${lpparam.packageName}:$scriptName:$err".e()
-                                    }
-
-                                    // If Lua function returned modified result, replace original result
-                                    modifiedResult?.isnil()?.let {
-                                        if (!it) {
-                                            param?.result = fromLuaValue(modifiedResult)
-                                        }
                                     }
                                 }
                             }
@@ -961,7 +1105,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                     return TRUE
 
                 } catch (e: Exception) {
-                    val err = simplifyLuaError(e.toString()).toString()
+                    val err = simplifyLuaError(e.toString())
                     "${lpparam.packageName}:$scriptName:$err".e()
                     return FALSE
                 }
@@ -969,18 +1113,117 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
         }
 
 
-        globals["hookcotr"] = object : VarArgFunction() {
+        globals["hookctor"] = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
                 try {
-                    val classNameOrClass = args.arg(1)
+                    val classNameOrTableOrClass = args.arg(1)
                     var classLoader: ClassLoader? = null
 
-                    if (classNameOrClass.isstring()) { // If first arg is a string (class name)
+                    if (classNameOrTableOrClass.istable()) {//table 全新语法
+                        val table = classNameOrTableOrClass.checktable()
+                        val before = table.get("before")
+                        val after = table.get("after")
+                        val clazz = table.get("class")
+                        classLoader =
+                            table.get("classloader").touserdata(ClassLoader::class.java)
+                                ?: lpparam.classLoader
+
+                        val params: LuaTable? = table.get("params").checktable()
+
+                        val paramTypes = mutableListOf<Class<*>>()
+
+                        params?.let {
+                            for (key in it.keys()) {
+                                val param = it.get(key)
+                                when {
+                                    param.isstring() -> {
+                                        // 支持更多类型转换
+                                        val typeStr = param.tojstring()
+                                        val type = parseType(typeStr, classLoader)
+                                        paramTypes.add(type!!)
+                                    }
+                                    // 可以扩展更多类型的处理
+                                    else -> {
+                                        val classObj = safeToJavaClass(param)
+                                        if (classObj != null) {
+                                            paramTypes.add(classObj)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        if (clazz.isstring()) {///////clazz字符串
+
+                            XposedHelpers.findAndHookConstructor(
+                                clazz.tojstring(),
+                                classLoader,
+                                *paramTypes.toTypedArray(),
+                                object : XC_MethodHook() {
+                                    override fun beforeHookedMethod(param: MethodHookParam?) {
+                                        before?.takeUnless { it.isnil() }?.let { func ->
+                                            val luaParam = CoerceJavaToLua.coerce(param)
+                                            try {
+                                                func.call(luaParam)
+                                            } catch (e: Exception) {
+                                                val err = simplifyLuaError(e.toString()).toString()
+                                                "${lpparam.packageName}:$scriptName:$err".e()
+                                            }
+
+                                        }
+                                    }
+
+                                    override fun afterHookedMethod(param: MethodHookParam?) {
+                                        after?.takeUnless { it.isnil() }?.let { func ->
+                                            val luaParam = CoerceJavaToLua.coerce(param)
+                                            try {
+                                                func.call(luaParam)
+                                            } catch (e: Exception) {
+                                                val err = simplifyLuaError(e.toString()).toString()
+                                                "${lpparam.packageName}:$scriptName:$err".e()
+                                            }
+                                        }
+                                    }
+                                }
+                            )
+                        } else if (clazz.isuserdata(Class::class.java)) {
+                            XposedHelpers.findAndHookConstructor(
+                                clazz.touserdata(Class::class.java),
+                                *paramTypes.toTypedArray(),
+                                object : XC_MethodHook() {
+                                    override fun beforeHookedMethod(param: MethodHookParam?) {
+                                        before?.takeUnless { it.isnil() }?.let { func ->
+                                            val luaParam = CoerceJavaToLua.coerce(param)
+                                            try {
+                                                func.call(luaParam)
+                                            } catch (e: Exception) {
+                                                val err = simplifyLuaError(e.toString()).toString()
+                                                "${lpparam.packageName}:$scriptName:$err".e()
+                                            }
+
+                                        }
+                                    }
+
+                                    override fun afterHookedMethod(param: MethodHookParam?) {
+                                        after?.takeUnless { it.isnil() }?.let { func ->
+                                            val luaParam = CoerceJavaToLua.coerce(param)
+                                            try {
+                                                func.call(luaParam)
+                                            } catch (e: Exception) {
+                                                val err = simplifyLuaError(e.toString()).toString()
+                                                "${lpparam.packageName}:$scriptName:$err".e()
+                                            }
+                                        }
+                                    }
+                                }
+                            )
+                        }
+
+
+                    } else if (classNameOrTableOrClass.isstring()) { /////
                         classLoader =
                             args.optuserdata(2, lpparam.javaClass.classLoader) as ClassLoader
-                        val className = classNameOrClass.tojstring()
-
-                        // Dynamic parameter type handling
+                        val className = classNameOrTableOrClass.tojstring()
                         val paramTypes = mutableListOf<Class<*>>()
 
                         if (args.arg(3).istable()) {
@@ -988,13 +1231,12 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                 val param = args.arg(3).checktable().get(key)
                                 when {
                                     param.isstring() -> {
-                                        // Support various type conversions
                                         val typeStr = param.tojstring()
                                         val type = parseType(typeStr, classLoader)
 
                                         paramTypes.add(type!!)
                                     }
-                                    // Can expand more type handling here
+
                                     else -> {
                                         val classObj = safeToJavaClass(param)
                                         if (classObj != null) {
@@ -1004,12 +1246,10 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                 }
                             }
                         } else {
-                            // Collect parameter types (starting from index 3)
                             for (i in 3 until args.narg() - 1) {
                                 val param = args.arg(i)
                                 when {
                                     param.isstring() -> {
-                                        // Support various type conversions
                                         val typeStr = param.tojstring()
                                         val type = parseType(typeStr, classLoader)
                                         paramTypes.add(type!!)
@@ -1037,38 +1277,11 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                 override fun beforeHookedMethod(param: MethodHookParam?) {
                                     beforeFunc?.let { func ->
                                         val luaParam = CoerceJavaToLua.coerce(param)
-
-
-                                        var modifiedParam: LuaValue? = null
-
                                         try {
-                                            // 允许在Lua中修改参数
-                                            modifiedParam = func.call(luaParam)
+                                            func.call(luaParam)
                                         } catch (e: Exception) {
                                             val err = simplifyLuaError(e.toString()).toString()
                                             "${lpparam.packageName}:$scriptName:$err".e()
-                                        }
-
-
-                                        // Replace original parameters if modified
-                                        modifiedParam?.isnil()?.let {
-                                            if (!it) {
-                                                if (modifiedParam.istable()) {
-                                                    val table = modifiedParam.checktable()
-                                                    val argsTable = table.get("args")
-
-                                                    if (argsTable.istable()) {
-                                                        val argsModified = argsTable.checktable()
-                                                        for (i in 1..argsModified.length()) {
-                                                            // Convert Lua parameters back to Java types
-                                                            param?.args?.set(
-                                                                i - 1,
-                                                                fromLuaValue(argsModified.get(i))
-                                                            )
-                                                        }
-                                                    }
-                                                }
-                                            }
                                         }
                                     }
                                 }
@@ -1076,58 +1289,34 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                 override fun afterHookedMethod(param: MethodHookParam?) {
                                     afterFunc?.let { func ->
                                         val luaParam = CoerceJavaToLua.coerce(param)
-
-
-                                        var modifiedResult: LuaValue? = null
-
                                         try {
-                                            // 允许在Lua中修改参数
-                                            modifiedResult = func.call(luaParam)
+                                            func.call(luaParam)
                                         } catch (e: Exception) {
                                             val err = simplifyLuaError(e.toString()).toString()
                                             "${lpparam.packageName}:$scriptName:$err".e()
-                                        }
-
-                                        // Replace original return value if modified
-                                        modifiedResult?.isnil()?.let {
-                                            if (!it) {
-                                                param?.result = fromLuaValue(modifiedResult)
-                                            }
                                         }
                                     }
                                 }
                             }
                         )
 
-                    } else if (classNameOrClass.isuserdata(Class::class.java)) {
+                    } else if (classNameOrTableOrClass.isuserdata(Class::class.java)) {
 
+                        val classs = classNameOrTableOrClass as Class<*>
 
-                        val classs = classNameOrClass as Class<*>
-
-                        // Dynamic parameter type handling
                         val paramTypes = mutableListOf<Class<*>>()
 
+                        //参数处理
                         if (args.arg(2).istable()) {
                             for (key in args.arg(2).checktable().keys()) {
                                 val param = args.arg(2).checktable().get(key)
                                 when {
                                     param.isstring() -> {
-                                        // Support various type conversions
                                         val typeStr = param.tojstring()
                                         val type = parseType(typeStr, lpparam.classLoader)
-
-//                                    val type = when (typeStr) {
-//                                        "int" -> Int::class.javaPrimitiveType
-//                                        "long" -> Long::class.javaPrimitiveType
-//                                        "boolean" -> Boolean::class.javaPrimitiveType
-//                                        "double" -> Double::class.javaPrimitiveType
-//                                        "float" -> Float::class.javaPrimitiveType
-//                                        "String" -> String::class.java
-//                                        else -> Class.forName(typeStr, true, classLoader)
-//                                    }
                                         paramTypes.add(type!!)
                                     }
-                                    // Can expand more type handling here
+
                                     else -> {
                                         val classObj = safeToJavaClass(param)
                                         if (classObj != null) {
@@ -1137,28 +1326,16 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                 }
                             }
                         } else {
-
-                            // Collect parameter types (starting from index 3)
                             for (i in 2 until args.narg() - 1) {
                                 val param = args.arg(i)
                                 when {
                                     param.isstring() -> {
-                                        // Support various type conversions
+
                                         val typeStr = param.tojstring()
                                         val type = parseType(typeStr, lpparam.classLoader)
-
-//                                    val type = when (typeStr) {
-//                                        "int" -> Int::class.javaPrimitiveType
-//                                        "long" -> Long::class.javaPrimitiveType
-//                                        "boolean" -> Boolean::class.javaPrimitiveType
-//                                        "double" -> Double::class.javaPrimitiveType
-//                                        "float" -> Float::class.javaPrimitiveType
-//                                        "String" -> String::class.java
-//                                        else -> Class.forName(typeStr, true, classLoader)
-//                                    }
                                         paramTypes.add(type!!)
                                     }
-                                    // Can expand more type handling here
+
                                     else -> {
                                         val classObj = safeToJavaClass(param)
                                         if (classObj != null) {
@@ -1180,38 +1357,11 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                 override fun beforeHookedMethod(param: MethodHookParam?) {
                                     beforeFunc?.let { func ->
                                         val luaParam = CoerceJavaToLua.coerce(param)
-
-
-                                        var modifiedParam: LuaValue? = null
-
                                         try {
-                                            // 允许在Lua中修改参数
-                                            modifiedParam = func.call(luaParam)
+                                            func.call(luaParam)
                                         } catch (e: Exception) {
                                             val err = simplifyLuaError(e.toString()).toString()
                                             "${lpparam.packageName}:$scriptName:$err".e()
-                                        }
-
-
-                                        // Replace original parameters if modified
-                                        modifiedParam?.isnil()?.let {
-                                            if (!it) {
-                                                if (modifiedParam.istable()) {
-                                                    val table = modifiedParam.checktable()
-                                                    val argsTable = table.get("args")
-
-                                                    if (argsTable.istable()) {
-                                                        val argsModified = argsTable.checktable()
-                                                        for (i in 1..argsModified.length()) {
-                                                            // Convert Lua parameters back to Java types
-                                                            param?.args?.set(
-                                                                i - 1,
-                                                                fromLuaValue(argsModified.get(i))
-                                                            )
-                                                        }
-                                                    }
-                                                }
-                                            }
                                         }
                                     }
                                 }
@@ -1219,22 +1369,11 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                 override fun afterHookedMethod(param: MethodHookParam?) {
                                     afterFunc?.let { func ->
                                         val luaParam = CoerceJavaToLua.coerce(param)
-
-                                        var modifiedResult: LuaValue? = null
-
                                         try {
-                                            // 允许在Lua中修改参数
-                                            modifiedResult = func.call(luaParam)
+                                            func.call(luaParam)
                                         } catch (e: Exception) {
                                             val err = simplifyLuaError(e.toString()).toString()
                                             "${lpparam.packageName}:$scriptName:$err".e()
-                                        }
-
-                                        // Replace original return value if modified
-                                        modifiedResult?.isnil()?.let {
-                                            if (!it) {
-                                                param?.result = fromLuaValue(modifiedResult)
-                                            }
                                         }
                                     }
                                 }
@@ -1254,7 +1393,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
             }
         }
 
-        globals["hookctor"] = globals["hookcotr"]
+        globals["hookcotr"] = globals["hookctor"]
 
 
         // 已弃用
