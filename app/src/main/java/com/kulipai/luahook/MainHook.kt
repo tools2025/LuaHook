@@ -1,7 +1,5 @@
 package com.kulipai.luahook
 
-import android.annotation.SuppressLint
-import android.content.pm.ApplicationInfo
 import com.kulipai.luahook.LuaLib.HookLib
 import com.kulipai.luahook.LuaLib.LuaActivity
 import com.kulipai.luahook.LuaLib.LuaImport
@@ -13,11 +11,7 @@ import de.robv.android.xposed.IXposedHookZygoteInit
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
-import io.github.libxposed.api.XposedInterface
-import io.github.libxposed.api.XposedModule
-import io.github.libxposed.api.XposedModuleInterface
 import org.json.JSONArray
-import org.json.JSONObject
 import org.luaj.Globals
 import org.luaj.LuaValue
 import org.luaj.lib.jse.CoerceJavaToLua
@@ -25,10 +19,6 @@ import org.luaj.lib.jse.JsePlatform
 import org.luckypray.dexkit.DexKitBridge
 import top.sacz.xphelper.XpHelper
 import top.sacz.xphelper.dexkit.DexFinder
-import java.io.File
-
-
-
 
 
 class MainHook: IXposedHookZygoteInit, IXposedHookLoadPackage {
@@ -38,15 +28,15 @@ class MainHook: IXposedHookZygoteInit, IXposedHookLoadPackage {
 //        }
 
         const val MODULE_PACKAGE = "com.kulipai.luahook"  // 模块包名
-        val PATH = "/data/local/tmp/LuaHook"
+        const val PATH = "/data/local/tmp/LuaHook"
     }
 
 
     lateinit var luaScript: String
     lateinit var appsScript: String
-    lateinit var SelectAppsString: String
+    lateinit var selectAppsString: String
 
-    lateinit var SelectAppsList: MutableList<String>
+    lateinit var selectAppsList: MutableList<String>
     lateinit var suparam: IXposedHookZygoteInit.StartupParam
 
 
@@ -67,14 +57,14 @@ class MainHook: IXposedHookZygoteInit, IXposedHookLoadPackage {
 
     fun LuaHook_init(lpparam: LPParam) {
 
-        SelectAppsString = read(PATH + "/apps.txt").replace("\n", "")
+        selectAppsString = read("$PATH/apps.txt").replace("\n", "")
 
-        luaScript = read(PATH + "/global.lua")
+        luaScript = read("$PATH/global.lua")
 
-        if (SelectAppsString.isNotEmpty() && SelectAppsString != "") {
-            SelectAppsList = SelectAppsString.split(",").toMutableList()
+        if (selectAppsString.isNotEmpty() && selectAppsString != "") {
+            selectAppsList = selectAppsString.split(",").toMutableList()
         } else {
-            SelectAppsList = mutableListOf()
+            selectAppsList = mutableListOf()
         }
 
 
@@ -86,14 +76,14 @@ class MainHook: IXposedHookZygoteInit, IXposedHookLoadPackage {
                 chunk.call()
             }
         } catch (e: Exception) {
-            val err = simplifyLuaError(e.toString()).toString()
+            val err = simplifyLuaError(e.toString())
             "${lpparam.packageName}:[GLOBAL]:$err".e()
         }
 
 
 //        app单独脚本
 
-        if (lpparam.packageName in SelectAppsList) {
+        if (lpparam.packageName in selectAppsList) {
 
             for ((k, v) in readMap("$PATH/${LShare.AppConf}/${lpparam.packageName}.txt")) {
                 try {
@@ -113,7 +103,7 @@ class MainHook: IXposedHookZygoteInit, IXposedHookLoadPackage {
                         }
                     }
                 } catch (e: Exception) {
-                    val err = simplifyLuaError(e.toString()).toString()
+                    val err = simplifyLuaError(e.toString())
                     "${lpparam.packageName}:$k:$err".e()
                 }
             }
