@@ -1,4 +1,4 @@
-package com.kulipai.luahook.Activity
+package com.kulipai.luahook.activity
 
 import android.animation.ArgbEvaluator
 import android.annotation.SuppressLint
@@ -45,7 +45,7 @@ import kotlin.math.abs
 
 class AboutActivity : AppCompatActivity() {
     private val toolbar: MaterialToolbar by lazy { findViewById(R.id.toolbar) }
-    private val app_bar: AppBarLayout by lazy { findViewById(R.id.app_bar) }
+    private val appBar: AppBarLayout by lazy { findViewById(R.id.app_bar) }
     private val cardDonate: MaterialCardView by lazy { findViewById(R.id.card_donate) }
     private val appLogo: ImageView by lazy { findViewById(R.id.app_logo) }
 //    开源协议部分
@@ -115,7 +115,7 @@ class AboutActivity : AppCompatActivity() {
 
         // --- 许可协议卡片功能 ---
 //        cardLicense.setOnClickListener {
-//            // TODO: 实现查看许可协议详情的逻辑，例如打开一个 WebView 或新的 Activity 显示许可文本
+//            // TODO: 实现查看许可协议详情的逻辑，例如打开一个 WebView 或新的 activity 显示许可文本
 //            Toast.makeText(this, "许可协议卡片被点击了！请实现查看详情逻辑。", Toast.LENGTH_SHORT).show()
 //        }
 
@@ -129,7 +129,7 @@ class AboutActivity : AppCompatActivity() {
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
 
-            app_bar.setPadding(0, systemBars.top, 0, 0)
+            appBar.setPadding(0, systemBars.top, 0, 0)
 
             val contentPaddingTop = contentLayout.paddingTop
             contentLayout.setPadding(
@@ -143,7 +143,7 @@ class AboutActivity : AppCompatActivity() {
         }
 
         // 用于控制 App Logo 透明度 和 Toolbar 内容颜色渐变
-        app_bar.addOnOffsetChangedListener { appBarLayout, verticalOffset ->
+        appBar.addOnOffsetChangedListener { appBarLayout, verticalOffset ->
             val totalScrollRange = appBarLayout.totalScrollRange
             val currentScroll = abs(verticalOffset)
 
@@ -232,7 +232,7 @@ class AboutActivity : AppCompatActivity() {
             override fun onFailure(call: Call, e: IOException) {
                 // 网络请求失败，切换到 UI 线程更新 UI
                 runOnUiThread {
-                    // 检查 Activity 是否仍然有效
+                    // 检查 activity 是否仍然有效
                     if (isFinishing || isDestroyed) return@runOnUiThread
                     tvUpdateStatus.text = resources.getString(R.string.check_failed)+"${e.message}" // 显示错误信息
                     Toast.makeText(
@@ -247,72 +247,62 @@ class AboutActivity : AppCompatActivity() {
             override fun onResponse(call: Call, response: Response) {
                 // 网络请求成功，切换到 UI 线程更新 UI
                 runOnUiThread {
-                    // 检查 Activity 是否仍然有效
+                    // 检查 activity 是否仍然有效
                     if (isFinishing || isDestroyed) return@runOnUiThread
 
                     if (response.isSuccessful) {
                         try {
-                            val responseBody = response.body?.string()
-                            if (responseBody != null) {
-                                // 解析 JSON 响应
-                                val jsonObject = JSONObject(responseBody)
-                                val latestVersion = jsonObject.getString("tag_name")
-                                    .removePrefix("v") // 获取 tag_name，并移除前缀 'v' (如果存在)
-                                val releasePageUrl =
-                                    jsonObject.getString("html_url") // 获取 Release 页面的 URL
+                            val responseBody = response.body.string()
+                            // 解析 JSON 响应
+                            val jsonObject = JSONObject(responseBody)
+                            val latestVersion = jsonObject.getString("tag_name")
+                                .removePrefix("v") // 获取 tag_name，并移除前缀 'v' (如果存在)
+                            val releasePageUrl =
+                                jsonObject.getString("html_url") // 获取 Release 页面的 URL
 
-                                // 获取当前应用版本号
-                                val currentVersion = try {
-                                    packageManager.getPackageInfo(
-                                        packageName,
-                                        0
-                                    ).versionName // 使用 0 作为 flags
-                                } catch (e: PackageManager.NameNotFoundException) {
-                                    e.printStackTrace()
-                                    "0.0.0" // 获取失败时设为默认值
-                                }
+                            // 获取当前应用版本号
+                            val currentVersion = try {
+                                packageManager.getPackageInfo(
+                                    packageName,
+                                    0
+                                ).versionName // 使用 0 作为 flags
+                            } catch (e: PackageManager.NameNotFoundException) {
+                                e.printStackTrace()
+                                "0.0.0" // 获取失败时设为默认值
+                            }
 
-                                // 比较版本号
-                                if (compareVersions(latestVersion, currentVersion ?: "0.0.0") > 0) {
-                                    // 有新版本
-                                    tvUpdateStatus.text = resources.getString(R.string.new_version) +"$latestVersion"
-                                    AlertDialog.Builder(this@AboutActivity)
-                                        .setTitle(resources.getString(R.string.find_new_version))
-                                        .setMessage(resources.getString(R.string.current_version)+"$currentVersion"+resources.getString(R.string.n_latest_version)+"$latestVersion"+resources.getString(R.string.if_goto_github))
-                                        .setPositiveButton(resources.getString(R.string.goto_github_release)) { dialog, _ ->
-                                            // 打开 Release 页面链接
-                                            val intent = Intent(
-                                                Intent.ACTION_VIEW,
-                                                releasePageUrl.toUri()
-                                            )
-                                            if (intent.resolveActivity(packageManager) != null) {
-                                                startActivity(intent)
-                                            } else {
-                                                Toast.makeText(
-                                                    this@AboutActivity,
-                                                     resources.getString(R.string.cant_open_link_goto)+"${releasePageUrl}",
-                                                    Toast.LENGTH_LONG
-                                                ).show()
-                                            }
-                                            dialog.dismiss()
+                            // 比较版本号
+                            if (compareVersions(latestVersion, currentVersion ?: "0.0.0") > 0) {
+                                // 有新版本
+                                tvUpdateStatus.text = resources.getString(R.string.new_version) +"$latestVersion"
+                                AlertDialog.Builder(this@AboutActivity)
+                                    .setTitle(resources.getString(R.string.find_new_version))
+                                    .setMessage(resources.getString(R.string.current_version)+"$currentVersion"+resources.getString(R.string.n_latest_version)+"$latestVersion"+resources.getString(R.string.if_goto_github))
+                                    .setPositiveButton(resources.getString(R.string.goto_github_release)) { dialog, _ ->
+                                        // 打开 Release 页面链接
+                                        val intent = Intent(
+                                            Intent.ACTION_VIEW,
+                                            releasePageUrl.toUri()
+                                        )
+                                        if (intent.resolveActivity(packageManager) != null) {
+                                            startActivity(intent)
+                                        } else {
+                                            Toast.makeText(
+                                                this@AboutActivity,
+                                                 resources.getString(R.string.cant_open_link_goto)+"${releasePageUrl}",
+                                                Toast.LENGTH_LONG
+                                            ).show()
                                         }
-                                        .setNegativeButton(resources.getString(R.string.cancel)) { dialog, _ -> dialog.dismiss() }
-                                        .show()
-                                } else {
-                                    // 已是最新版本
-                                    tvUpdateStatus.text = resources.getString(R.string.latest_version)
-                                    Toast.makeText(
-                                        this@AboutActivity,
-                                        resources.getString(R.string.latest_version),
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }
+                                        dialog.dismiss()
+                                    }
+                                    .setNegativeButton(resources.getString(R.string.cancel)) { dialog, _ -> dialog.dismiss() }
+                                    .show()
                             } else {
-                                // 响应体为空
-                                tvUpdateStatus.text = resources.getString(R.string.check_failed_no_data)
+                                // 已是最新版本
+                                tvUpdateStatus.text = resources.getString(R.string.latest_version)
                                 Toast.makeText(
                                     this@AboutActivity,
-                                    resources.getString(R.string.check_update_failed_no_data),
+                                    resources.getString(R.string.latest_version),
                                     Toast.LENGTH_SHORT
                                 ).show()
                             }

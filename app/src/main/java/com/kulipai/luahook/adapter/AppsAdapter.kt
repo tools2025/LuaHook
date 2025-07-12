@@ -3,25 +3,25 @@ package com.kulipai.luahook.adapter
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.core.content.edit
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.kulipai.luahook.Activity.AppsEdit
-import com.kulipai.luahook.Activity.MultiScriptActivity
+import com.kulipai.luahook.activity.MultiScriptActivity
 import com.kulipai.luahook.R
 import com.kulipai.luahook.fragment.AppInfo
 import com.kulipai.luahook.util.LShare
 
 class AppsAdapter(private var apps: List<AppInfo>, private val context: Context) :
     RecyclerView.Adapter<AppsAdapter.AppsViewHolder>() {
-    val pm = context.packageManager
+    val pm: PackageManager = context.packageManager
 
+    @SuppressLint("NotifyDataSetChanged")
     inner class AppsViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
         val name: TextView = itemView.findViewById(R.id.name)

@@ -181,10 +181,6 @@ object DrawableHelper {
 
             // 处理响应体
             val responseBody = response.body
-            if (responseBody == null) {
-                "同步加载失败: 响应体为空".d()
-                return null
-            }
 
             // 读取字节数据
             val bytes = try {
@@ -248,7 +244,6 @@ object DrawableHelper {
         } catch (e: Throwable) {
             "同步加载未捕获异常: ${e.javaClass.name}".d()
             throw LuaError(e)
-            return null
         }
     }
 
@@ -303,11 +298,6 @@ object DrawableHelper {
 
                         // 处理响应体
                         val responseBody = response.body
-                        if (responseBody == null) {
-                            "异步加载失败: 响应体为空".d()
-                            callback(null)
-                            return
-                        }
 
                         // 读取字节数据
                         val bytes = try {
@@ -383,7 +373,6 @@ object DrawableHelper {
         } catch (e: Throwable) {
             "异步加载未捕获异常: ${e.javaClass.name}".d()
             throw LuaError(e)
-            callback(null)
         }
     }
 
@@ -452,7 +441,6 @@ object DrawableHelper {
         } catch (e: Throwable) {
             "本地加载未捕获异常: ${e.javaClass.name}".d()
             throw LuaError(e)
-            return null
         }
     }
 
@@ -480,7 +468,6 @@ object DrawableHelper {
         } catch (e: Exception) {
             "清除缓存失败: ${e.javaClass.name}".d()
             throw LuaError(e)
-            false
         }
     }
 }

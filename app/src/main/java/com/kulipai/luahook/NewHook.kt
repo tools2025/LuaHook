@@ -9,8 +9,6 @@ import com.kulipai.luahook.LuaLib.LuaUtil
 import com.kulipai.luahook.util.LShare
 import com.kulipai.luahook.util.e
 import de.robv.android.xposed.IXposedHookZygoteInit
-import de.robv.android.xposed.XposedBridge
-import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedModule
@@ -22,9 +20,7 @@ import org.luaj.Globals
 import org.luaj.LuaValue
 import org.luaj.lib.jse.CoerceJavaToLua
 import org.luaj.lib.jse.JsePlatform
-import org.luckypray.dexkit.DexKitBridge
 import top.sacz.xphelper.XpHelper
-import top.sacz.xphelper.dexkit.DexFinder
 import java.io.File
 
 lateinit var  LPParam_processName: String
@@ -40,8 +36,8 @@ interface LPParam {
 
 
 class LoadPackageParamWrapper(val origin: LoadPackageParam) : LPParam {
-    override val packageName get() = origin.packageName
-    override val classLoader get() = origin.classLoader
+    override val packageName: String get() = origin.packageName
+    override val classLoader: ClassLoader get() = origin.classLoader
     override val appInfo: ApplicationInfo get() = origin.appInfo
     override val processName: String get() = origin.processName
     override val isFirstApplication: Boolean get() = origin.isFirstApplication
@@ -76,7 +72,7 @@ fun readMap(path: String): MutableMap<String, Any?> {
             map[key] = jsonObject.get(key)
         }
         map
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         mutableMapOf()
     }
 
@@ -118,14 +114,14 @@ class NewHook(base: XposedInterface, param: ModuleLoadedParam) : XposedModule(ba
 //        }
 
         const val MODULE_PACKAGE = "com.kulipai.luahook"  // 模块包名
-        val PATH = "/data/local/tmp/LuaHook"
+        const val PATH = "/data/local/tmp/LuaHook"
     }
 
 
     lateinit var luaScript: String
-    lateinit var SelectAppsString: String
+    lateinit var selectAppsString: String
 
-    lateinit var SelectAppsList: MutableList<String>
+    lateinit var selectAppsList: MutableList<String>
     lateinit var suparam: IXposedHookZygoteInit.StartupParam
 
 
@@ -150,14 +146,14 @@ class NewHook(base: XposedInterface, param: ModuleLoadedParam) : XposedModule(ba
 
     fun LuaHook_init(lpparam: LPParam) {
 
-        SelectAppsString = read(PATH + "/apps.txt").replace("\n", "")
+        selectAppsString = read("$PATH/apps.txt").replace("\n", "")
 
-        luaScript = read(PATH + "/global.lua")
+        luaScript = read("$PATH/global.lua")
 
-        if (SelectAppsString.isNotEmpty() && SelectAppsString != "") {
-            SelectAppsList = SelectAppsString.split(",").toMutableList()
+        selectAppsList = if (selectAppsString.isNotEmpty() && selectAppsString != "") {
+            selectAppsString.split(",").toMutableList()
         } else {
-            SelectAppsList = mutableListOf()
+            mutableListOf()
         }
 
 
@@ -169,14 +165,14 @@ class NewHook(base: XposedInterface, param: ModuleLoadedParam) : XposedModule(ba
                 chunk.call()
             }
         } catch (e: Exception) {
-            val err = simplifyLuaError(e.toString()).toString()
+            val err = simplifyLuaError(e.toString())
             "${lpparam.packageName}:[GLOBAL]:$err".e()
         }
 
 
 //        app单独脚本
 
-        if (lpparam.packageName in SelectAppsList) {
+        if (lpparam.packageName in selectAppsList) {
 
             for ((k, v) in readMap("$PATH/${LShare.AppConf}/${lpparam.packageName}.txt")) {
                 try {
@@ -196,7 +192,7 @@ class NewHook(base: XposedInterface, param: ModuleLoadedParam) : XposedModule(ba
                         }
                     }
                 } catch (e: Exception) {
-                    val err = simplifyLuaError(e.toString()).toString()
+                    val err = simplifyLuaError(e.toString())
                     "${lpparam.packageName}:$k:$err".e()
                 }
             }
@@ -215,7 +211,7 @@ class NewHook(base: XposedInterface, param: ModuleLoadedParam) : XposedModule(ba
         globals["suparam"] = CoerceJavaToLua.coerce(suparam)
         LuaActivity(null).registerTo(globals)
         HookLib(lpparam, scriptName).registerTo(globals)
-        LuaUtil.LoadBasicLib(globals)
+        LuaUtil.loadBasicLib(globals)
         LuaImport(lpparam.classLoader, this::class.java.classLoader!!).registerTo(globals)
 
         return globals

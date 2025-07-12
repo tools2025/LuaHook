@@ -1,19 +1,13 @@
 package com.kulipai.luahook
 
-import android.adservices.ondevicepersonalization.LogReader
-import android.app.Application
 import android.os.Bundle
-import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
 import com.kulipai.luahook.LuaLib.LuaActivity
 import com.kulipai.luahook.LuaLib.LuaImport
 import com.kulipai.luahook.LuaLib.LuaUtil
 //import androidx.activity.enableEdgeToEdge
-import com.kulipai.luahook.util.d
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
 import org.luaj.Globals
-import org.luaj.android.loadlayout
 import org.luaj.lib.jse.CoerceJavaToLua
 import org.luaj.lib.jse.JsePlatform
 import org.luckypray.dexkit.DexKitBridge
@@ -26,12 +20,8 @@ class EmptyActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-
-
-//        enableEdgeToEdge()
         val data = intent.getStringExtra("script")
         CreateGlobals().load(data).call()
-
 
     }
 
@@ -49,7 +39,7 @@ class EmptyActivity : BaseActivity() {
         LuaActivity(this).registerTo(globals)
 
         LuaImport(this::class.java.classLoader!!, this::class.java.classLoader!!).registerTo(globals)
-        LuaUtil.LoadBasicLib(globals)
+        LuaUtil.loadBasicLib(globals)
         return globals
     }
 

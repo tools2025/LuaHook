@@ -1,5 +1,8 @@
+package com.kulipai.luahook.adapter
+
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.pm.PackageManager
 import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
@@ -33,7 +36,7 @@ class SelectAppsAdapter(
 
 
     RecyclerView.Adapter<SelectAppsAdapter.AppsViewHolder>() {
-    val pm = context.packageManager
+    val pm: PackageManager = context.packageManager
 
 
     inner class AppsViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -53,11 +56,11 @@ class SelectAppsAdapter(
                     card.cardElevation = 0.toFloat()
 
 
-                    val aicon =
+                    val icon =
                         pm.getApplicationIcon(pm.getApplicationInfo(apps[bindingAdapterPosition].packageName, 0))
-                    icon.setImageDrawable(aicon)
+                    this@AppsViewHolder.icon.setImageDrawable(icon)
 //                    icon.setImageDrawable(apps[adapterPosition].icon)
-                    icon.setColorFilter(0)
+                    this@AppsViewHolder.icon.setColorFilter(0)
                     selectApps -= apps[bindingAdapterPosition].packageName
                 } else {
 
@@ -106,8 +109,8 @@ class SelectAppsAdapter(
             holder.card.cardElevation = 0.toFloat()
 
 
-            val aicon = pm.getApplicationIcon(pm.getApplicationInfo(apps[position].packageName, 0))
-            holder.icon.setImageDrawable(aicon)
+            val icon = pm.getApplicationIcon(pm.getApplicationInfo(apps[position].packageName, 0))
+            holder.icon.setImageDrawable(icon)
 //            holder.icon.setImageDrawable(apps[position].icon)
             holder.icon.setColorFilter(0)
         }

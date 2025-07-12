@@ -20,7 +20,7 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * ErrorActivity 是一个专门用于显示应用程序错误信息的 Activity。
+ * ErrorActivity 是一个专门用于显示应用程序错误信息的 activity。
  * 它从 Intent 中接收错误消息和堆栈跟踪，并将其显示在 UI 上。
  */
 class ErrorActivity : AppCompatActivity() {
@@ -73,11 +73,11 @@ class ErrorActivity : AppCompatActivity() {
 
         // 设置重启应用程序按钮的点击监听器
         btnRestartApp.setOnClickListener {
-            // 重启应用程序到主 Activity
+            // 重启应用程序到主 activity
             val intent = packageManager.getLaunchIntentForPackage(packageName)
             intent?.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
             startActivity(intent)
-            finish() // 关闭当前错误 Activity
+            finish() // 关闭当前错误 activity
         }
     }
 
@@ -98,7 +98,7 @@ class ErrorActivity : AppCompatActivity() {
             制造商：${android.os.Build.MANUFACTURER}
             型号：${android.os.Build.MODEL}
             Android 版本：${android.os.Build.VERSION.RELEASE} (API ${android.os.Build.VERSION.SDK_INT})
-            应用版本：${try { packageManager.getPackageInfo(packageName, 0).versionName } catch (e: Exception) { "未知" }}
+            应用版本：${try { packageManager.getPackageInfo(packageName, 0).versionName } catch (_: Exception) { "未知" }}
             包名：$packageName
             ---
             生成时间：${SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())}

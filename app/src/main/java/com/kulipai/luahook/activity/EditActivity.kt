@@ -1,11 +1,9 @@
-package com.kulipai.luahook.Activity
+package com.kulipai.luahook.activity
 
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.content.res.Configuration
-import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.text.SpannableString
 import android.text.TextPaint
@@ -46,20 +44,11 @@ class EditActivity : AppCompatActivity() {
         return try {
             val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
             packageInfo.versionName!!
-        } catch (e: PackageManager.NameNotFoundException) {
+        } catch (_: PackageManager.NameNotFoundException) {
             "Unknown"
         }
     }
 
-
-    fun getAppVersionCode(context: Context): Long {
-        return try {
-            val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-            packageInfo.longVersionCode // 注意这里使用 longVersionCode，在旧版本中是 versionCode (Int)
-        } catch (e: PackageManager.NameNotFoundException) {
-            -1 // 或者其他表示未找到的数值
-        }
-    }
 
     fun getDynamicColor(context: Context, @AttrRes colorAttributeResId: Int): Int {
         val typedValue = TypedValue()
@@ -188,10 +177,6 @@ class EditActivity : AppCompatActivity() {
     }
 
 
-    fun isNightMode(context: Context): Boolean {
-        return (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
-    }
-
     //菜单
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menu?.add(0, 1, 0, "Undo")
@@ -267,8 +252,6 @@ class EditActivity : AppCompatActivity() {
     private val toolbar: MaterialToolbar by lazy { findViewById(R.id.toolbar) }
     private val rootLayout: CoordinatorLayout by lazy { findViewById(R.id.main) }
     private val bottomSymbolBar: LinearLayout by lazy { findViewById(R.id.bottomBar) }
-
-    private lateinit var defaultLogo: Drawable
 
     companion object
 
@@ -352,7 +335,7 @@ class EditActivity : AppCompatActivity() {
 
         val luaScript = read("/data/local/tmp/LuaHook/global.lua")
         if (luaScript == "") {
-            var lua = """
+            val lua = """
         """.trimIndent()
             saveScript(lua)
         }

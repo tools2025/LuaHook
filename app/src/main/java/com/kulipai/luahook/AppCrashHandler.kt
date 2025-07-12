@@ -13,7 +13,7 @@ import java.io.StringWriter
  * @param context 应用程序上下文
  * @param defaultHandler 默认的未捕获异常处理器，用于链式调用或在某些情况下使用。
  */
-class AppCrashHandler(private val context: Context, private val defaultHandler: Thread.UncaughtExceptionHandler?) : Thread.UncaughtExceptionHandler {
+class AppCrashHandler(private val context: Context) : Thread.UncaughtExceptionHandler {
 
     /**
      * 当线程发生未捕获异常时调用。
@@ -31,7 +31,7 @@ class AppCrashHandler(private val context: Context, private val defaultHandler: 
 
         // 创建 Intent 跳转到 ErrorActivity
         val intent = Intent(context, ErrorActivity::class.java).apply {
-            // 添加标志，确保在一个新的任务栈中启动，并清除旧的 Activity 栈
+            // 添加标志，确保在一个新的任务栈中启动，并清除旧的 activity 栈
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
             putExtra(ErrorActivity.EXTRA_ERROR_MESSAGE, errorMessage)
             putExtra(ErrorActivity.EXTRA_STACK_TRACE, stackTrace)
@@ -68,7 +68,7 @@ class AppCrashHandler(private val context: Context, private val defaultHandler: 
         fun init(context: Context) {
             val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
             if (defaultHandler !is AppCrashHandler) { // 避免重复设置
-                Thread.setDefaultUncaughtExceptionHandler(AppCrashHandler(context.applicationContext, defaultHandler))
+                Thread.setDefaultUncaughtExceptionHandler(AppCrashHandler(context.applicationContext))
             }
         }
     }

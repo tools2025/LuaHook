@@ -33,8 +33,8 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.kulipai.luahook.Activity.AppsEdit
-import com.kulipai.luahook.Activity.SelectApps
+import com.kulipai.luahook.activity.AppsEdit
+import com.kulipai.luahook.activity.SelectApps
 import com.kulipai.luahook.MyApplication
 import com.kulipai.luahook.R
 import com.kulipai.luahook.adapter.AppsAdapter
@@ -77,7 +77,7 @@ fun getInstalledApps(context: Context): List<AppInfo> {
 
 //                apps.add(AppInfo(appName, packageName, icon, versionName, versionCode))
                 apps.add(AppInfo(appName, packageName, versionName, versionCode))
-            } catch (e: PackageManager.NameNotFoundException) {
+            } catch (_: PackageManager.NameNotFoundException) {
                 // 忽略未找到的包
             }
         }
@@ -96,7 +96,7 @@ class AppsFragment : Fragment() {
     // --- **修改点 1：将 launcher 的初始化移到这里，作为成员变量** ---
     private val launcher: ActivityResultLauncher<Intent> =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            // 使用 Activity.RESULT_OK 进行比较
+            // 使用 activity.RESULT_OK 进行比较
 
             // 在处理 Fragment 视图相关的操作时，使用 viewLifecycleOwner.lifecycleScope 更安全
             lifecycleScope.launch {
@@ -215,7 +215,7 @@ class AppsFragment : Fragment() {
         }
 
         //fab点击
-        var isOpen: Boolean = false
+        var isOpen = false
         fab.setOnClickListener {
             val rotateAnimator =
                 ObjectAnimator.ofFloat(fab, "rotation", fab.rotation, fab.rotation + 45f)
@@ -391,17 +391,17 @@ class AppsFragment : Fragment() {
         } else {
             // apps列表
             val appList = LShare.readStringList("/apps.txt")
-            if (appList.isEmpty() || !appList.contains(param.packageName.toString())) {
-                appList.add(param.packageName.toString())
+            if (appList.isEmpty() || !appList.contains(param.packageName)) {
+                appList.add(param.packageName)
                 LShare.writeStringList("/apps.txt", appList)
             }
 
 
             // appconf
             // 写配置
-            var path = LShare.AppConf + "/" + param.packageName + ".txt"
-            var map = LShare.readMap(path)
-            map[param.name] = arrayOf(true, param.descript, "v1.0")
+            val path = LShare.AppConf + "/" + param.packageName + ".txt"
+            val map = LShare.readMap(path)
+            map[param.name] = arrayOf<Any?>(true, param.descript, "v1.0")
             LShare.writeMap(path, map)
             LShare.ensureDirectoryExists(LShare.DIR + "/" + LShare.AppScript + "/" + param.packageName)
 

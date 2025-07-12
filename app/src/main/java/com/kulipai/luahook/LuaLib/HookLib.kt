@@ -137,12 +137,10 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
             override fun invoke(args: Varargs): LuaValue {
                 // 确保 self 是字符串
                 val className = args.checkjstring(1)
-                var loader: ClassLoader
-                if (args.narg() == 1) {
-                    loader = lpparam.classLoader
+                val loader: ClassLoader = if (args.narg() == 1) {
+                    lpparam.classLoader
                 } else {
-                    loader = args.checkuserdata(2, ClassLoader::class.java) as ClassLoader
-
+                    args.checkuserdata(2, ClassLoader::class.java) as ClassLoader
                 }
 
                 // 查找类
@@ -239,7 +237,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                         if (fieldValue is Class<*>) {
                             return fieldValue
                         }
-                    } catch (e: NoSuchFieldException) {
+                    } catch (_: NoSuchFieldException) {
                         // 继续尝试下一个字段
                     }
                 }
@@ -253,7 +251,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                         if (result is Class<*>) {
                             return result
                         }
-                    } catch (e: NoSuchMethodException) {
+                    } catch (_: NoSuchMethodException) {
                         // 继续尝试下一个方法
                     }
                 }
@@ -269,7 +267,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                     if (className != null) {
                         return Class.forName(className)
                     }
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     // 忽略并返回 null
                 }
 
@@ -1302,7 +1300,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
 
                     } else if (classNameOrTableOrClass.isuserdata(Class::class.java)) {
 
-                        val classs = classNameOrTableOrClass as Class<*>
+                        val classs = classNameOrTableOrClass.touserdata(Class::class.java) as Class<*>
 
                         val paramTypes = mutableListOf<Class<*>>()
 
@@ -1497,7 +1495,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
 
         val baseClass = typeMap[baseType] ?: try {
             XposedHelpers.findClass(baseType, classLoader)
-        } catch (e: ClassNotFoundException) {
+        } catch (_: ClassNotFoundException) {
             "参数错误".d()
             return null
         }

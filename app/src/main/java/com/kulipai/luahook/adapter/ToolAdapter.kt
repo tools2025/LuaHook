@@ -32,13 +32,12 @@ class ToolAdapter(
 
         init {
             toolItem.setOnClickListener {
-                val symbol = symbols[adapterPosition]
-                var idx = editor.selectionStart
+                val symbol = symbols[bindingAdapterPosition]
                 if (editor.isSelected && symbol == "\"") {
                     editor.insert(editor.selectionStart, symbol)
                     editor.insert(editor.selectionEnd, symbol)
                 }
-                when (adapterPosition) {
+                when (bindingAdapterPosition) {
                     0 -> {
                         val view = LayoutInflater.from(context).inflate(R.layout.dialog_hook, null)
 
@@ -193,25 +192,25 @@ class ToolAdapter(
 
                                 try {
                                     if(input.startsWith("invoke")) {
-                                        val InvokeInfo = parseDalvikInstruction(input)!!
-                                        var invokelua =""
-                                        if(InvokeInfo.get("methodName") == "<init>") {
-                                            invokelua = """
-                                                imports "${InvokeInfo["className"].toString()}"
-                                                ${InvokeInfo["className"].toString().substringAfterLast(".")}()
+                                        val invokeInfo = parseDalvikInstruction(input)!!
+                                        var invokeLua =""
+                                        if(invokeInfo["methodName"] == "<init>") {
+                                            invokeLua = """
+                                                imports "${invokeInfo["className"].toString()}"
+                                                ${invokeInfo["className"].toString().substringAfterLast(".")}()
                                             """.trimIndent()
                                         }else if(input.startsWith("invoke-static")) {
-                                            invokelua = """
-                                                imports "${InvokeInfo["className"].toString()}"
-                                                ${InvokeInfo["className"].toString().substringAfterLast(".")}.${InvokeInfo["methodName"].toString()}()
+                                            invokeLua = """
+                                                imports "${invokeInfo["className"].toString()}"
+                                                ${invokeInfo["className"].toString().substringAfterLast(".")}.${invokeInfo["methodName"].toString()}()
                                             """.trimIndent()
                                         }else{
-                                            invokelua = """
-                                                imports "${InvokeInfo["className"].toString()}"
-                                                ${InvokeInfo["className"].toString().substringAfterLast(".")}().${InvokeInfo["methodName"].toString()}()
+                                            invokeLua = """
+                                                imports "${invokeInfo["className"].toString()}"
+                                                ${invokeInfo["className"].toString().substringAfterLast(".")}().${invokeInfo["methodName"].toString()}()
                                             """.trimIndent()
                                         }
-                                        editor.insert(editor.selectionStart, invokelua)
+                                        editor.insert(editor.selectionStart, invokeLua)
                                         dialog.dismiss()
 
                                     }else{
@@ -221,20 +220,16 @@ class ToolAdapter(
                                         par.size.toString().d()
                                         var p =
                                             if (par.isEmpty()) "" else "\n" + par.joinToString(",") { "\"${it.trim()}\"" } + ","
-
-                                        var hookLua: String
-                                        if (methodInfo.methodName == "<init>") {
-                                            hookLua =
-                                                "hookcotr(\"${methodInfo.className}\",\nlpparam.classLoader,$p\nfunction(it)\n\nend,\nfunction(it)\n\nend)"
+                                        var hookLua: String = if (methodInfo.methodName == "<init>") {
+                                            "hookcotr(\"${methodInfo.className}\",\nlpparam.classLoader,$p\nfunction(it)\n\nend,\nfunction(it)\n\nend)"
                                         } else {
-                                            hookLua =
-                                                "hook(\"${methodInfo.className}\",\nlpparam.classLoader,\n\"${methodInfo.methodName}\",$p\nfunction(it)\n\nend,\nfunction(it)\n\nend)"
+                                            "hook(\"${methodInfo.className}\",\nlpparam.classLoader,\n\"${methodInfo.methodName}\",$p\nfunction(it)\n\nend,\nfunction(it)\n\nend)"
                                         }
                                         editor.insert(editor.selectionStart, hookLua)
                                         dialog.dismiss()
                                     }
 
-                                } catch (e: Exception) {
+                                } catch (_: Exception) {
                                     Toast.makeText(context, context.resources.getString(R.string.param_err), Toast.LENGTH_SHORT).show()
                                     return@setPositiveButton
                                 }
@@ -290,7 +285,7 @@ class ToolAdapter(
                                     if (code[i] == '(') parenCount--
                                     i--
                                 }
-                                return parenCount == 0 && hasIdentifierAfterColon
+                                return parenCount == 0
                             }
 
                             // 如果是右方括号，判断是否是闭合的
@@ -302,7 +297,7 @@ class ToolAdapter(
                                     if (code[i] == '[') bracketCount--
                                     i--
                                 }
-                                return bracketCount == 0 && hasIdentifierAfterColon
+                                return bracketCount == 0
                             }
 
                             // 如果是标识符的一部分
@@ -311,7 +306,7 @@ class ToolAdapter(
                                 while (i >= 0 && (code[i].isLetterOrDigit() || code[i] == '_')) {
                                     i--
                                 }
-                                return hasIdentifierAfterColon
+                                return true
                             }
 
                             return false
@@ -569,7 +564,7 @@ class ToolAdapter(
 
 
                         /**
-                         * 将代码中的 it.args[index] 转换为 it.args[index-1]
+                         * 将代码中的 it.args[ index] 转换为 it.args[index-1]
                          * 如果 index 已经是 index-1 形式，则保持不变
                          */
                         fun convertItArgsIndex(code: String): String {
@@ -762,18 +757,18 @@ class ToolAdapter(
 
     fun parseDalvikInstruction(instruction: String): Map<String, String>? {
         // 匹配 invoke-direct
-        val directPattern = Pattern.compile("invoke-direct \\{([^}]+)\\}, L([^;]+);->([^\\(]+)\\((.*)\\)(.*)\\s*?")
+        val directPattern = Pattern.compile("invoke-direct \\{([^}]+)\\}, L([^;]+);->([^(]+)\\((.*)\\)(.*)\\s*?")
         // 匹配 invoke-virtual
-        val virtualPattern = Pattern.compile("invoke-virtual \\{([^}]+)\\}, L([^;]+);->([^\\(]+)\\((.*)\\)(.*)\\s*?")
+        val virtualPattern = Pattern.compile("invoke-virtual \\{([^}]+)\\}, L([^;]+);->([^(]+)\\((.*)\\)(.*)\\s*?")
         // 匹配 invoke-static
-        val staticPattern = Pattern.compile("invoke-static \\{([^}]+)\\}, L([^;]+);->([^\\(]+)\\((.*)\\)(.*)\\s*?")
+        val staticPattern = Pattern.compile("invoke-static \\{([^}]+)\\}, L([^;]+);->([^(]+)\\((.*)\\)(.*)\\s*?")
 
         val directMatcher = directPattern.matcher(instruction)
         if (directMatcher.matches()) {
             return mapOf(
                 "instructionType" to "invoke-direct",
                 "registers" to directMatcher.group(1), // p1
-                "className" to directMatcher.group(2).replace('/', '.'), // Ljava/lang/StringBuilder -> java.lang.StringBuilder
+                "className" to directMatcher.group(2)!!.replace('/', '.'), // Ljava/lang/StringBuilder -> java.lang.StringBuilder
                 "methodName" to directMatcher.group(3), // <init>
                 "parameters" to directMatcher.group(4), // 参数类型，这里是空
                 "returnType" to directMatcher.group(5) // 返回类型，这里是 V
@@ -785,7 +780,7 @@ class ToolAdapter(
             return mapOf(
                 "instructionType" to "invoke-virtual",
                 "registers" to virtualMatcher.group(1), // p1
-                "className" to virtualMatcher.group(2).replace('/', '.'), // Landroid/widget/Toast -> android.widget.Toast
+                "className" to virtualMatcher.group(2)!!.replace('/', '.'), // Landroid/widget/Toast -> android.widget.Toast
                 "methodName" to virtualMatcher.group(3), // show
                 "parameters" to virtualMatcher.group(4), // 参数类型，这里是空
                 "returnType" to virtualMatcher.group(5) // 返回类型，这里是 V
@@ -797,7 +792,7 @@ class ToolAdapter(
             return mapOf(
                 "instructionType" to "invoke-static",
                 "registers" to staticMatcher.group(1), // p1, p2, v0
-                "className" to staticMatcher.group(2).replace('/', '.'), // Landroid/widget/Toast -> android.widget.Toast
+                "className" to staticMatcher.group(2)!!.replace('/', '.'), // Landroid/widget/Toast -> android.widget.Toast
                 "methodName" to staticMatcher.group(3), // makeText
                 "parameters" to staticMatcher.group(4), // 参数类型，Landroid/content/Context;Ljava/lang/CharSequence;I
                 "returnType" to staticMatcher.group(5) // 返回类型，Landroid/widget/Toast;

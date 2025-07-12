@@ -23,9 +23,6 @@
 
 -keep class org.luckypray.** {*;}
 -keep class top.sacz.xphelper.** {*;}
-
--keep class com.kulipai.luahook.fragment.** { *; }
--keep class com.kulipai.luahook.MainHook { *; }
 -keep class com.androlua.** { *; }
 -keep class com.kulipai.luahook.** {*;}
 # 保留整个 LuaJ 库

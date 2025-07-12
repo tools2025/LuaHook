@@ -1,25 +1,23 @@
 package com.kulipai.luahook.LuaLib
 
-import android.Manifest
 import com.kulipai.luahook.simplifyLuaError
 import com.kulipai.luahook.util.ShellManager
 import com.kulipai.luahook.util.d
-import de.robv.android.xposed.XposedBridge
 import org.luaj.Globals
 import org.luaj.LuaTable
 import org.luaj.LuaValue
-import org.luaj.LuaValue.NIL
-import org.luaj.LuaValue.NONE
 import org.luaj.Varargs
 import org.luaj.lib.OneArgFunction
 import org.luaj.lib.VarArgFunction
 import org.luaj.lib.jse.CoerceJavaToLua
 
 object LuaUtil {
-    fun Shell(_G: Globals) {
-        _G["shell"] = object : OneArgFunction() {
-            override fun call(cmdValue: LuaValue): LuaValue {
-                val cmd = cmdValue.checkjstring() // 确保输入是字符串
+    fun shell(_G: Globals) {
+        // 如果存在 VarargFunction 或类似基类
+        _G["shell"] = object : VarArgFunction() {
+            override fun invoke(args: Varargs): Varargs { // 重写的是 invoke 方法，接收 Varargs，返回 Varargs
+                // 检查第一个参数是否为字符串，通常用 checkjstring(1)
+                val cmd = args.checkjstring(1)
 
                 // 调用 ShellManager.shell 获取 Pair 返回值
                 val resultPair: Pair<String, Boolean> = ShellManager.shell(cmd)
@@ -28,13 +26,13 @@ object LuaUtil {
                 val luaResultString = CoerceJavaToLua.coerce(resultPair.first)
                 val luaSuccessBoolean = CoerceJavaToLua.coerce(resultPair.second)
 
-                // 使用 varargsOf 返回两个 LuaValue，模拟 Lua 的多返回值
-                return varargsOf(luaResultString, luaSuccessBoolean) as LuaValue
+                // 使用 varargsOf 返回两个 LuaValue，作为多返回值
+                return varargsOf(luaResultString, luaSuccessBoolean)
             }
         }
     }
 
-    fun LoadBasicLib(_G: Globals) {
+    fun loadBasicLib(_G: Globals) {
         LuaHttp.registerTo(_G)
         Luafile.registerTo(_G)
         LuaJson.registerTo(_G)

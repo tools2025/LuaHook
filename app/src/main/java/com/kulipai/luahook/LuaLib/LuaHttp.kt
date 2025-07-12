@@ -11,7 +11,6 @@ import okhttp3.Response
 import org.luaj.LuaTable
 import org.luaj.LuaValue
 import org.luaj.Varargs
-import org.luaj.lib.OneArgFunction
 import org.luaj.lib.VarArgFunction
 import java.io.File
 import java.io.FileOutputStream
@@ -39,7 +38,7 @@ object LuaHttp{
                 val cookie =
                     if (args.narg() > (if (hasTimeout) 4 else 3)) args.optjstring(3, null) else null
                 val timeout =
-                    if (hasTimeout) args.checklong(args.narg()).toLong() else 10000L // Default 10s
+                    if (hasTimeout) args.checklong(args.narg()) else 10000L // Default 10s
 
                 val client = OkHttpClient.Builder()
                     .connectTimeout(timeout, TimeUnit.MILLISECONDS)
@@ -74,12 +73,12 @@ object LuaHttp{
 
                 client.newCall(request).enqueue(object : Callback {
                     override fun onFailure(call: Call, e: IOException) {
-                        callback.call(LuaValue.valueOf(-1), LuaValue.valueOf(e.message ?: ""))
+                        callback.call(valueOf(-1), valueOf(e.message ?: ""))
                     }
 
                     override fun onResponse(call: Call, response: Response) {
-                        val body = response.body?.string() ?: ""
-                        callback.call(LuaValue.valueOf(response.code), LuaValue.valueOf(body))
+                        val body = response.body.string()
+                        callback.call(valueOf(response.code), valueOf(body))
                     }
                 })
 
@@ -101,7 +100,7 @@ object LuaHttp{
                 val cookie =
                     if (args.narg() > (if (hasTimeout) 5 else 4)) args.optjstring(4, null) else null
                 val timeout =
-                    if (hasTimeout) args.checklong(args.narg()).toLong() else 10000L // Default 10s
+                    if (hasTimeout) args.checklong(args.narg()) else 10000L // Default 10s
 
                 val client = OkHttpClient.Builder()
                     .connectTimeout(timeout, TimeUnit.MILLISECONDS)
@@ -111,7 +110,7 @@ object LuaHttp{
 
                 var contentType = "application/x-www-form-urlencoded"
                 headers?.let {
-                    var key: LuaValue = LuaValue.NIL
+                    var key: LuaValue = NIL
                     while (true) {
                         val nextPair = headers.next(key)
                         key = nextPair.arg1()
@@ -129,7 +128,7 @@ object LuaHttp{
 
                 headers?.let {
                     val headerMap = mutableMapOf<String, String>()
-                    var key: LuaValue = LuaValue.NIL
+                    var key: LuaValue = NIL
                     while (true) {
                         val nextPair = headers.next(key)
                         key = nextPair.arg1()
@@ -150,12 +149,12 @@ object LuaHttp{
 
                 client.newCall(request).enqueue(object : Callback {
                     override fun onFailure(call: Call, e: IOException) {
-                        callback.call(LuaValue.valueOf(-1), LuaValue.valueOf(e.message ?: ""))
+                        callback.call(valueOf(-1), valueOf(e.message ?: ""))
                     }
 
                     override fun onResponse(call: Call, response: Response) {
-                        val body = response.body?.string() ?: ""
-                        callback.call(LuaValue.valueOf(response.code), LuaValue.valueOf(body))
+                        val body = response.body.string()
+                        callback.call(valueOf(response.code), valueOf(body))
                     }
                 })
 
@@ -308,7 +307,7 @@ object LuaHttp{
                 headers?.let {
                     val headerMap = mutableMapOf<String, String>()
 
-                    var key: LuaValue = LuaValue.NIL
+                    var key: LuaValue = NIL
                     while (true) {
                         val nextPair = headers.next(key)
                         key = nextPair.arg1()
@@ -332,12 +331,12 @@ object LuaHttp{
 
                 client.newCall(request).enqueue(object : Callback {
                     override fun onFailure(call: Call, e: IOException) {
-                        callback.call(LuaValue.valueOf(-1), LuaValue.valueOf(e.message ?: ""))
+                        callback.call(valueOf(-1), valueOf(e.message ?: ""))
                     }
 
                     override fun onResponse(call: Call, response: Response) {
-                        val body = response.body?.string() ?: ""
-                        callback.call(LuaValue.valueOf(response.code), LuaValue.valueOf(body))
+                        val body = response.body.string()
+                        callback.call(valueOf(response.code), valueOf(body))
                     }
                 })
 
@@ -382,27 +381,20 @@ object LuaHttp{
 
                 client.newCall(request).enqueue(object : Callback {
                     override fun onFailure(call: Call, e: IOException) {
-                        callback.call(LuaValue.valueOf(-1), LuaValue.valueOf(e.message ?: ""))
+                        callback.call(valueOf(-1), valueOf(e.message ?: ""))
                     }
 
                     override fun onResponse(call: Call, response: Response) {
                         try {
                             if (!response.isSuccessful) {
                                 callback.call(
-                                    LuaValue.valueOf(response.code),
-                                    LuaValue.valueOf("下载失败: ${response.message}")
+                                    valueOf(response.code),
+                                    valueOf("下载失败: ${response.message}")
                                 )
                                 return
                             }
 
                             val body = response.body
-                            if (body == null) {
-                                callback.call(
-                                    LuaValue.valueOf(response.code),
-                                    LuaValue.valueOf("下载失败: 空响应")
-                                )
-                                return
-                            }
 
                             val file = File(savePath)
                             // 创建父目录（如果不存在）
@@ -422,7 +414,7 @@ object LuaHttp{
                                 // 每下载约10%回调一次进度
                                 if (contentLength > 0 && downloadedBytes % (contentLength / 10) < 4096) {
                                     val progress = (downloadedBytes * 100 / contentLength).toInt()
-                                    callback.call(LuaValue.valueOf(0), LuaValue.valueOf(progress))
+                                    callback.call(valueOf(0), valueOf(progress))
                                 }
                             }
 
@@ -430,13 +422,13 @@ object LuaHttp{
                             inputStream.close()
 
                             callback.call(
-                                LuaValue.valueOf(response.code),
-                                LuaValue.valueOf(savePath)
+                                valueOf(response.code),
+                                valueOf(savePath)
                             )
                         } catch (e: Exception) {
                             callback.call(
-                                LuaValue.valueOf(-1),
-                                LuaValue.valueOf("下载异常: ${e.message}")
+                                valueOf(-1),
+                                valueOf("下载异常: ${e.message}")
                             )
                         }
                     }
@@ -481,17 +473,17 @@ object LuaHttp{
 
                 client.newCall(request).enqueue(object : Callback {
                     override fun onFailure(call: Call, e: IOException) {
-                        callback.call(LuaValue.valueOf(-1), LuaValue.valueOf(e.message ?: ""))
+                        callback.call(valueOf(-1), valueOf(e.message ?: ""))
                     }
 
                     override fun onResponse(call: Call, response: Response) {
                         // 将响应头转换为 Lua 表
                         val headersTable = LuaTable()
                         response.headers.forEach { (name, value) ->
-                            headersTable[LuaValue.valueOf(name)] = LuaValue.valueOf(value)
+                            headersTable[valueOf(name)] = valueOf(value)
                         }
 
-                        callback.call(LuaValue.valueOf(response.code), headersTable)
+                        callback.call(valueOf(response.code), headersTable)
                     }
                 })
 
@@ -513,7 +505,7 @@ object LuaHttp{
 
                 // 检查headers中是否指定了Content-Type
                 headers?.let {
-                    var key: LuaValue = LuaValue.NIL
+                    var key: LuaValue = NIL
                     while (true) {
                         val nextPair = headers.next(key)
                         key = nextPair.arg1()
@@ -535,7 +527,7 @@ object LuaHttp{
                 // 添加请求头
                 headers?.let {
                     val headerMap = mutableMapOf<String, String>()
-                    var key: LuaValue = LuaValue.NIL
+                    var key: LuaValue = NIL
                     while (true) {
                         val nextPair = headers.next(key)
                         key = nextPair.arg1()
@@ -557,12 +549,12 @@ object LuaHttp{
 
                 client.newCall(request).enqueue(object : Callback {
                     override fun onFailure(call: Call, e: IOException) {
-                        callback.call(LuaValue.valueOf(-1), LuaValue.valueOf(e.message ?: ""))
+                        callback.call(valueOf(-1), valueOf(e.message ?: ""))
                     }
 
                     override fun onResponse(call: Call, response: Response) {
-                        val body = response.body?.string() ?: ""
-                        callback.call(LuaValue.valueOf(response.code), LuaValue.valueOf(body))
+                        val body = response.body.string()
+                        callback.call(valueOf(response.code), valueOf(body))
                     }
                 })
 
@@ -605,12 +597,12 @@ object LuaHttp{
 
                 client.newCall(request).enqueue(object : Callback {
                     override fun onFailure(call: Call, e: IOException) {
-                        callback.call(LuaValue.valueOf(-1), LuaValue.valueOf(e.message ?: ""))
+                        callback.call(valueOf(-1), valueOf(e.message ?: ""))
                     }
 
                     override fun onResponse(call: Call, response: Response) {
-                        val body = response.body?.string() ?: ""
-                        callback.call(LuaValue.valueOf(response.code), LuaValue.valueOf(body))
+                        val body = response.body.string()
+                        callback.call(valueOf(response.code), valueOf(body))
                     }
                 })
 
@@ -632,8 +624,8 @@ object LuaHttp{
                     val file = File(filePath)
                     if (!file.exists() || !file.isFile) {
                         callback.call(
-                            LuaValue.valueOf(-1),
-                            LuaValue.valueOf("文件不存在或不是文件")
+                            valueOf(-1),
+                            valueOf("文件不存在或不是文件")
                         )
                         return NIL
                     }
@@ -678,16 +670,16 @@ object LuaHttp{
 
                     client.newCall(request).enqueue(object : Callback {
                         override fun onFailure(call: Call, e: IOException) {
-                            callback.call(LuaValue.valueOf(-1), LuaValue.valueOf(e.message ?: ""))
+                            callback.call(valueOf(-1), valueOf(e.message ?: ""))
                         }
 
                         override fun onResponse(call: Call, response: Response) {
-                            val body = response.body?.string() ?: ""
-                            callback.call(LuaValue.valueOf(response.code), LuaValue.valueOf(body))
+                            val body = response.body.string()
+                            callback.call(valueOf(response.code), valueOf(body))
                         }
                     })
                 } catch (e: Exception) {
-                    callback.call(LuaValue.valueOf(-1), LuaValue.valueOf("上传异常: ${e.message}"))
+                    callback.call(valueOf(-1), valueOf("上传异常: ${e.message}"))
                 }
 
                 return NIL

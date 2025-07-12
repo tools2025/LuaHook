@@ -11,7 +11,7 @@ import androidx.transition.TransitionManager
 import com.androlua.LuaEditor
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.transition.MaterialContainerTransform
-import com.kulipai.luahook.Activity.OnCardExpandListener
+import com.kulipai.luahook.activity.OnCardExpandListener
 import com.kulipai.luahook.R
 
 class ManAdapter(

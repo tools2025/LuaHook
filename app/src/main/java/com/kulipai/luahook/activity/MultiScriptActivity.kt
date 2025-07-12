@@ -1,10 +1,9 @@
-package com.kulipai.luahook.Activity
+package com.kulipai.luahook.activity
 
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
 import android.os.Bundle
@@ -26,7 +25,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.google.android.material.floatingtoolbar.FloatingToolbarLayout
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.kulipai.luahook.R
@@ -38,7 +36,6 @@ import org.json.JSONException
 
 class MultiScriptActivity : AppCompatActivity() {
 
-    private val ftb: FloatingToolbarLayout by lazy { findViewById(R.id.ftb) }
     private val toolbar: MaterialToolbar by lazy { findViewById(R.id.toolbar) }
     private val rec: RecyclerView by lazy { findViewById(R.id.rec) }
     private val fab: FloatingActionButton by lazy { findViewById(R.id.fab) }
@@ -47,14 +44,14 @@ class MultiScriptActivity : AppCompatActivity() {
     private lateinit var adapter: MultScriptAdapter
     private lateinit var currentPackageName: String
     private lateinit var appName: String
-    lateinit var ScriptList: MutableList<MutableMap.MutableEntry<String, Any?>>
+    lateinit var scriptList: MutableList<MutableMap.MutableEntry<String, Any?>>
 
 
     val launcher: ActivityResultLauncher<Intent> =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             lifecycleScope.launch {
-                ScriptList = ReadConf()
-                adapter.updateData(ScriptList)
+                scriptList = readConf()
+                adapter.updateData(scriptList)
             }
         }
 
@@ -82,10 +79,10 @@ class MultiScriptActivity : AppCompatActivity() {
         }
 
 
-        ScriptList = ReadConf()
+        scriptList = readConf()
 
         rec.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
-        adapter = MultScriptAdapter(ScriptList, currentPackageName, appName, this, launcher)
+        adapter = MultScriptAdapter(scriptList, currentPackageName, appName, this, launcher)
         rec.adapter = adapter
 
         val itemTouchHelperCallback = object : ItemTouchHelper.SimpleCallback(
@@ -110,7 +107,7 @@ class MultiScriptActivity : AppCompatActivity() {
                 // removeItem 方法内部会调用 notifyItemRemoved(position) 来更新 UI
             }
 
-            @SuppressLint("ResourceType")
+            @SuppressLint("ResourceType", "UseCompatLoadingForDrawables")
             override fun onChildDraw(
                 c: Canvas,
                 recyclerView: RecyclerView,
@@ -178,11 +175,11 @@ class MultiScriptActivity : AppCompatActivity() {
 
                     if (edit.text.isNullOrEmpty()) {
                         edit.error = resources.getString(R.string.input_sth)
-                    } else if (ScriptList.any { entry -> entry.key == edit.text.toString() }) {
+                    } else if (scriptList.any { entry -> entry.key == edit.text.toString() }) {
                         edit.error = resources.getString(R.string.existed)
                     } else {
                         // TODO 内容过长判断
-                        CreateScript(edit.text.toString(), edit2.text.toString())
+                        createScript(edit.text.toString(), edit2.text.toString())
                     }
                 })
                 .setNegativeButton(resources.getString(R.string.cancel), { dialog, which ->
@@ -197,7 +194,7 @@ class MultiScriptActivity : AppCompatActivity() {
     }
 
 
-    fun ReadConf(): MutableList<MutableMap.MutableEntry<String, Any?>> {
+    fun readConf(): MutableList<MutableMap.MutableEntry<String, Any?>> {
         val path = LShare.AppConf + "/" + currentPackageName + ".txt"
         val list = LShare.readMap(path).entries.toMutableList()
         transformBooleanValuesToJsonArrayInMaps(list)
@@ -206,11 +203,11 @@ class MultiScriptActivity : AppCompatActivity() {
     }
 
 
-    fun CreateScript(name: String, description: String) {
+    fun createScript(name: String, description: String) {
         // 写配置
-        var path = LShare.AppConf + "/" + currentPackageName + ".txt"
-        var map = LShare.readMap(path)
-        map[name] = arrayOf(true, description, "v1.0")
+        val path = LShare.AppConf + "/" + currentPackageName + ".txt"
+        val map = LShare.readMap(path)
+        map[name] = arrayOf<Any?>(true, description, "v1.0")
         LShare.writeMap(path, map)
         LShare.ensureDirectoryExists(LShare.DIR + "/" + LShare.AppScript + "/" + currentPackageName)
 
@@ -246,16 +243,16 @@ class MultiScriptActivity : AppCompatActivity() {
                 try {
                     // 创建 JSONArray，包含布尔值和另外两个字符串
                     // Kotlin 的 arrayOf(value, "", "v1.0") 会创建 Object[]
-                    val newArray = JSONArray(arrayOf(value, "", "v1.0"))
+                    val newArray = JSONArray(arrayOf<Any?>(value, "", "v1.0"))
 
                     // 由于 entry 是 MutableMap.MutableEntry，你需要通过它的 setValue 方法来修改值
                     // 或者，如果 MyMutableEntry 是你自定义的可变 Entry 类，可以直接赋值
                     entry.setValue(newArray) // 使用 setValue 方法更新 Entry 的值
 
-                } catch (e: JSONException) {
+                } catch (_: JSONException) {
                     // 如果出现 JSON 相关的异常，这里可以处理
                     // ("Error creating JSONArray for key '$key': ${e.message}")
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     // 捕获其他可能的异常
                     //  ("Unexpected error for key '$key': ${e.message}")
                 }

@@ -1,4 +1,4 @@
-package com.kulipai.luahook.Activity
+package com.kulipai.luahook.activity
 
 import android.os.Bundle
 import android.view.Menu
@@ -19,17 +19,16 @@ import com.kulipai.luahook.R
 import com.kulipai.luahook.adapter.LogAdapter
 import com.kulipai.luahook.util.LogcatHelper
 import com.kulipai.luahook.util.ShellManager
-import com.kulipai.luahook.util.d
 import kotlinx.coroutines.launch
 
 
 class LogCatActivity : AppCompatActivity() {
 
-    private val LogRecyclerView: RecyclerView by lazy { findViewById<RecyclerView>(R.id.LogRecyclerView) }
+    private val logRecyclerView: RecyclerView by lazy { findViewById(R.id.LogRecyclerView) }
 
-    private val toolbar: MaterialToolbar by lazy { findViewById<MaterialToolbar>(R.id.toolbar) }
-    private val noPower: TextView by lazy { findViewById<TextView>(R.id.noPower) }
-    private val refresh: FloatingActionButton by lazy { findViewById<FloatingActionButton>(R.id.fab) }
+    private val toolbar: MaterialToolbar by lazy { findViewById(R.id.toolbar) }
+    private val noPower: TextView by lazy { findViewById(R.id.noPower) }
+    private val refresh: FloatingActionButton by lazy { findViewById(R.id.fab) }
 
     private lateinit var adapter: LogAdapter
 
@@ -68,20 +67,20 @@ class LogCatActivity : AppCompatActivity() {
 
         if (ShellManager.getMode() != ShellManager.Mode.NONE) {
             lifecycleScope.launch {
-                var logs = LogcatHelper.getSystemLogsByTagSince("LuaXposed",getSharedPreferences("cache",MODE_PRIVATE).getString("logClearTime",null))
-                LogRecyclerView.layoutManager =
+                val logs = LogcatHelper.getSystemLogsByTagSince("LuaXposed",getSharedPreferences("cache",MODE_PRIVATE).getString("logClearTime",null))
+                logRecyclerView.layoutManager =
                     LinearLayoutManager(this@LogCatActivity, LinearLayoutManager.VERTICAL, false)
                 adapter = LogAdapter(logs as MutableList<String>)
-                LogRecyclerView.adapter = adapter
+                logRecyclerView.adapter = adapter
             }
         } else {
             noPower.visibility = View.VISIBLE
-            LogRecyclerView.visibility = View.INVISIBLE
+            logRecyclerView.visibility = View.INVISIBLE
         }
 
         refresh.setOnClickListener {
             lifecycleScope.launch {
-                var logs = LogcatHelper.getSystemLogsByTagSince("LuaXposed",
+                val logs = LogcatHelper.getSystemLogsByTagSince("LuaXposed",
                     getSharedPreferences("cache",MODE_PRIVATE).getString("logClearTime",null)
                 )
                 adapter.updateLogs(logs as MutableList<String>)
@@ -125,7 +124,7 @@ class LogCatActivity : AppCompatActivity() {
                     apply()
                 }
                 lifecycleScope.launch {
-                    var logs = LogcatHelper.getSystemLogsByTagSince("LuaXposed",
+                    val logs = LogcatHelper.getSystemLogsByTagSince("LuaXposed",
                         getSharedPreferences("cache",MODE_PRIVATE).getString("logClearTime",null)
                     )
                     adapter.updateLogs(logs as MutableList<String>)

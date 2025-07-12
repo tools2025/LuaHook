@@ -33,7 +33,6 @@ class MainHook: IXposedHookZygoteInit, IXposedHookLoadPackage {
 
 
     lateinit var luaScript: String
-    lateinit var appsScript: String
     lateinit var selectAppsString: String
 
     lateinit var selectAppsList: MutableList<String>
@@ -127,7 +126,7 @@ class MainHook: IXposedHookZygoteInit, IXposedHookLoadPackage {
         HookLib(lpparam, scriptName).registerTo(globals)
 
         LuaImport(lpparam.classLoader, this::class.java.classLoader!!).registerTo(globals)
-        LuaUtil.LoadBasicLib(globals)
+        LuaUtil.loadBasicLib(globals)
 
         return globals
     }

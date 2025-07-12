@@ -18,52 +18,52 @@ object Luafile{
 
         file["isFile"]= object : OneArgFunction() {
             override fun call(path: LuaValue): LuaValue =
-                LuaValue.valueOf(File(path.checkjstring()).isFile)
+                valueOf(File(path.checkjstring()).isFile)
         }
 
         file["isDir"] =  object : OneArgFunction() {
             override fun call(path: LuaValue): LuaValue =
-                LuaValue.valueOf(File(path.checkjstring()).isDirectory)
+                valueOf(File(path.checkjstring()).isDirectory)
         }
 
         file["isExists"] =  object : OneArgFunction() {
             override fun call(path: LuaValue): LuaValue =
-                LuaValue.valueOf(File(path.checkjstring()).exists())
+                valueOf(File(path.checkjstring()).exists())
         }
 
         file["read"] =  object : OneArgFunction() {
             override fun call(path: LuaValue): LuaValue = try {
                 val content = String(Files.readAllBytes(Paths.get(path.checkjstring())))
-                LuaValue.valueOf(content)
-            } catch (e: Exception) {
-                LuaValue.NIL
+                valueOf(content)
+            } catch (_: Exception) {
+                NIL
             }
         }
 
         file["readBytes"] =  object : OneArgFunction() {
             override fun call(path: LuaValue): LuaValue = try {
                 val bytes = Files.readAllBytes(Paths.get(path.checkjstring()))
-                LuaValue.valueOf(String(bytes)) // 可改为 base64 或返回 userdata
-            } catch (e: Exception) {
-                LuaValue.NIL
+                valueOf(String(bytes)) // 可改为 base64 或返回 userdata
+            } catch (_: Exception) {
+                NIL
             }
         }
 
         file["write"] =  object : TwoArgFunction() {
             override fun call(path: LuaValue, content: LuaValue): LuaValue = try {
                 Files.write(Paths.get(path.checkjstring()), content.checkjstring().toByteArray())
-                LuaValue.TRUE
-            } catch (e: Exception) {
-                LuaValue.FALSE
+                TRUE
+            } catch (_: Exception) {
+                FALSE
             }
         }
 
         file["writeBytes"] =  object : TwoArgFunction() {
             override fun call(path: LuaValue, content: LuaValue): LuaValue = try {
                 Files.write(Paths.get(path.checkjstring()), content.checkstring().c)
-                LuaValue.TRUE
-            } catch (e: Exception) {
-                LuaValue.FALSE
+                TRUE
+            } catch (_: Exception) {
+                FALSE
             }
         }
 
@@ -103,7 +103,7 @@ object Luafile{
                     StandardCopyOption.REPLACE_EXISTING
                 )
                 TRUE
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 FALSE
             }
         }
@@ -116,7 +116,7 @@ object Luafile{
                     StandardCopyOption.REPLACE_EXISTING
                 )
                 TRUE
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 FALSE
             }
         }

@@ -1,15 +1,15 @@
 package com.kulipai.luahook.LuaLib
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.Resources
 import android.graphics.drawable.Drawable
+import com.kulipai.luahook.util.d
+import org.luaj.Globals
+import org.luaj.LuaError
 import org.luaj.LuaTable
-import org.luaj.LuaValue
 import org.luaj.Varargs
 import org.luaj.lib.VarArgFunction
 import org.luaj.lib.jse.CoerceJavaToLua
-import com.kulipai.luahook.util.d // 假设这是你的日志工具
-import org.luaj.Globals
-import org.luaj.LuaError
 import java.lang.reflect.Modifier
 
 /**
@@ -38,11 +38,10 @@ object LuaResource {
 //                    "Lua::getDrawable - Context: ${context.packageName}, ResName: $resourceName, PkgName: $packageName".d()
 
                     val drawable = ResourceHelper.getDrawableByName(context, resourceName, packageName)
-                    return if (drawable != null) CoerceJavaToLua.coerce(drawable) else LuaValue.NIL
+                    return if (drawable != null) CoerceJavaToLua.coerce(drawable) else NIL
                 } catch (e: Exception) {
                     "Lua::getDrawable - Error".d()
                     throw LuaError(e)
-                    return LuaValue.NIL
                 }
             }
         })
@@ -60,11 +59,10 @@ object LuaResource {
 //                    "Lua::getResourceId - Context: ${context.packageName}, ResName: $resourceName, ResType: $resourceType".d()
 
                     val resId = ResourceHelper.getResourceId(context, resourceName, resourceType)
-                    return LuaValue.valueOf(resId)
+                    return valueOf(resId)
                 } catch (e: Exception) {
                     "Lua::getResourceId - Error".d()
                     throw LuaError(e)
-                    return LuaValue.valueOf(0) // 返回0表示未找到或出错
                 }
             }
         })
@@ -81,11 +79,10 @@ object LuaResource {
 //                    "Lua::getString - Context: ${context.packageName}, ResName: $resourceName".d()
 
                     val str = ResourceHelper.getStringByName(context, resourceName)
-                    return if (str != null) LuaValue.valueOf(str) else LuaValue.NIL
+                    return if (str != null) valueOf(str) else NIL
                 } catch (e: Exception) {
                     "Lua::getString - Error".d()
                     throw LuaError(e)
-                    return LuaValue.NIL
                 }
             }
         })
@@ -105,11 +102,10 @@ object LuaResource {
                     val colorInt = ResourceHelper.getColorByName(context, resourceName)
                     // 如果颜色是0，可能是没找到，也可能是颜色本身就是透明黑
                     // 这里直接返回值，由Lua端判断
-                    return LuaValue.valueOf(colorInt)
+                    return valueOf(colorInt)
                 } catch (e: Exception) {
                     "Lua::getColor - Error".d()
                     throw LuaError(e)
-                    return LuaValue.valueOf(0) // 返回0表示出错
                 }
             }
         })
@@ -128,13 +124,13 @@ object LuaResource {
                     val constantsMap = ResourceHelper.getRClassConstants(context, resourceType)
                     val luaTable = LuaTable()
                     constantsMap.forEach { (key, value) ->
-                        luaTable.set(key, LuaValue.valueOf(value))
+                        luaTable.set(key, valueOf(value))
                     }
                     return luaTable
                 } catch (e: Exception) {
                     "Lua::getRConstants - Error".d()
                     throw LuaError(e)
-                    return LuaTable() // 返回空表表示出错
+                    // 返回空表表示出错
                 }
             }
         })
@@ -159,6 +155,7 @@ object LuaResource {
  */
 object ResourceHelper {
 
+    @SuppressLint("DiscouragedApi")
     fun getDrawableByName(context: Context, resourceName: String, packageName: String? = null): Drawable? {
         try {
             val targetPackageName = packageName ?: context.packageName
@@ -169,7 +166,7 @@ object ResourceHelper {
                 } catch (e: Exception) {
                     ("ResourceHelper: Failed to get resources for package $targetPackageName").d()
                     throw LuaError(e)
-                    return null // 获取外部包资源失败
+                    // 获取外部包资源失败
                 }
             } else {
                 context.resources
@@ -195,21 +192,19 @@ object ResourceHelper {
         } catch (e: Resources.NotFoundException) {
             ("ResourceHelper: Drawable resource not found for '$resourceName' (ID: ${context.resources.getIdentifier(resourceName, "drawable", packageName ?: context.packageName)})").d()
             throw LuaError(e)
-            return null
         } catch (e: Exception) {
             println("ResourceHelper: Error getting drawable '$resourceName': ${e.javaClass.name}")
             throw LuaError(e)
-            return null
         }
     }
 
+    @SuppressLint("DiscouragedApi")
     fun getResourceId(context: Context, resourceName: String, resourceType: String): Int {
         return try {
             context.resources.getIdentifier(resourceName, resourceType, context.packageName)
         } catch (e: Exception) {
             ("ResourceHelper: Error getting resource ID for '$resourceName' (type: $resourceType)").d()
             throw LuaError(e)
-            0 // Return 0 for failure
         }
     }
 
@@ -224,12 +219,9 @@ object ResourceHelper {
         } catch (e: Resources.NotFoundException) {
             ("ResourceHelper: String resource not found for '$resourceName' (ID: ${getResourceId(context, resourceName, "string")})").d()
             throw LuaError(e)
-            return null
         } catch (e: Exception) {
             ("ResourceHelper: Error getting string '$resourceName'").d()
             throw LuaError(e)
-            e.printStackTrace()
-            null
         }
     }
 
@@ -254,12 +246,9 @@ object ResourceHelper {
         } catch (e: Resources.NotFoundException) {
             ("ResourceHelper: Color resource not found for '$resourceName' (ID: ${getResourceId(context, resourceName, "color")})").d()
             throw LuaError(e)
-            return 0 // Return 0 for failure
         } catch (e: Exception) {
             ("ResourceHelper: Error getting color '$resourceName'").d()
             throw LuaError(e)
-            e.printStackTrace()
-            0 // Return 0 for failure
         }
     }
 
@@ -268,8 +257,7 @@ object ResourceHelper {
         try {
             val packageName = context.packageName
             // 加载内部类 R$resourceType (例如 com.example.app.R$drawable)
-            val rClass = Class.forName("$packageName.R\$$resourceType")
-
+            val rClass = Class.forName("$packageName.R$$resourceType")
             rClass.declaredFields.forEach { field ->
                 // 只获取 public static final int 类型的字段
                 if (Modifier.isStatic(field.modifiers) &&
@@ -281,13 +269,13 @@ object ResourceHelper {
                         val name = field.name
                         val value = field.getInt(null) // 获取静态字段的值
                         result[name] = value
-                    } catch (e: Exception) {
+                    } catch (_: Exception) {
                         // 忽略获取单个常量失败的情况
                         ("ResourceHelper: Error getting R constant value for '${field.name}'").d()
                     }
                 }
             }
-        } catch (e: ClassNotFoundException) {
+        } catch (_: ClassNotFoundException) {
             ("ResourceHelper: R class not found for type '$resourceType' in package '${context.packageName}'").d()
             // 这可能是因为类型名称错误（如 "layout" 而不是 "layouts"），或者R文件结构不同
         } catch (e: Exception) {

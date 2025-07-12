@@ -1,5 +1,3 @@
-import com.android.build.api.dsl.AndroidResources
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)

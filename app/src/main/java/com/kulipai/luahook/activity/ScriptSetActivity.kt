@@ -1,36 +1,21 @@
-package com.kulipai.luahook.Activity
+package com.kulipai.luahook.activity
 
 
 import android.os.Bundle
-import android.os.PersistableBundle
 import android.view.Gravity
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import com.kulipai.luahook.LuaLib.LuaActivity
 import com.kulipai.luahook.LuaLib.LuaImport
 import com.kulipai.luahook.LuaLib.LuaUtil
-import com.kulipai.luahook.MainHook.Companion.MODULE_PACKAGE
-import com.kulipai.luahook.R
-import com.kulipai.luahook.util.d
 import com.kulipai.luahook.util.e
-import com.myopicmobile.textwarrior.common.LuaParser
-import de.robv.android.xposed.XposedBridge
-import de.robv.android.xposed.XposedHelpers
 import org.luaj.Globals
 import org.luaj.LuaValue
-import org.luaj.android.loadlayout
-import org.luaj.lib.OneArgFunction
 import org.luaj.lib.ZeroArgFunction
 import org.luaj.lib.jse.CoerceJavaToLua
 import org.luaj.lib.jse.JsePlatform
-import org.luckypray.dexkit.DexKitBridge
-import top.sacz.xphelper.XpHelper
-import top.sacz.xphelper.dexkit.DexFinder
 import java.io.File
-import java.io.StringReader
 
 class ScriptSetActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,7 +32,7 @@ class ScriptSetActivity : AppCompatActivity() {
             val funcLine = func.functionStartLine
             val callfunc = getFunctionName(func.functionCode)
             try {
-                CreateGlobals().load("${func.functionCode}\n$callfunc()").call()
+                createGlobals().load("${func.functionCode}\n$callfunc()").call()
             } catch (e: Exception) {
                 val err = simplifyLuaError(e.toString(),funcLine)
                 val errText = TextView(this)
@@ -109,7 +94,6 @@ class ScriptSetActivity : AppCompatActivity() {
         }
 
         // 从标签后开始查找函数
-        var functionStartIndex = -1
         var functionStartLine = -1
 
         for (i in (labelLineIndex + 1) until lines.size) {
@@ -117,7 +101,6 @@ class ScriptSetActivity : AppCompatActivity() {
             if (line.isNotEmpty()) {
                 val functionMatch = Regex("""^\s*function\s+\w+\s*\(.*?\)\s*$""").find(lines[i])
                 if (functionMatch != null) {
-                    functionStartIndex = functionMatch.range.first
                     functionStartLine = i
                     break
                 }
@@ -143,7 +126,7 @@ class ScriptSetActivity : AppCompatActivity() {
     private fun createLabelPattern(label: String): Regex {
         val escapedLabel = Regex.escape(label)
         // 匹配 ::label、@label、::label::、@label@、::label@、@label::
-        return Regex("^\\s*(?:[:@]{1,2})$escapedLabel(?:[:@]{0,2})\\s*$")
+        return Regex("^\\s*[:@]{1,2}$escapedLabel[:@]{0,2}\\s*$")
     }
 
     /**
@@ -240,7 +223,7 @@ class ScriptSetActivity : AppCompatActivity() {
 
 
 
-    fun CreateGlobals(): Globals {
+    fun createGlobals(): Globals {
         val globals: Globals = JsePlatform.standardGlobals()
 
         //加载Lua模块
@@ -253,9 +236,9 @@ class ScriptSetActivity : AppCompatActivity() {
         })
         globals["activity"] = CoerceJavaToLua.coerce(this)
         LuaActivity(this).registerTo(globals)
-        LuaUtil.LoadBasicLib(globals)
+        LuaUtil.loadBasicLib(globals)
         LuaImport(this::class.java.classLoader!!, this::class.java.classLoader!!).registerTo(globals)
-        LuaUtil.Shell(globals)
+        LuaUtil.shell(globals)
         return globals
     }
 

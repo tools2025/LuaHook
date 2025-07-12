@@ -18,7 +18,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.google.android.material.card.MaterialCardView
-import com.kulipai.luahook.Activity.EditActivity
+import com.kulipai.luahook.activity.EditActivity
 import com.kulipai.luahook.R
 import com.kulipai.luahook.util.ShellManager
 import com.kulipai.luahook.util.XposedScope
@@ -37,7 +37,7 @@ class HomeFragment : Fragment() {
         return try {
             val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
             packageInfo.versionName!!
-        } catch (e: PackageManager.NameNotFoundException) {
+        } catch (_: PackageManager.NameNotFoundException) {
             "Unknown"
         }
     }
@@ -47,7 +47,7 @@ class HomeFragment : Fragment() {
         return try {
             val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
             packageInfo.longVersionCode // 注意这里使用 longVersionCode，在旧版本中是 versionCode (Int)
-        } catch (e: PackageManager.NameNotFoundException) {
+        } catch (_: PackageManager.NameNotFoundException) {
             -1 // 或者其他表示未找到的数值
         }
     }
@@ -82,7 +82,7 @@ class HomeFragment : Fragment() {
         var frameworkName = ""
 
         version.text =
-            getAppVersionName(requireContext()).toString() + " (" + getAppVersionCode(requireContext()).toString() + ")"
+            getAppVersionName(requireContext()) + " (" + getAppVersionCode(requireContext()).toString() + ")"
 
         XposedScope.withService {
             frameworkName = " + " + it.frameworkName
@@ -121,7 +121,7 @@ class HomeFragment : Fragment() {
                 )
 
             } else if (ShellManager.getMode() == ShellManager.Mode.SHIZUKU) {
-                status.text = "Shizuku" + frameworkName
+                status.text = "Shizuku$frameworkName"
                 card.setCardBackgroundColor(
                     getDynamicColor(
                         requireContext(),

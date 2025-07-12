@@ -54,7 +54,7 @@ class SymbolAdapter(private val editor: LuaEditor) :
 
         init {
             symbolItem.setOnClickListener {
-                val symbol = symbols[adapterPosition]
+                val symbol = symbols[bindingAdapterPosition]
                 var idx = editor.selectionStart
                 if (editor.isSelected && symbol == "\"") {
                     editor.insert(editor.selectionStart, symbol)

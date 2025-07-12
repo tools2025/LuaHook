@@ -1,4 +1,4 @@
-package com.kulipai.luahook.Activity
+package com.kulipai.luahook.activity
 
 import android.content.Context
 import android.content.Intent
@@ -48,12 +48,11 @@ class AppsEdit : AppCompatActivity() {
     private val rootLayout: CoordinatorLayout by lazy { findViewById(R.id.main) }
     private val bottomSymbolBar: LinearLayout by lazy { findViewById(R.id.bottomBar) }
     private val symbolRecyclerView: RecyclerView by lazy { findViewById(R.id.symbolRecyclerView) }
-    private val ToolRec: RecyclerView by lazy { findViewById(R.id.toolRec) }
+    private val toolRec: RecyclerView by lazy { findViewById(R.id.toolRec) }
 
 
     //全局变量
     private lateinit var currentPackageName: String
-    private lateinit var appName: String
     private lateinit var scripName: String
     private lateinit var scriptDescription: String
     private var author: String = ""
@@ -144,9 +143,9 @@ class AppsEdit : AppCompatActivity() {
                 resources.getString(R.string.grammer_converse)
             )
 
-        ToolRec.layoutManager =
+        toolRec.layoutManager =
             LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
-        ToolRec.adapter = ToolAdapter(tool, editor, this)
+        toolRec.adapter = ToolAdapter(tool, editor, this)
 
 
 //        val prefs = getSharedPreferences(PREFS_NAME, MODE_WORLD_READABLE)
@@ -196,9 +195,12 @@ class AppsEdit : AppCompatActivity() {
             ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
         menu?.add(0, 5, 0, resources.getString(R.string.manual))
             ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
-        menu?.add(0, 9, 0, resources.getString(R.string.search))?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
-        menu?.add(0, 15, 0, resources.getString(R.string.share))?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
-        menu?.add(0, 25, 0, resources.getString(R.string.setting))?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
+        menu?.add(0, 9, 0, resources.getString(R.string.search))
+            ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
+        menu?.add(0, 15, 0, resources.getString(R.string.share))
+            ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
+        menu?.add(0, 25, 0, resources.getString(R.string.setting))
+            ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
         return true
     }
 
@@ -257,7 +259,7 @@ class AppsEdit : AppCompatActivity() {
                         .isNullOrEmpty()
                 ) {
 
-                    var view = LayoutInflater.from(this).inflate(R.layout.dialog_edit, null)
+                    val view = LayoutInflater.from(this).inflate(R.layout.dialog_edit, null)
                     val inputLayout = view.findViewById<TextInputLayout>(R.id.text_input_layout)
                     val edit = view.findViewById<TextInputEditText>(R.id.edit)
                     inputLayout.hint = "作者名称"
@@ -306,7 +308,10 @@ class AppsEdit : AppCompatActivity() {
             25 -> {
 
                 val intent = Intent(this, ScriptSetActivity::class.java)
-                intent.putExtra("path", LShare.DIR + LShare.AppScript + "/" + currentPackageName + "/" + scripName + ".lua")
+                intent.putExtra(
+                    "path",
+                    LShare.DIR + LShare.AppScript + "/" + currentPackageName + "/" + scripName + ".lua"
+                )
                 startActivity(intent)
                 true
             }
@@ -364,7 +369,7 @@ class AppsEdit : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(
                         context,
-                        resources.getString(R.string.source_file_not_exist)+"$sourceFilePath",
+                        resources.getString(R.string.source_file_not_exist) + sourceFilePath,
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -420,14 +425,18 @@ class AppsEdit : AppCompatActivity() {
                         if (shareIntent.resolveActivity(context.packageManager) != null) {
                             context.startActivity(chooser)
                         } else {
-                            Toast.makeText(context, resources.getString(R.string.no_apps_share), Toast.LENGTH_SHORT)
+                            Toast.makeText(
+                                context,
+                                resources.getString(R.string.no_apps_share),
+                                Toast.LENGTH_SHORT
+                            )
                                 .show()
                         }
                     } catch (e: Exception) {
                         e.printStackTrace()
                         Toast.makeText(
                             context,
-                            resources.getString(R.string.errors_sharing)+"${e.message}",
+                            resources.getString(R.string.errors_sharing) + "${e.message}",
                             Toast.LENGTH_LONG
                         ).show()
                     }

@@ -1,5 +1,6 @@
-package com.kulipai.luahook.Activity
+package com.kulipai.luahook.activity
 
+import android.annotation.SuppressLint
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
@@ -17,7 +18,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.transition.TransitionManager
 import com.androlua.LuaEditor
-import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.transition.MaterialContainerTransform
 import com.kulipai.luahook.R
@@ -26,7 +26,6 @@ import com.kulipai.luahook.adapter.ManAdapter
 
 class Manual : AppCompatActivity(), OnCardExpandListener {
 
-    private val toolbar: MaterialToolbar by lazy { findViewById(R.id.toolbar) }
     private val rec: RecyclerView by lazy { findViewById(R.id.rec) }
     private val container: CoordinatorLayout by lazy { findViewById(R.id.main) }
     private val detail: MaterialCardView by lazy { findViewById(R.id.detail) }
@@ -360,6 +359,7 @@ class Manual : AppCompatActivity(), OnCardExpandListener {
     }
 
 
+    @SuppressLint("GestureBackNavigation")
     @Deprecated("This method has been deprecated in favor of using the\n      {@link OnBackPressedDispatcher} via {@link #getOnBackPressedDispatcher()}.\n      The OnBackPressedDispatcher controls how back button events are dispatched\n      to one or more {@link OnBackPressedCallback} objects.")
     override fun onBackPressed() {
         if (detail.isVisible && currentCard != null) {

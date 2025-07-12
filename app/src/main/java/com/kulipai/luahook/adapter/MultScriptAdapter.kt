@@ -15,8 +15,8 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.materialswitch.MaterialSwitch
-import com.kulipai.luahook.Activity.AppsEdit
-import com.kulipai.luahook.Activity.ScriptSetActivity
+import com.kulipai.luahook.activity.AppsEdit
+import com.kulipai.luahook.activity.ScriptSetActivity
 import com.kulipai.luahook.R
 import com.kulipai.luahook.util.LShare
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -43,7 +43,7 @@ class MultScriptAdapter(
     @OptIn(DelicateCoroutinesApi::class)
     inner class MultScriptViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val card: MaterialCardView = itemView.findViewById(R.id.card)
-        val scrptName: TextView = itemView.findViewById(R.id.name)
+        val scriptName: TextView = itemView.findViewById(R.id.name)
         val description: TextView = itemView.findViewById(R.id.description)
         val logoText: TextView = itemView.findViewById(R.id.logoText)
         val switchWidget: MaterialSwitch = itemView.findViewById(R.id.switchWidget)
@@ -67,24 +67,24 @@ class MultScriptAdapter(
             card.setOnLongClickListener {
 
                 val view = LayoutInflater.from(context).inflate(R.layout.dialog_scriptdetail, null)
-                val bsd_logoText: TextView = view.findViewById<TextView>(R.id.logoText)
-                val bsd_name: TextView = view.findViewById<TextView>(R.id.name)
-                val bsd_description: TextView = view.findViewById<TextView>(R.id.description)
-                val bsd_author: TextView = view.findViewById<TextView>(R.id.author)
+                val bsdLogoText: TextView = view.findViewById(R.id.logoText)
+                val bsdName: TextView = view.findViewById(R.id.name)
+                val bsdDescription: TextView = view.findViewById(R.id.description)
+                val bsdAuthor: TextView = view.findViewById(R.id.author)
 
                 var bsd = BottomSheetDialog(context)
 
-                bsd_logoText.text = conf[bindingAdapterPosition].key[0].toString()
-                bsd_name.text = conf[bindingAdapterPosition].key
+                bsdLogoText.text = conf[bindingAdapterPosition].key[0].toString()
+                bsdName.text = conf[bindingAdapterPosition].key
 
                 val innerList = conf[bindingAdapterPosition].value as org.json.JSONArray
 
-                bsd_description.text = (innerList[1] as String).takeUnless { it.isEmpty() } ?: "无"
+                bsdDescription.text = (innerList[1] as String).takeUnless { it.isEmpty() } ?: "无"
 
                 val param =
                     LShare.parseParameters(read(LShare.DIR + "/" + LShare.AppScript + "/" + currentPackageName + "/" + conf[bindingAdapterPosition].key + ".lua"))
 
-                bsd_author.text = param?.author ?: "无"
+                bsdAuthor.text = param?.author ?: "无"
 
 
                 val window = bsd.window
@@ -138,7 +138,7 @@ class MultScriptAdapter(
 
     override fun onBindViewHolder(holder: MultScriptViewHolder, position: Int) {
         val innerList = conf[position].value as org.json.JSONArray
-        holder.scrptName.text = conf[position].key
+        holder.scriptName.text = conf[position].key
         holder.logoText.text = conf[position].key[0].toString()
         holder.switchWidget.isChecked = innerList[0] as Boolean
         if (innerList[1].toString().isNotEmpty()) {

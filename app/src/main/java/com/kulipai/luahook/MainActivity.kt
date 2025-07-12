@@ -3,13 +3,9 @@ package com.kulipai.luahook
 import AViewModel
 import DataRepository.ShellInit
 import LanguageUtil
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.content.res.Configuration
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.view.Menu
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
@@ -27,29 +23,18 @@ import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.kulipai.luahook.Activity.AppsEdit
-import com.kulipai.luahook.Activity.EditActivity
-import com.kulipai.luahook.Activity.SettingsActivity
+import com.kulipai.luahook.activity.AppsEdit
+import com.kulipai.luahook.activity.EditActivity
+import com.kulipai.luahook.activity.SettingsActivity
 import com.kulipai.luahook.fragment.AppsFragment
 import com.kulipai.luahook.fragment.HomeFragment
 import com.kulipai.luahook.fragment.PluginsFragment
 import com.kulipai.luahook.util.LShare
 import com.kulipai.luahook.util.ShellManager
-import com.kulipai.luahook.util.XposedScope
-import com.kulipai.luahook.util.d
 import com.topjohnwu.superuser.Shell
-import io.github.libxposed.api.XposedInterface
-import io.github.libxposed.api.XposedModule
-import io.github.libxposed.api.XposedModuleInterface
-import io.github.libxposed.service.XposedProvider
-import io.github.libxposed.service.XposedService
-import io.github.libxposed.service.XposedServiceHelper
 import kotlinx.coroutines.launch
 import rikka.shizuku.Shizuku
 import rikka.sui.Sui
-import java.io.FileWriter
-import kotlin.random.Random
-
 
 
 class MainActivity : AppCompatActivity() {
@@ -61,11 +46,7 @@ class MainActivity : AppCompatActivity() {
     private val shizukuRequestCode = 100
 
 
-    private lateinit var SettingsLauncher: ActivityResultLauncher<Intent>
-
-    fun isNightMode(context: Context): Boolean {
-        return (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
-    }
+    private lateinit var settingsLauncher: ActivityResultLauncher<Intent>
 
     private val bottomBar: BottomNavigationView by lazy { findViewById(R.id.bottomBar) }
     private val toolbar: MaterialToolbar by lazy { findViewById(R.id.toolbar) }
@@ -99,7 +80,7 @@ class MainActivity : AppCompatActivity() {
 
 
         // 注册 ActivityResultLauncher
-        SettingsLauncher = registerForActivityResult(
+        settingsLauncher = registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
         ) {
             if (LanguageUtil.getCurrentLanguage(this)!=thisLanguage){
@@ -114,9 +95,9 @@ class MainActivity : AppCompatActivity() {
             when (it.itemId) {
                 1 -> {
                     thisLanguage = LanguageUtil.getCurrentLanguage(this)
-                    val itent = Intent(this, SettingsActivity::class.java)
+                    val intent = Intent(this, SettingsActivity::class.java)
 
-                    SettingsLauncher.launch(itent)
+                    settingsLauncher.launch(intent)
                     true
                 }
 
@@ -127,9 +108,7 @@ class MainActivity : AppCompatActivity() {
         //状态检查
         val prefs = getSharedPreferences("status", MODE_PRIVATE)
         val current = prefs.getString("current", "null")
-        if (current == "null") {
-
-        } else if (current == "apps") {
+        if (current == "apps") {
             val intent = Intent(this, AppsEdit::class.java)
             intent.putExtra("packageName", prefs.getString("packageName", ""))
             intent.putExtra("appName", prefs.getString("appName", ""))
@@ -149,13 +128,13 @@ class MainActivity : AppCompatActivity() {
         // 可以选择在这里观察是否加载完（调试用）
         val app = application as MyApplication
         lifecycleScope.launch {
-            val apps = app.getAppListAsync()
+            app.getAppListAsync()
             if (ShellManager.getMode() != ShellManager.Mode.NONE) {
-                val savedList = getStringList(this@MainActivity, "selectApps")
+                val savedList = getStringList()
                 if (savedList.isEmpty()) {
                     // 列表为空的逻辑
                 } else {
-                    val appInfoList = MyApplication.instance.getAppInfoList(savedList)
+                    MyApplication.instance.getAppInfoList(savedList)
                     // 加载 appInfoList
                 }
             }
@@ -172,7 +151,7 @@ class MainActivity : AppCompatActivity() {
         }
 
 
-        val menu: Menu = bottomBar.getMenu()
+        val menu: Menu = bottomBar.menu
 
 
 
@@ -209,14 +188,14 @@ class MainActivity : AppCompatActivity() {
         viewPager2.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
                 bottomBar.menu[position].isChecked = true
-                menu.get(0).setIcon(R.drawable.home_24px)
-                menu.get(2).setIcon(R.drawable.extension_24px)
+                menu[0].setIcon(R.drawable.home_24px)
+                menu[2].setIcon(R.drawable.extension_24px)
 
                 if (position == 0) {
-                    menu.get(0).setIcon(R.drawable.home_fill_24px)
+                    menu[0].setIcon(R.drawable.home_fill_24px)
                 } else if (position == 2) {
 
-                    menu.get(2).setIcon(R.drawable.extension_fill_24px)
+                    menu[2].setIcon(R.drawable.extension_fill_24px)
 
 
                 }
@@ -249,14 +228,7 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    fun saveStringList(context: Context, key: String, list: List<String>) {
-        LShare.write("/apps.txt", list.joinToString(","))
-//        val prefs = context.getSharedPreferences("MyAppPrefs", MODE_WORLD_READABLE)
-//        val serialized = list.joinToString(",")
-//        prefs.edit { putString(key, serialized) }
-    }
-
-    fun getStringList(context: Context, key: String): MutableList<String> {
+    fun getStringList(): MutableList<String> {
 //        val prefs = context.getSharedPreferences("MyAppPrefs", MODE_WORLD_READABLE)
 //        val serialized = prefs.getString(key, "") ?: ""
         val serialized = LShare.read("/apps.txt")

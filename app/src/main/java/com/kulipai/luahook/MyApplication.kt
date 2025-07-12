@@ -40,7 +40,7 @@ class MyApplication : Application() {
                 val applicationInfo = pm.getApplicationInfo(pkg, 0)
 
                 val appName = pm.getApplicationLabel(applicationInfo).toString()
-                val icon = pm.getApplicationIcon(applicationInfo)
+                pm.getApplicationIcon(applicationInfo)
                 val versionName = packageInfo.versionName ?: "N/A"
                 val versionCode =
                     packageInfo.longVersionCode
@@ -90,23 +90,8 @@ class MyApplication : Application() {
         instance = this
         LanguageUtil.applyLanguage(this)
         // 预加载 shell，确保 MainActivity 能及时拿到状态
-
-
-
         ShellInit(applicationContext)
         XposedScope.init()
-
-
-//        // 在 Application 中初始化
-//        ShellManager.init(applicationContext) {
-//
-//            val (output, success) = ShellManager.shell("id")
-//            ("Output = $output, success = $success").d()
-//            ShellManager.getMode().toString().d()
-//
-//        }
-
-
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {

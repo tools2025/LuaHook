@@ -1,4 +1,4 @@
-package com.kulipai.luahook.Activity
+package com.kulipai.luahook.activity
 
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -47,7 +47,7 @@ class SettingsActivity : AppCompatActivity() {
 //            menu.show(language, language.parent as View,100)
 ////
 //            val menu =
-            showLanguagePickerDialog(this,)
+            showLanguagePickerDialog(this)
 
         }
 

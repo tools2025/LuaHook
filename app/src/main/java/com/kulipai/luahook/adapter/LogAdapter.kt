@@ -13,13 +13,9 @@ class LogAdapter(private var logs: MutableList<String>) :
     RecyclerView.Adapter<LogAdapter.LogViewHolder>() {
 
     inner class LogViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val card: MaterialCardView = itemView.findViewById<MaterialCardView>(R.id.card)
+        val card: MaterialCardView = itemView.findViewById(R.id.card)
         val timeText: TextView = itemView.findViewById(R.id.time)
-        val logText: TextView = itemView.findViewById<TextView>(R.id.log)
-
-        init {
-
-        }
+        val logText: TextView = itemView.findViewById(R.id.log)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): LogViewHolder {

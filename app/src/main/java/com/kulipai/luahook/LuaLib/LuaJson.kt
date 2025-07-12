@@ -19,9 +19,9 @@ object LuaJson {
                 } else {
                     JSONObject().put("value", arg.tojstring()).toString()
                 }
-                LuaValue.valueOf(jsonStr)
-            } catch (e: Exception) {
-                LuaValue.NIL
+                valueOf(jsonStr)
+            } catch (_: Exception) {
+                NIL
             }
         })
 
@@ -33,8 +33,8 @@ object LuaJson {
                 } else {
                     toLuaValue(JSONObject(str))
                 }
-            } catch (e: Exception) {
-                LuaValue.NIL
+            } catch (_: Exception) {
+                NIL
             }
         })
 

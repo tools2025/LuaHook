@@ -1,13 +1,11 @@
 package com.kulipai.luahook.LuaLib
 import com.kulipai.luahook.util.d
-import com.kulipai.luahook.util.e
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.XposedHelpers.ClassNotFoundError
 import org.luaj.Globals
 import org.luaj.LuaValue
 import org.luaj.lib.OneArgFunction
 import org.luaj.lib.jse.CoerceJavaToLua
-import kotlin.collections.set
 
 class LuaImport(
     private val classLoader: ClassLoader,
@@ -24,10 +22,10 @@ class LuaImport(
                 var clazz: Class<*>
                 try {
                     clazz = XposedHelpers.findClass(className, classLoader)
-                } catch (e: ClassNotFoundError) {
+                } catch (_: ClassNotFoundError) {
                     try {
                         clazz = XposedHelpers.findClass(className, thisLoader)
-                    } catch (e: ClassNotFoundError) {
+                    } catch (_: ClassNotFoundError) {
                         "Error:import 未找到类"
                         clazz = Void::class.java
                     }

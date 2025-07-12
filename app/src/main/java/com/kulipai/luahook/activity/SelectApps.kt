@@ -1,6 +1,5 @@
-package com.kulipai.luahook.Activity
+package com.kulipai.luahook.activity
 
-import SelectAppsAdapter
 import android.graphics.Rect
 import android.os.Bundle
 import android.view.View
@@ -20,10 +19,10 @@ import com.google.android.material.color.DynamicColors
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.kulipai.luahook.MyApplication
 import com.kulipai.luahook.R
+import com.kulipai.luahook.adapter.SelectAppsAdapter
 import com.kulipai.luahook.fragment.AppInfo
 import com.kulipai.luahook.util.LShare
 import com.kulipai.luahook.util.XposedScope
-import com.kulipai.luahook.util.d
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -103,7 +102,6 @@ class SelectApps : AppCompatActivity() {
 
         //搜索
         searchEdit.doAfterTextChanged { s ->
-            val input = s.toString()
             searchJob?.cancel()
             searchJob = CoroutineScope(Dispatchers.Main).launch {
                 if (isLoaded) {
