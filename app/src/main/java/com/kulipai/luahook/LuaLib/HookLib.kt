@@ -164,7 +164,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
             override fun invoke(args: Varargs): LuaValue {
                 val obj = args.arg(1)  // Lua 传入的第一个参数
                 val methodName = args.checkjstring(2) // 方法名
-                var isStatic: Boolean = false
+                var isStatic = false
 
                 // 获取 Java 对象
                 val targetObject: Any? = when {
@@ -443,7 +443,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
 
                 if (isStatic) {
                     // Convert all Lua arguments to Java objects
-                    val javaArgs = Array<Any?>(args.narg() - 1) { i ->
+                    val javaArgs = Array(args.narg() - 1) { i ->
                         fromLuaValue(args.arg(i + 2))
                     }
 
@@ -460,7 +460,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                     val instance = fromLuaValue(args.arg(2))
 
                     // Convert remaining Lua arguments to Java objects
-                    val javaArgs = Array<Any?>(args.narg() - 2) { i ->
+                    val javaArgs = Array(args.narg() - 2) { i ->
                         fromLuaValue(args.arg(i + 3))
                     }
 
@@ -531,7 +531,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                             try {
                                                 func.call(luaParam)
                                             } catch (e: Exception) {
-                                                val err = simplifyLuaError(e.toString()).toString()
+                                                val err = simplifyLuaError(e.toString())
                                                 "${lpparam.packageName}:$scriptName:$err".e()
                                             }
 
@@ -544,7 +544,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                             try {
                                                 func.call(luaParam)
                                             } catch (e: Exception) {
-                                                val err = simplifyLuaError(e.toString()).toString()
+                                                val err = simplifyLuaError(e.toString())
                                                 "${lpparam.packageName}:$scriptName:$err".e()
                                             }
                                         }
@@ -563,7 +563,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                             try {
                                                 func.call(luaParam)
                                             } catch (e: Exception) {
-                                                val err = simplifyLuaError(e.toString()).toString()
+                                                val err = simplifyLuaError(e.toString())
                                                 "${lpparam.packageName}:$scriptName:$err".e()
                                             }
 
@@ -576,7 +576,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                             try {
                                                 func.call(luaParam)
                                             } catch (e: Exception) {
-                                                val err = simplifyLuaError(e.toString()).toString()
+                                                val err = simplifyLuaError(e.toString())
                                                 "${lpparam.packageName}:$scriptName:$err".e()
                                             }
                                         }
@@ -596,7 +596,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                         try {
                                             func.call(luaParam)
                                         } catch (e: Exception) {
-                                            val err = simplifyLuaError(e.toString()).toString()
+                                            val err = simplifyLuaError(e.toString())
                                             "${lpparam.packageName}:$scriptName:$err".e()
                                         }
                                     }
@@ -608,7 +608,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                         try {
                                             func.call(luaParam)
                                         } catch (e: Exception) {
-                                            val err = simplifyLuaError(e.toString()).toString()
+                                            val err = simplifyLuaError(e.toString())
                                             "${lpparam.packageName}:$scriptName:$err".e()
                                         }
                                     }
@@ -688,7 +688,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                     try {
                                         func.call(luaParam)
                                     } catch (e: Exception) {
-                                        val err = simplifyLuaError(e.toString()).toString()
+                                        val err = simplifyLuaError(e.toString())
                                         "${lpparam.packageName}:$scriptName:$err".e()
                                     }
 
@@ -702,7 +702,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                     try {
                                         func.call(luaParam)
                                     } catch (e: Exception) {
-                                        val err = simplifyLuaError(e.toString()).toString()
+                                        val err = simplifyLuaError(e.toString())
                                         "${lpparam.packageName}:$scriptName:$err".e()
                                     }
 
@@ -728,7 +728,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                     try {
                                         func.call(luaParam)
                                     } catch (e: Exception) {
-                                        val err = simplifyLuaError(e.toString()).toString()
+                                        val err = simplifyLuaError(e.toString())
                                         "${lpparam.packageName}:$scriptName:$err".e()
                                     }
 
@@ -741,7 +741,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                     try {
                                         func.call(luaParam)
                                     } catch (e: Exception) {
-                                        val err = simplifyLuaError(e.toString()).toString()
+                                        val err = simplifyLuaError(e.toString())
                                         "${lpparam.packageName}:$scriptName:$err".e()
                                     }
                                 }
@@ -761,7 +761,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
         globals["replace"] = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
                 val classNameOrTableOrMethod = args.arg(1)
-                var classLoader: ClassLoader? = null
+                var classLoader: ClassLoader?
                 val methodName: String
 
                 if (classNameOrTableOrMethod.istable()) {//table 全新语法
@@ -813,7 +813,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                             try {
                                                 func.call(luaParam)
                                             } catch (e: Exception) {
-                                                val err = simplifyLuaError(e.toString()).toString()
+                                                val err = simplifyLuaError(e.toString())
                                                 "${lpparam.packageName}:$scriptName:$err".e()
                                             }
                                         }
@@ -833,7 +833,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                             try {
                                                 func.call(luaParam)
                                             } catch (e: Exception) {
-                                                val err = simplifyLuaError(e.toString()).toString()
+                                                val err = simplifyLuaError(e.toString())
                                                 "${lpparam.packageName}:$scriptName:$err".e()
                                             }
                                         }
@@ -854,7 +854,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                         try {
                                             func.call(luaParam)
                                         } catch (e: Exception) {
-                                            val err = simplifyLuaError(e.toString()).toString()
+                                            val err = simplifyLuaError(e.toString())
                                             "${lpparam.packageName}:$scriptName:$err".e()
                                         }
                                     }
@@ -931,7 +931,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                     try {
                                         func.call(luaParam)
                                     } catch (e: Exception) {
-                                        val err = simplifyLuaError(e.toString()).toString()
+                                        val err = simplifyLuaError(e.toString())
                                         "${lpparam.packageName}:$scriptName:$err".e()
                                     }
                                 }
@@ -955,7 +955,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                     try {
                                         func.call(luaParam)
                                     } catch (e: Exception) {
-                                        val err = simplifyLuaError(e.toString()).toString()
+                                        val err = simplifyLuaError(e.toString())
                                         "${lpparam.packageName}:$scriptName:$err".e()
                                     }
                                 }
@@ -977,7 +977,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
             override fun invoke(args: Varargs): LuaValue {
                 try {
                     val classNameOrTableOrClass = args.arg(1)
-                    var classLoader: ClassLoader? = null
+                    var classLoader: ClassLoader?
                     lateinit var clazz: Class<*>
                     lateinit var method: String
                     lateinit var beforeFunc: LuaFunction
@@ -1005,7 +1005,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                             try {
                                                 func.call(luaParam)
                                             } catch (e: Exception) {
-                                                val err = simplifyLuaError(e.toString()).toString()
+                                                val err = simplifyLuaError(e.toString())
                                                 "${lpparam.packageName}:$scriptName:$err".e()
                                             }
 
@@ -1018,7 +1018,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                             try {
                                                 func.call(luaParam)
                                             } catch (e: Exception) {
-                                                val err = simplifyLuaError(e.toString()).toString()
+                                                val err = simplifyLuaError(e.toString())
                                                 "${lpparam.packageName}:$scriptName:$err".e()
                                             }
                                         }
@@ -1036,7 +1036,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                             try {
                                                 func.call(luaParam)
                                             } catch (e: Exception) {
-                                                val err = simplifyLuaError(e.toString()).toString()
+                                                val err = simplifyLuaError(e.toString())
                                                 "${lpparam.packageName}:$scriptName:$err".e()
                                             }
 
@@ -1049,7 +1049,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                             try {
                                                 func.call(luaParam)
                                             } catch (e: Exception) {
-                                                val err = simplifyLuaError(e.toString()).toString()
+                                                val err = simplifyLuaError(e.toString())
                                                 "${lpparam.packageName}:$scriptName:$err".e()
                                             }
                                         }
@@ -1077,24 +1077,24 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                         method,
                         object : XC_MethodHook() {
                             override fun beforeHookedMethod(param: MethodHookParam?) {
-                                beforeFunc?.let { func ->
+                                beforeFunc.let { func ->
                                     val luaParam = CoerceJavaToLua.coerce(param)
                                     try {
                                         func.call(luaParam)
                                     } catch (e: Exception) {
-                                        val err = simplifyLuaError(e.toString()).toString()
+                                        val err = simplifyLuaError(e.toString())
                                         "${lpparam.packageName}:$scriptName:$err".e()
                                     }
                                 }
                             }
 
                             override fun afterHookedMethod(param: MethodHookParam?) {
-                                afterFunc?.let { func ->
+                                afterFunc.let { func ->
                                     val luaParam = CoerceJavaToLua.coerce(param)
                                     try {
                                         func.call(luaParam)
                                     } catch (e: Exception) {
-                                        val err = simplifyLuaError(e.toString()).toString()
+                                        val err = simplifyLuaError(e.toString())
                                         "${lpparam.packageName}:$scriptName:$err".e()
                                     }
                                 }
@@ -1117,7 +1117,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
             override fun invoke(args: Varargs): LuaValue {
                 try {
                     val classNameOrTableOrClass = args.arg(1)
-                    var classLoader: ClassLoader? = null
+                    var classLoader: ClassLoader?
 
                     if (classNameOrTableOrClass.istable()) {//table 全新语法
                         val table = classNameOrTableOrClass.checktable()
@@ -1166,7 +1166,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                             try {
                                                 func.call(luaParam)
                                             } catch (e: Exception) {
-                                                val err = simplifyLuaError(e.toString()).toString()
+                                                val err = simplifyLuaError(e.toString())
                                                 "${lpparam.packageName}:$scriptName:$err".e()
                                             }
 
@@ -1179,7 +1179,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                             try {
                                                 func.call(luaParam)
                                             } catch (e: Exception) {
-                                                val err = simplifyLuaError(e.toString()).toString()
+                                                val err = simplifyLuaError(e.toString())
                                                 "${lpparam.packageName}:$scriptName:$err".e()
                                             }
                                         }
@@ -1197,7 +1197,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                             try {
                                                 func.call(luaParam)
                                             } catch (e: Exception) {
-                                                val err = simplifyLuaError(e.toString()).toString()
+                                                val err = simplifyLuaError(e.toString())
                                                 "${lpparam.packageName}:$scriptName:$err".e()
                                             }
 
@@ -1210,7 +1210,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                             try {
                                                 func.call(luaParam)
                                             } catch (e: Exception) {
-                                                val err = simplifyLuaError(e.toString()).toString()
+                                                val err = simplifyLuaError(e.toString())
                                                 "${lpparam.packageName}:$scriptName:$err".e()
                                             }
                                         }
@@ -1280,7 +1280,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                         try {
                                             func.call(luaParam)
                                         } catch (e: Exception) {
-                                            val err = simplifyLuaError(e.toString()).toString()
+                                            val err = simplifyLuaError(e.toString())
                                             "${lpparam.packageName}:$scriptName:$err".e()
                                         }
                                     }
@@ -1292,7 +1292,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                         try {
                                             func.call(luaParam)
                                         } catch (e: Exception) {
-                                            val err = simplifyLuaError(e.toString()).toString()
+                                            val err = simplifyLuaError(e.toString())
                                             "${lpparam.packageName}:$scriptName:$err".e()
                                         }
                                     }
@@ -1360,7 +1360,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                         try {
                                             func.call(luaParam)
                                         } catch (e: Exception) {
-                                            val err = simplifyLuaError(e.toString()).toString()
+                                            val err = simplifyLuaError(e.toString())
                                             "${lpparam.packageName}:$scriptName:$err".e()
                                         }
                                     }
@@ -1372,7 +1372,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                         try {
                                             func.call(luaParam)
                                         } catch (e: Exception) {
-                                            val err = simplifyLuaError(e.toString()).toString()
+                                            val err = simplifyLuaError(e.toString())
                                             "${lpparam.packageName}:$scriptName:$err".e()
                                         }
                                     }
@@ -1386,7 +1386,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                     return NIL
 
                 } catch (e: Exception) {
-                    val err = simplifyLuaError(e.toString()).toString()
+                    val err = simplifyLuaError(e.toString())
                     "${lpparam.packageName}:$scriptName:$err".e()
                     return NIL
                 }
