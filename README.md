@@ -65,25 +65,25 @@ imports "top.sacz.xphelper.dexkit.FieldFinder"
 imports "java.lang.reflect.Modifier"
 imports "top.sacz.xphelper.dexkit.bean.MethodInfo"
 hook("android.app.Application",
-lpparam.classLoader,
-"attach",
-"android.content.Context",
-function(it)end,
-function(it)
-  XpHelper.initContext(it.thisObject)
-  XpHelper.injectResourcesToContext(it.thisObject)
-  local loader=invoke(it.thisObject,"getClassLoader")
-  DexFinder=DexFinder.INSTANCE
-  DexFinder.create(lpparam.appInfo.sourceDir)
-  local method=MethodInfo() {
-    UsedString={"MicroMsg.QRCodeHandler","qbar_string_scan_source"},
-    ParamCount=2,
-  }.generate().firstOrNull()
-  hook(method,function(it)
-    it.args[1].putString("result_code_name","WX_CODE")
-    end,function(it)
-  end)
-end)
+    lpparam.classLoader,
+    "attach",
+    "android.content.Context",
+    function(it) end,
+    function(it)
+        XpHelper.initContext(it.thisObject)
+        XpHelper.injectResourcesToContext(it.thisObject)
+        local loader = invoke(it.thisObject, "getClassLoader")
+        DexFinder = DexFinder.INSTANCE
+        DexFinder.create(lpparam.appInfo.sourceDir)
+        local method = MethodInfo() {
+            UsedString = { "MicroMsg.QRCodeHandler", "qbar_string_scan_source" },
+            ParamCount = 2,
+        }.generate().firstOrNull()
+        hook(method, function(it)
+            it.args[1].putString("result_code_name", "WX_CODE")
+        end, function(it)
+        end)
+    end)
 ```
 
 打开微信扫一扫，扫描下面二维码进行赞赏:)
